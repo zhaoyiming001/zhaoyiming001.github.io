@@ -1,1 +1,406 @@
-<!DOCTYPE html><html><head><title>zhaoyiming001</title></head><body><h1>欢迎！这是 AdMob 验证网站。</h1></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World | Vibrant Experience</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#ec4899',
+                        accent: '#8b5cf6',
+                        dark: '#1e293b',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Poppins', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            }
+            .text-gradient {
+                background-clip: text;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+            .animate-float {
+                animation: float 6s ease-in-out infinite;
+            }
+            .animate-pulse-slow {
+                animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            .backdrop-blur-xl {
+                backdrop-filter: blur(24px);
+            }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+    
+    <!-- 导入Google字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-dark to-slate-900 text-white overflow-x-hidden">
+    <!-- 粒子背景容器 -->
+    <div id="particles-js" class="fixed inset-0 z-0 opacity-60"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-4 transition-all duration-300" id="navbar">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="#" class="text-2xl font-display font-bold tracking-tight">
+                <span class="bg-gradient-to-r from-primary to-secondary text-gradient">Hello.</span>
+            </a>
+            
+            <div class="hidden md:flex space-x-8 items-center">
+                <a href="#about" class="hover:text-primary transition-colors duration-300">About</a>
+                <a href="#experience" class="hover:text-primary transition-colors duration-300">Experience</a>
+                <a href="#contact" class="hover:text-primary transition-colors duration-300">Contact</a>
+                <a href="#" class="px-6 py-2 rounded-full bg-gradient-to-r from-primary to-secondary hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
+                    Get Started
+                </a>
+            </div>
+            
+            <button class="md:hidden text-2xl" id="menuToggle">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+        
+        <!-- 移动端菜单 -->
+        <div class="md:hidden absolute top-full left-0 right-0 bg-dark/80 backdrop-blur-xl shadow-lg rounded-b-2xl mt-2 px-6 py-4 hidden transition-all duration-300" id="mobileMenu">
+            <div class="flex flex-col space-y-4">
+                <a href="#about" class="py-2 hover:text-primary transition-colors duration-300">About</a>
+                <a href="#experience" class="py-2 hover:text-primary transition-colors duration-300">Experience</a>
+                <a href="#contact" class="py-2 hover:text-primary transition-colors duration-300">Contact</a>
+                <a href="#" class="py-2 px-4 rounded-full bg-gradient-to-r from-primary to-secondary text-center hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 英雄区域 -->
+    <header class="min-h-screen flex items-center justify-center relative pt-20 overflow-hidden">
+        <div class="container mx-auto px-6 z-10 text-center">
+            <h1 class="text-[clamp(2.5rem,8vw,6rem)] font-display font-black leading-none mb-6 animate-float">
+                <span class="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 text-gradient">Hello</span>
+                <span class="block md:inline bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 text-gradient">World!</span>
+            </h1>
+            
+            <p class="text-[clamp(1rem,3vw,1.5rem)] text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed">
+                A vibrant journey into the world of web development, where creativity meets technology.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="#explore" class="px-8 py-4 rounded-full bg-gradient-to-r from-primary to-accent text-white font-semibold hover:shadow-lg hover:shadow-primary/30 transform hover:-translate-y-1 transition-all duration-300">
+                    Explore <i class="fa fa-arrow-right ml-2"></i>
+                </a>
+                <a href="#learn-more" class="px-8 py-4 rounded-full bg-transparent border-2 border-white/30 text-white font-semibold hover:bg-white/10 transform hover:-translate-y-1 transition-all duration-300">
+                    Learn More
+                </a>
+            </div>
+        </div>
+        
+        <!-- 装饰元素 -->
+        <div class="absolute -bottom-10 -left-10 w-64 h-64 bg-primary/20 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/3 -right-20 w-80 h-80 bg-secondary/20 rounded-full blur-3xl"></div>
+    </header>
+    
+    <!-- 关于区域 -->
+    <section id="about" class="py-24 relative">
+        <div class="container mx-auto px-6">
+            <div class="max-w-3xl mx-auto text-center mb-16">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-display font-bold mb-6">
+                    <span class="bg-gradient-to-r from-green-400 to-blue-500 text-gradient">About This Project</span>
+                </h2>
+                <p class="text-slate-300 text-lg">
+                    This vibrant "Hello World" demonstration showcases modern web design techniques,
+                    including gradient colors, animations, and responsive layouts.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 transform hover:-translate-y-2">
+                    <div class="w-14 h-14 bg-primary/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fa fa-code text-2xl text-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Modern Code</h3>
+                    <p class="text-slate-300">
+                        Built with the latest web technologies and best practices for optimal performance.
+                    </p>
+                </div>
+                
+                <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-secondary/50 transition-all duration-300 hover:shadow-lg hover:shadow-secondary/10 transform hover:-translate-y-2">
+                    <div class="w-14 h-14 bg-secondary/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fa fa-paint-brush text-2xl text-secondary"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Vibrant Design</h3>
+                    <p class="text-slate-300">
+                        Stunning visual elements with gradient colors and dynamic animations that captivate.
+                    </p>
+                </div>
+                
+                <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-accent/50 transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 transform hover:-translate-y-2">
+                    <div class="w-14 h-14 bg-accent/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fa fa-mobile text-2xl text-accent"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Responsive</h3>
+                    <p class="text-slate-300">
+                        Perfectly adapts to any screen size, providing an optimal experience on all devices.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 体验区域 -->
+    <section id="experience" class="py-24 bg-gradient-to-b from-transparent to-white/5 relative">
+        <div class="container mx-auto px-6">
+            <div class="max-w-3xl mx-auto text-center mb-16">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-display font-bold mb-6">
+                    <span class="bg-gradient-to-r from-yellow-400 to-red-500 text-gradient">Experience the Color</span>
+                </h2>
+                <p class="text-slate-300 text-lg">
+                    Interact with our colorful elements and see the magic of modern web design.
+                </p>
+            </div>
+            
+            <div class="flex flex-col items-center">
+                <div class="relative w-full max-w-2xl aspect-square mb-12 rounded-full overflow-hidden border-4 border-white/10 shadow-2xl animate-pulse-slow">
+                    <div class="absolute inset-0 bg-gradient-to-r from-primary via-purple-500 to-secondary mix-blend-overlay"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="text-[clamp(2rem,5vw,4rem)] font-display font-black text-white text-shadow">Hello!</span>
+                    </div>
+                    
+                    <!-- 旋转动画环 -->
+                    <div class="absolute inset-[-20px] border-4 border-primary/30 rounded-full animate-spin-slow"></div>
+                    <div class="absolute inset-[-40px] border-2 border-secondary/20 rounded-full animate-spin-reverse-slow"></div>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-2xl">
+                    <div class="aspect-square rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300">
+                        <span class="font-bold text-xl">Blue</span>
+                    </div>
+                    <div class="aspect-square rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300">
+                        <span class="font-bold text-xl">Purple</span>
+                    </div>
+                    <div class="aspect-square rounded-xl bg-gradient-to-br from-pink-500 to-red-600 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300">
+                        <span class="font-bold text-xl">Pink</span>
+                    </div>
+                    <div class="aspect-square rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300">
+                        <span class="font-bold text-xl">Yellow</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 联系区域 -->
+    <section id="contact" class="py-24 relative">
+        <div class="container mx-auto px-6">
+            <div class="max-w-4xl mx-auto bg-white/5 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-white/10 shadow-xl">
+                <div class="text-center mb-10">
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-display font-bold mb-4">
+                        <span class="bg-gradient-to-r from-cyan-400 to-blue-500 text-gradient">Get In Touch</span>
+                    </h2>
+                    <p class="text-slate-300">
+                        Want to create something amazing? Reach out to start your project.
+                    </p>
+                </div>
+                
+                <form class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-slate-300 mb-2">Name</label>
+                            <input type="text" id="name" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300" placeholder="Your name">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                            <input type="email" id="email" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300" placeholder="Your email">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="message" class="block text-sm font-medium text-slate-300 mb-2">Message</label>
+                        <textarea id="message" rows="5" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300" placeholder="Your message"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="w-full py-4 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-semibold hover:shadow-lg hover:shadow-primary/30 transition-all duration-300">
+                        Send Message <i class="fa fa-paper-plane ml-2"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 页脚 -->
+    <footer class="py-12 border-t border-white/10">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <a href="#" class="text-2xl font-display font-bold tracking-tight">
+                        <span class="bg-gradient-to-r from-primary to-secondary text-gradient">Hello World</span>
+                    </a>
+                    <p class="text-slate-400 mt-2">A vibrant web experience</p>
+                </div>
+                
+                <div class="flex space-x-6">
+                    <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all duration-300">
+                        <i class="fa fa-twitter"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all duration-300">
+                        <i class="fa fa-github"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all duration-300">
+                        <i class="fa fa-linkedin"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all duration-300">
+                        <i class="fa fa-instagram"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mt-10 pt-6 border-t border-white/10 text-center text-slate-400 text-sm">
+                <p>&copy; 2023 Hello World. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- 粒子效果库 -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    
+    <!-- 自定义脚本 -->
+    <script>
+        // 粒子背景配置
+        particlesJS("particles-js", {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: ["#6366f1", "#ec4899", "#8b5cf6", "#3b82f6"] },
+                shape: { type: "circle" },
+                opacity: { 
+                    value: 0.5, 
+                    random: true, 
+                    anim: { enable: true, speed: 1, opacity_min: 0.1, sync: false } 
+                },
+                size: { 
+                    value: 3, 
+                    random: true, 
+                    anim: { enable: true, speed: 2, size_min: 0.1, sync: false } 
+                },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: "#ffffff",
+                    opacity: 0.1,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 1,
+                    direction: "none",
+                    random: true,
+                    straight: false,
+                    out_mode: "out",
+                    bounce: false
+                }
+            },
+            interactivity: {
+                detect_on: "canvas",
+                events: {
+                    onhover: { enable: true, mode: "grab" },
+                    onclick: { enable: true, mode: "push" },
+                    resize: true
+                },
+                modes: {
+                    grab: { distance: 140, line_linked: { opacity: 0.3 } },
+                    push: { particles_nb: 4 }
+                }
+            },
+            retina_detect: true
+        });
+        
+        // 导航栏滚动效果
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('bg-dark/80', 'backdrop-blur-xl', 'shadow-lg');
+            } else {
+                navbar.classList.remove('bg-dark/80', 'backdrop-blur-xl', 'shadow-lg');
+            }
+        });
+        
+        // 移动端菜单切换
+        const menuToggle = document.getElementById('menuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        menuToggle.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            const icon = menuToggle.querySelector('i');
+            if (icon.classList.contains('fa-bars')) {
+                icon.classList.replace('fa-bars', 'fa-times');
+            } else {
+                icon.classList.replace('fa-times', 'fa-bars');
+            }
+        });
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                // 关闭移动菜单（如果打开）
+                if (!mobileMenu.classList.contains('hidden')) {
+                    mobileMenu.classList.add('hidden');
+                    const icon = menuToggle.querySelector('i');
+                    icon.classList.replace('fa-times', 'fa-bars');
+                }
+                
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // 添加旋转动画
+        document.head.insertAdjacentHTML('beforeend', `
+            <style>
+                @keyframes spin-slow {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                @keyframes spin-reverse-slow {
+                    from { transform: rotate(360deg); }
+                    to { transform: rotate(0deg); }
+                }
+                .animate-spin-slow {
+                    animation: spin-slow 30s linear infinite;
+                }
+                .animate-spin-reverse-slow {
+                    animation: spin-reverse-slow 45s linear infinite;
+                }
+            </style>
+        `);
+    </script>
+</body>
+</html>
