@@ -8,6 +8,7 @@
       "interface_name": "domestic_oil_price_query",
       "version": "2.0",
       "data_source": "各地加油站实时上报",
+      "update_date": "2025-10-18",
       "update_cycle": "24小时/次",
       "warning": "云南、陕西、四川、辽宁、青海、贵州、内蒙古、黑龙江为区域参考价，实际以当地站点为准"
     },
