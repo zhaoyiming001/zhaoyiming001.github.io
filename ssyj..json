@@ -46,11 +46,11 @@
         {"region": "青海", "gasoline_92": 7.01, "gasoline_95": 7.51, "gasoline_98": 8.18, "diesel_0": 6.63, "is_reference": true},
         {"region": "宁夏", "gasoline_92": 6.96, "gasoline_95": 7.35, "gasoline_98": 8.41, "diesel_0": 6.59, "is_reference": false},
         {"region": "陕西", "gasoline_92": 6.94, "gasoline_95": 7.34, "gasoline_98": 9.63, "diesel_0": 6.60, "is_reference": true},
-        {"region": "拉萨", "gasoline_92": 7.94, "gasoline_95": 8.40, "gasoline_98": 9.38, "diesel_0": 7.25, "is_reference": false},
+        {"region": "西藏", "gasoline_92": 7.94, "gasoline_95": 8.40, "gasoline_98": 9.38, "diesel_0": 7.25, "is_reference": false},
         {"region": "辽宁", "gasoline_92": 7.15, "gasoline_95": 7.64, "gasoline_98": 8.32, "diesel_0": 6.60, "is_reference": true},
         {"region": "黑龙江", "gasoline_92": 7.02, "gasoline_95": 7.52, "gasoline_98": 8.52, "diesel_0": 6.51, "is_reference": true},
         {"region": "内蒙古", "gasoline_92": 6.99, "gasoline_95": 7.46, "gasoline_98": 8.19, "diesel_0": 6.58, "is_reference": true},
-        {"region": "乌鲁木齐", "gasoline_92": 6.85, "gasoline_95": 7.33, "gasoline_98": 8.19, "diesel_0": 6.48, "is_reference": false}
+        {"region": "新疆", "gasoline_92": 6.85, "gasoline_95": 7.33, "gasoline_98": 8.19, "diesel_0": 6.48, "is_reference": false}
       ]
     }
   }
