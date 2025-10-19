@@ -20,9 +20,9 @@
     "data": {
       "unit": "元/升",
       "oil_price_list": [
-        {"region": "北京", "gasoline_92": 7.05, "gasoline_95": 7.51, "gasoline_98": 9.01, "diesel_0": 6.74, "is_reference": false},
-        {"region": "山东", "gasoline_92": 7.02, "gasoline_95": 7.53, "gasoline_98": 8.53, "diesel_0": 6.22, "is_reference": false},
-        {"region": "上海", "gasoline_92": 7.02, "gasoline_95": 7.47, "gasoline_98": 9.37, "diesel_0": 6.67, "is_reference": false},
+        {"region": "北京", "gasoline_92": 1.05, "gasoline_95": 7.51, "gasoline_98": 9.01, "diesel_0": 6.74, "is_reference": false},
+        {"region": "山东", "gasoline_92": 2.02, "gasoline_95": 7.53, "gasoline_98": 8.53, "diesel_0": 6.22, "is_reference": false},
+        {"region": "上海", "gasoline_92": 3.02, "gasoline_95": 7.47, "gasoline_98": 9.37, "diesel_0": 6.67, "is_reference": false},
         {"region": "江苏", "gasoline_92": 7.03, "gasoline_95": 7.48, "gasoline_98": 9.52, "diesel_0": 6.66, "is_reference": false},
         {"region": "安徽", "gasoline_92": 7.02, "gasoline_95": 7.52, "gasoline_98": 9.02, "diesel_0": 6.73, "is_reference": false},
         {"region": "福建", "gasoline_92": 7.02, "gasoline_95": 7.50, "gasoline_98": 9.00, "diesel_0": 6.69, "is_reference": false},
