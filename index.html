@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Pixel Hello World OS v3.0</title>
+  <title>PIXEL HELLO WORLD</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- 像素字体 -->
+  <!-- Pixel font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -31,7 +31,7 @@
       --hero-color: #33ff99;
     }
 
-    /* 主题切换 */
+    /* Themes */
     [data-theme="crt"] {
       --screen-border: #22e0ff;
       --screen-border-dark: #006c8a;
@@ -81,7 +81,7 @@
       background:
         linear-gradient(90deg, var(--grid) 1px, transparent 1px),
         linear-gradient(var(--grid) 1px, transparent 1px),
-        radial-gradient(circle at top, #171f3a 0, var(--bg) 55%);
+        radial-gradient(circle at top, #271f5a 0, var(--bg) 55%);
       background-size: 24px 24px, 24px 24px, cover;
       color: var(--text-main);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -99,7 +99,7 @@
       z-index: 1;
     }
 
-    /* 背景星空 */
+    /* Background */
     .layer-back {
       position: fixed;
       inset: 0;
@@ -118,7 +118,7 @@
         radial-gradient(2px 2px at 10% 70%, rgba(255,255,255,0.4), transparent),
         radial-gradient(2px 2px at 90% 20%, rgba(255,255,255,0.5), transparent);
       animation: star-move 50s linear infinite;
-      opacity: 0.7;
+      opacity: 0.8;
       filter: saturate(1.2);
     }
 
@@ -156,7 +156,6 @@
       100% { transform: translateY(-90vh) translateX(-10vw); opacity: 0; }
     }
 
-    /* 粒子噪点滤镜 */
     .noise-overlay {
       position: fixed;
       inset: -10px;
@@ -166,11 +165,11 @@
       z-index: 0;
     }
 
-    /* BOOT 屏幕 */
+    /* Boot screen */
     #boot-screen {
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at center, #0b1720 0, #000000 70%);
+      background: radial-gradient(circle at center, #1a0830 0, #000000 70%);
       color: var(--pixel-green);
       display: flex;
       align-items: center;
@@ -179,7 +178,7 @@
       font-family: "Press Start 2P", system-ui, sans-serif;
       font-size: 10px;
       z-index: 999;
-      text-shadow: 0 0 8px rgba(51,255,153,0.8);
+      text-shadow: 0 0 8px rgba(255,113,184,0.9);
     }
 
     #boot-screen.hidden {
@@ -201,9 +200,9 @@
     .boot-progress {
       margin-top: 14px;
       display: inline-block;
-      border: 2px solid #33ff99;
+      border: 2px solid #ff71b8;
       padding: 4px;
-      min-width: 180px;
+      min-width: 200px;
       text-align: left;
       box-shadow: 0 0 0 2px #000;
       background: #000;
@@ -212,20 +211,20 @@
     .boot-sweep {
       position: absolute;
       inset: 0;
-      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.2) 40%, transparent 80%);
+      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.23) 40%, transparent 80%);
       mix-blend-mode: screen;
       animation: boot-sweep 1.6s ease-in-out infinite;
       pointer-events: none;
     }
 
     @keyframes boot-sweep {
-      0% { transform: translateX(-100%) skewX(-20deg); opacity: 0; }
+      0% { transform: translateX(-120%) skewX(-20deg); opacity: 0; }
       40% { opacity: 1; }
       80% { opacity: 0; }
       100% { transform: translateX(120%) skewX(-20deg); opacity: 0; }
     }
 
-    /* 顶部栏 */
+    /* Top bar */
     .top-bar {
       display: flex;
       justify-content: space-between;
@@ -261,7 +260,6 @@
       justify-content: flex-end;
     }
 
-    /* 像素按钮 / 选择框 */
     .pixel-btn {
       position: relative;
       padding: 6px 10px 8px;
@@ -335,19 +333,19 @@
       image-rendering: pixelated;
     }
 
-    /* 主屏幕框 */
+    /* Screen */
     .screen {
       position: relative;
-      background: radial-gradient(circle at top, #18243f 0, #050713 60%);
+      background: radial-gradient(circle at top, #3b1a5a 0, #050713 60%);
       padding: 12px;
       border-radius: 0;
       image-rendering: pixelated;
       box-shadow:
-        0 20px 40px rgba(0,0,0,0.8),
+        0 20px 40px rgba(0,0,0,0.9),
         0 0 0 4px #000,
         0 0 0 8px var(--screen-border-dark),
         0 0 0 12px #000,
-        0 0 40px rgba(0, 242, 255, 0.4);
+        0 0 50px rgba(255, 74, 242, 0.7);
       overflow: hidden;
     }
 
@@ -357,8 +355,8 @@
         to bottom,
         #050713 0px,
         #050713 2px,
-        #06081a 2px,
-        #06081a 4px
+        #090421 2px,
+        #090421 4px
       );
       padding: 16px;
       position: relative;
@@ -383,8 +381,8 @@
       inset: -40%;
       background:
         radial-gradient(circle at 50% -20%, rgba(255, 255, 255, 0.12), transparent 50%),
-        radial-gradient(circle at 10% 120%, rgba(0, 255, 204, 0.28), transparent 60%);
-      opacity: 0.4;
+        radial-gradient(circle at 10% 120%, rgba(255, 0, 178, 0.35), transparent 60%);
+      opacity: 0.5;
       pointer-events: none;
       z-index: 0;
     }
@@ -396,7 +394,7 @@
       mix-blend-mode: screen;
       animation: screen-sweep 4s ease-in-out infinite;
       pointer-events: none;
-      opacity: 0.3;
+      opacity: 0.35;
     }
 
     @keyframes screen-sweep {
@@ -419,7 +417,7 @@
       }
     }
 
-    /* HERO 文本 */
+    /* Hero */
     .hero {
       font-family: "Press Start 2P", system-ui, sans-serif;
       color: var(--pixel-green);
@@ -435,7 +433,7 @@
       margin-bottom: 10px;
       color: var(--hero-color);
       text-shadow:
-        0 0 6px rgba(51, 255, 153, 0.8),
+        0 0 6px rgba(255, 113, 184, 0.9),
         0 0 14px rgba(0, 0, 0, 0.8);
       display: inline-flex;
       align-items: center;
@@ -455,7 +453,7 @@
       height: 18px;
       margin-left: 4px;
       background: var(--pixel-green);
-      box-shadow: 0 0 8px rgba(51, 255, 153, 0.9);
+      box-shadow: 0 0 8px rgba(255, 113, 184, 0.9);
       animation: blink 0.9s steps(1, end) infinite;
     }
 
@@ -464,7 +462,7 @@
       50%, 100% { opacity: 0; }
     }
 
-    /* 终端 */
+    /* Terminal */
     .terminal-card {
       margin-top: 8px;
       background: #050713;
@@ -560,7 +558,7 @@
       color: var(--danger);
     }
 
-    /* 右侧 */
+    /* Right */
     .right-pane {
       display: flex;
       flex-direction: column;
@@ -569,7 +567,7 @@
 
     .sprite-card {
       border: 2px solid #171e39;
-      background: radial-gradient(circle at top, #10162b 0, #050713 80%);
+      background: radial-gradient(circle at top, #241548 0, #050713 80%);
       padding: 10px;
       box-shadow: inset 0 0 0 2px #000;
       display: grid;
@@ -630,7 +628,7 @@
       width: 32px;
       height: 32px;
       background:
-        linear-gradient(#ffffff 0, #ffffff 50%, #ffd93b 50%, #ffd93b 100%);
+        linear-gradient(#fef7ff 0, #fef7ff 50%, #ffb347 50%, #ffb347 100%);
       box-shadow:
         0 0 0 2px #000,
         0 0 12px rgba(0, 0, 0, 0.6);
@@ -683,7 +681,7 @@
       position: absolute;
       left: 60px;
       bottom: 70px;
-      max-width: 160px;
+      max-width: 170px;
       background: #050713;
       border: 2px solid #171e39;
       color: var(--text-main);
@@ -727,7 +725,7 @@
       margin-bottom: 4px;
     }
 
-    /* LOGO 生成器 */
+    /* Logo generator */
     .logo-card {
       border: 2px solid #171e39;
       background: #050713;
@@ -782,10 +780,10 @@
       margin-top: 4px;
     }
 
-    /* 联系我们卡片 */
+    /* Contact */
     .contact-card {
       border: 2px solid #171e39;
-      background: radial-gradient(circle at top, #10162b 0, #050713 80%);
+      background: radial-gradient(circle at top, #241548 0, #050713 80%);
       padding: 10px;
       box-shadow: inset 0 0 0 2px #000;
       margin-top: 6px;
@@ -837,7 +835,7 @@
 
     .contact-input:focus {
       border-color: var(--pixel-green);
-      box-shadow: 0 0 0 2px #000, 0 0 10px rgba(51,255,153,0.4);
+      box-shadow: 0 0 0 2px #000, 0 0 10px rgba(255,113,184,0.5);
     }
 
     .contact-textarea {
@@ -868,12 +866,12 @@
       color: var(--danger);
     }
 
-    /* 页脚 */
+    /* Footer */
     .footer {
       font-family: "Press Start 2P", system-ui, sans-serif;
       font-size: 8px;
       text-align: center;
-      color: #5d6a96;
+      color: #8a90c8;
       margin-top: 6px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -899,8 +897,8 @@
     }
   </style>
 </head>
-<body data-theme="crt">
-  <!-- 背景层 -->
+<body data-theme="synth">
+  <!-- Background -->
   <div class="layer-back">
     <div class="stars"></div>
     <div class="pixel-floating">
@@ -912,28 +910,28 @@
   </div>
   <div class="noise-overlay"></div>
 
-  <!-- BOOT 屏幕 -->
+  <!-- Boot screen -->
   <div id="boot-screen">
     <div class="boot-sweep"></div>
-    <div class="boot-line">PIXEL OS v3.0</div>
-    <div class="boot-line">INITIALIZING VIDEO...  OK</div>
-    <div class="boot-line">SCANNING STARS...      OK</div>
-    <div class="boot-line">LOADING HELLO WORLD... _</div>
+    <div class="boot-line">PIXEL HELLO WORLD</div>
+    <div class="boot-line">INITIALIZING NEON PIXEL INTERFACE...  OK</div>
+    <div class="boot-line">LINKING STARFIELDS AND SPRITES...    OK</div>
+    <div class="boot-line">ENTERING NEON PIXEL UNIVERSE...</div>
     <div class="boot-progress" id="boot-progress">[..........]</div>
   </div>
 
-  <!-- 主应用 -->
+  <!-- App -->
   <div class="app-root">
-    <!-- 顶部栏 -->
+    <!-- Top bar -->
     <header class="top-bar">
       <div class="top-left">
         <div class="pixel-dot-mini"></div>
-        PIXEL HELLO WORLD • OS
+        PIXEL HELLO WORLD
       </div>
       <div class="top-right">
         <select id="lang-select" class="pixel-select" title="Language">
-          <option value="en">EN</option>
-          <option value="zh" selected>ZH</option>
+          <option value="en" selected>EN</option>
+          <option value="zh">ZH</option>
           <option value="ja">JA</option>
           <option value="ko">KO</option>
           <option value="de">DE</option>
@@ -951,7 +949,7 @@
       </div>
     </header>
 
-    <!-- 主像素屏幕 -->
+    <!-- Main screen -->
     <main class="screen">
       <div class="screen-inner">
         <div class="glow"></div>
@@ -959,7 +957,7 @@
         <div class="screen-sweep"></div>
 
         <div class="screen-layout">
-          <!-- 左侧：Hello + 终端 + 联系 -->
+          <!-- Left: Hero + terminal + contact -->
           <section>
             <div class="hero">
               <div class="hero-title">
@@ -967,7 +965,7 @@
                 <span class="cursor"></span>
               </div>
               <div class="hero-sub" id="hero-sub">
-                一个来自像素宇宙的 "Hello, World" 启动画面。
+                A neon pixel operating system for your very first hello.
               </div>
             </div>
 
@@ -978,7 +976,7 @@
                   <div class="code-dot yellow"></div>
                   <div class="code-dot green"></div>
                 </div>
-                <span>PIXEL&gt; TERMINAL</span>
+                <span>NEON&gt; TERMINAL</span>
               </div>
               <div class="terminal-output" id="terminal-output"></div>
               <div class="terminal-input-row">
@@ -994,7 +992,7 @@
               </div>
             </div>
 
-            <!-- 联系我们 -->
+            <!-- Contact -->
             <div class="contact-card">
               <div class="contact-title">CONTACT US</div>
               <form id="contact-form">
@@ -1022,23 +1020,23 @@
             </div>
           </section>
 
-          <!-- 右侧：精灵 + LOGO 生成器 -->
+          <!-- Right: sprite + logo -->
           <section class="right-pane">
             <div class="sprite-card">
               <div class="sprite-world">
                 <div class="sprite-shadow"></div>
                 <div class="sprite" id="sprite"></div>
                 <div class="sprite-bubble" id="sprite-bubble">
-                  HELLO, HUMAN!<br/>WELCOME TO PIXEL WORLD.
+                  HELLO, HUMAN!<br/>WELCOME TO THE NEON PIXEL WORLD.
                 </div>
                 <div class="ground"></div>
               </div>
               <div class="sprite-info">
                 <div class="sprite-info-title">PIXEL COMPANION</div>
                 <p>
-                  · 点击右侧小人，他会对你打招呼。<br/>
-                  · 主题 / 语言切换时，他会继续在宇宙里散步。<br/>
-                  · 背景音乐随机风格，每次进入都不一样。
+                  · Click the little sprite to get a greeting.<br/>
+                  · It keeps walking while you switch themes and languages.<br/>
+                  · Background music is random every time you enter.
                 </p>
               </div>
             </div>
@@ -1051,7 +1049,7 @@
                   class="logo-input"
                   type="text"
                   maxlength="16"
-                  placeholder="输入你的名字或项目名..."
+                  placeholder="Type your name or project..."
                 />
                 <button class="pixel-btn small secondary" id="logo-generate">
                   GENERATE
@@ -1062,7 +1060,7 @@
               </div>
               <canvas id="logo-canvas" width="300" height="80"></canvas>
               <div class="logo-tip">
-                TIP: 点击 “GENERATE” 生成像素 LOGO，再用 “DOWNLOAD” 保存 PNG。
+                TIP: Generate a neon pixel logo and download it as PNG.
               </div>
             </div>
           </section>
@@ -1071,13 +1069,13 @@
     </main>
 
     <footer class="footer" id="footer">
-      <div>PIXEL &lt;HELLO WORLD&gt; READY</div>
-      <div>PRESS <span>ENTER</span> INSIDE TERMINAL</div>
+      <div>PIXEL HELLO WORLD ONLINE</div>
+      <div>PRESS <span>ENTER</span> INSIDE TERMINAL TO BEGIN</div>
     </footer>
   </div>
 
   <script>
-    // ========== BOOT 动画 ==========
+    // Boot animation
     (function bootSequence() {
       const boot = document.getElementById('boot-screen');
       const progress = document.getElementById('boot-progress');
@@ -1100,35 +1098,35 @@
       }, 280);
     })();
 
-    // ========== 多语言 Hello World ==========
+    // Language data
     const langData = {
       en: {
         hero: 'HELLO, WORLD',
-        sub: 'A tiny pixel universe where every square lights up to say hello.'
+        sub: 'A neon pixel operating system for your very first hello.'
       },
       zh: {
         hero: '你好，世界',
-        sub: '一个来自像素宇宙的 Hello World 启动画面。'
+        sub: '一个来自霓虹像素宇宙的 Hello World 启动画面。'
       },
       ja: {
         hero: 'こんにちは、世界',
-        sub: 'すべてのドットが「こんにちは」と光る小さなピクセル宇宙。'
+        sub: 'すべてのドットがネオンで挨拶する、小さなピクセル宇宙。'
       },
       ko: {
         hero: '안녕, 세상',
-        sub: '모든 픽셀이 인사를 건네는 작은 우주입니다.'
+        sub: '모든 픽셀이 네온빛으로 인사를 건네는 작은 우주입니다.'
       },
       de: {
         hero: 'HALLO, WELT',
-        sub: 'Jedes Pixel sagt hier nur eins: Hallo.'
+        sub: 'Jedes Pixel sagt hier in Neon nur eins: Hallo.'
       },
       es: {
         hero: 'HOLA, MUNDO',
-        sub: 'Un pequeño universo de píxeles que sólo quiere saludar.'
+        sub: 'Un pequeño universo de píxeles de neón que sólo quiere saludar.'
       },
       fr: {
         hero: 'BONJOUR, MONDE',
-        sub: 'Un minuscule univers de pixels qui vous dit bonjour.'
+        sub: 'Un minuscule univers de pixels néon qui vous dit bonjour.'
       }
     };
 
@@ -1147,9 +1145,11 @@
       playClick();
     });
 
-    updateLanguage(langSelect.value);
+    // default EN
+    updateLanguage('en');
+    langSelect.value = 'en';
 
-    // ========== 主题切换 ==========
+    // Theme switching
     const themeButtons = document.querySelectorAll('[data-theme-btn]');
     function setTheme(theme) {
       document.body.setAttribute('data-theme', theme);
@@ -1169,15 +1169,14 @@
         playClick();
       });
     });
-    setTheme('crt');
+    setTheme('synth');
 
-    // ========== 音效 / BGM（Web Audio） ==========
+    // Audio / BGM
     let audioCtx = null;
     let sfxEnabled = false;
     let bgmEnabled = false;
     let bgmInterval = null;
 
-    // 随机 BGM 风格
     const bgmStyles = [
       { id: 'adventure', label: 'ADV', pattern: [440, 494, 523, 494], interval: 320, type: 'square' },
       { id: 'synth', label: 'SYN', pattern: [440, 660, 880, 660], interval: 260, type: 'sawtooth' },
@@ -1241,9 +1240,12 @@
       let step = 0;
       const pattern = currentBgmStyle.pattern;
       const intervalMs = currentBgmStyle.interval;
+
       bgmInterval = setInterval(() => {
         if (!bgmEnabled) return;
-        const freq = pattern[step % pattern.length];
+        // slight random detune
+        const jitter = (Math.random() * 4) - 2;
+        const freq = pattern[step % pattern.length] + jitter;
         playBeep(freq, 120, currentBgmStyle.type);
         step++;
       }, intervalMs);
@@ -1264,7 +1266,6 @@
     bgmBtn.addEventListener('click', () => {
       bgmEnabled = !bgmEnabled;
       if (bgmEnabled) {
-        // 切换时也随机一首
         currentBgmStyle = bgmStyles[Math.floor(Math.random() * bgmStyles.length)];
         startBgm();
       } else {
@@ -1273,13 +1274,11 @@
       playClick();
     });
 
-    // 每次打开页面自动开启 BGM（浏览器可能要求一次交互才真正响）
+    // auto BGM (may be blocked until first interaction)
     window.addEventListener('load', () => {
       bgmEnabled = true;
       startBgm();
     });
-
-    // 第一次点击页面时，确保音频可以播放
     window.addEventListener('pointerdown', () => {
       initAudio();
       if (bgmEnabled && !bgmInterval) {
@@ -1287,7 +1286,7 @@
       }
     }, { once: true });
 
-    // ========== 终端 ==========
+    // Terminal
     const termOut = document.getElementById('terminal-output');
     const termIn = document.getElementById('terminal-input');
 
@@ -1325,13 +1324,13 @@
           break;
         case 'hello': {
           const current = langData[langSelect.value] || langData.en;
-          printLine(current.hero.toUpperCase() + ' _/');
+          printLine(current.hero.toUpperCase() + ' _/', 'system');
           break;
         }
         case 'about':
-          printLine('PIXEL OS v3.0 • HELLO WORLD EDITION', 'system');
-          printLine('MADE WITH PURE HTML + CSS + JS.', 'system');
-          printLine('USE THIS PAGE AS YOUR PIXEL LANDING.', 'system');
+          printLine('PIXEL HELLO WORLD • NEON PIXEL SHELL', 'system');
+          printLine('BUILT WITH PURE HTML + CSS + JS.', 'system');
+          printLine('USE THIS AS YOUR PIXEL LANDING PAGE.', 'system');
           break;
         case 'clear':
           termOut.innerHTML = '';
@@ -1352,11 +1351,9 @@
       }
     });
 
-    // 初始化终端欢迎信息
-    printLine('PIXEL TERMINAL READY.', 'system');
+    printLine('NEON PIXEL TERMINAL READY.', 'system');
     printLine('TYPE "help" AND PRESS ENTER.', 'system');
 
-    // matrix 模式：简单字符雨
     function runMatrixMode() {
       const chars = '01';
       let count = 0;
@@ -1376,7 +1373,7 @@
       }, 80);
     }
 
-    // ========== 精灵互动 ==========
+    // Sprite
     const sprite = document.getElementById('sprite');
     const spriteBubble = document.getElementById('sprite-bubble');
     let bubbleTimer = null;
@@ -1390,7 +1387,7 @@
       }, 2200);
     });
 
-    // ========== LOGO 生成器 ==========
+    // Logo generator
     const logoInput = document.getElementById('logo-input');
     const logoCanvas = document.getElementById('logo-canvas');
     const logoBtn = document.getElementById('logo-generate');
@@ -1398,14 +1395,13 @@
     const ctx = logoCanvas.getContext('2d');
 
     function drawLogo(text) {
-      const t = text || 'HELLO WORLD';
+      const t = text || 'PIXEL HELLO WORLD';
       ctx.imageSmoothingEnabled = false;
       ctx.clearRect(0, 0, logoCanvas.width, logoCanvas.height);
 
-      // 背景栅格
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = '#050013';
       ctx.fillRect(0, 0, logoCanvas.width, logoCanvas.height);
-      ctx.strokeStyle = '#222840';
+      ctx.strokeStyle = '#3a2a6f';
       for (let x = 0; x < logoCanvas.width; x += 8) {
         ctx.beginPath();
         ctx.moveTo(x + 0.5, 0);
@@ -1419,10 +1415,9 @@
         ctx.stroke();
       }
 
-      // 文字
-      ctx.fillStyle = '#33ff99';
-      ctx.shadowColor = '#33ff99';
-      ctx.shadowBlur = 8;
+      ctx.fillStyle = '#ff71b8';
+      ctx.shadowColor = '#ff71b8';
+      ctx.shadowBlur = 10;
       ctx.font = '16px "Press Start 2P"';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -1431,10 +1426,10 @@
       ctx.shadowBlur = 0;
     }
 
-    drawLogo('HELLO WORLD');
+    drawLogo('PIXEL HELLO WORLD');
 
     logoBtn.addEventListener('click', () => {
-      const text = logoInput.value.trim() || 'HELLO WORLD';
+      const text = logoInput.value.trim() || 'PIXEL HELLO WORLD';
       drawLogo(text);
       playClick();
     });
@@ -1447,7 +1442,7 @@
       playClick();
     });
 
-    // ========== 联系我们表单 ==========
+    // Contact form
     const contactForm = document.getElementById('contact-form');
     const contactStatus = document.getElementById('contact-status');
 
@@ -1475,7 +1470,6 @@
         return;
       }
 
-      // Demo 成功
       setContactStatus('MESSAGE SENT (DEMO ONLY). THANK YOU!', 'ok');
       contactForm.reset();
     });
