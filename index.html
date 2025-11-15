@@ -1,406 +1,512 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World | Vibrant Experience</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    
-    <!-- 配置Tailwind自定义颜色和字体 -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#6366f1',
-                        secondary: '#ec4899',
-                        accent: '#8b5cf6',
-                        dark: '#1e293b',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        display: ['Poppins', 'system-ui', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-    
-    <!-- 自定义工具类 -->
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .text-shadow {
-                text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            }
-            .text-gradient {
-                background-clip: text;
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-            }
-            .animate-float {
-                animation: float 6s ease-in-out infinite;
-            }
-            .animate-pulse-slow {
-                animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-            }
-            .backdrop-blur-xl {
-                backdrop-filter: blur(24px);
-            }
-        }
-        
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-            100% { transform: translateY(0px); }
-        }
-    </style>
-    
-    <!-- 导入Google字体 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-</head>
+  <meta charset="UTF-8">
+  <title>Pixel Hello World</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<body class="min-h-screen bg-gradient-to-br from-dark to-slate-900 text-white overflow-x-hidden">
-    <!-- 粒子背景容器 -->
-    <div id="particles-js" class="fixed inset-0 z-0 opacity-60"></div>
-    
-    <!-- 导航栏 -->
-    <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-4 transition-all duration-300" id="navbar">
-        <div class="container mx-auto flex justify-between items-center">
-            <a href="#" class="text-2xl font-display font-bold tracking-tight">
-                <span class="bg-gradient-to-r from-primary to-secondary text-gradient">Hello.</span>
-            </a>
-            
-            <div class="hidden md:flex space-x-8 items-center">
-                <a href="#about" class="hover:text-primary transition-colors duration-300">About</a>
-                <a href="#experience" class="hover:text-primary transition-colors duration-300">Experience</a>
-                <a href="#contact" class="hover:text-primary transition-colors duration-300">Contact</a>
-                <a href="#" class="px-6 py-2 rounded-full bg-gradient-to-r from-primary to-secondary hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
-                    Get Started
-                </a>
+  <!-- 像素字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <style>
+    /* 全局重置 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #050810;
+      --grid: rgba(72, 85, 122, 0.18);
+      --screen-bg: #0b1020;
+      --screen-border: #22e0ff;
+      --screen-border-dark: #006c8a;
+      --text-main: #f4f7ff;
+      --text-dim: #8ea1d0;
+      --accent: #ffdd33;
+      --pixel-green: #33ff99;
+      --danger: #ff4d6a;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        radial-gradient(circle at top, #172038 0, var(--bg) 55%);
+      background-size: 24px 24px, 24px 24px, cover;
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    /* 漂浮像素方块背景 */
+    .pixel-floating {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .pixel-dot {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: #39ffb6;
+      box-shadow: 0 0 10px #39ffb6;
+      image-rendering: pixelated;
+      opacity: 0.7;
+      animation: float 14s linear infinite;
+    }
+
+    .pixel-dot:nth-child(2) { background: #ff71b8; box-shadow: 0 0 10px #ff71b8; animation-duration: 18s; }
+    .pixel-dot:nth-child(3) { background: #ffd93b; box-shadow: 0 0 10px #ffd93b; animation-duration: 22s; }
+    .pixel-dot:nth-child(4) { background: #7aa2ff; box-shadow: 0 0 10px #7aa2ff; animation-duration: 16s; }
+
+    @keyframes float {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      50% { transform: translateY(-40vh) translateX(20vw); }
+      100% { transform: translateY(-90vh) translateX(-10vw); opacity: 0; }
+    }
+
+    /* 中央内容 */
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: "Press Start 2P", system-ui, sans-serif;
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding-inline: 4px;
+    }
+
+    .top-bar span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pixel-dot-mini {
+      width: 8px;
+      height: 8px;
+      background: #ff4d6a;
+      box-shadow: 0 0 5px #ff4d6a;
+      image-rendering: pixelated;
+    }
+
+    /* 像素屏幕 */
+    .screen {
+      position: relative;
+      background: radial-gradient(circle at top, #111933, #050713 60%);
+      padding: 14px;
+      border-radius: 0;
+      image-rendering: pixelated;
+      box-shadow:
+        0 0 0 4px #000,
+        0 0 0 8px var(--screen-border-dark),
+        0 0 0 12px #000,
+        0 0 40px rgba(0, 242, 255, 0.46);
+    }
+
+    /* 模拟像素边缘：用多个内阴影 */
+    .screen-inner {
+      border: 4px solid var(--screen-border);
+      background: repeating-linear-gradient(
+          to bottom,
+          #050713 0px,
+          #050713 2px,
+          #06081a 2px,
+          #06081a 4px
+      );
+      padding: 18px 18px 22px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scanline {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.04),
+        rgba(0, 0, 0, 0.2)
+      );
+      mix-blend-mode: soft-light;
+      pointer-events: none;
+    }
+
+    .glow {
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 50% -20%, rgba(255, 255, 255, 0.12), transparent 50%),
+        radial-gradient(circle at 10% 120%, rgba(0, 255, 204, 0.28), transparent 60%);
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    /* 内容布局 */
+    .screen-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .screen-grid {
+        grid-template-columns: 1fr;
+      }
+      .screen-inner {
+        padding: 14px;
+      }
+    }
+
+    /* 左侧：Hello World 像素文本 */
+    .hello-block {
+      font-family: "Press Start 2P", system-ui, sans-serif;
+      color: var(--pixel-green);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      line-height: 1.7;
+      font-size: 12px;
+      position: relative;
+    }
+
+    .hello-title {
+      font-size: 18px;
+      margin-bottom: 16px;
+      text-shadow:
+        0 0 6px rgba(51, 255, 153, 0.8),
+        0 0 14px rgba(0, 0, 0, 0.8);
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 14px;
+      height: 18px;
+      margin-left: 4px;
+      background: var(--pixel-green);
+      box-shadow: 0 0 8px rgba(51, 255, 153, 0.9);
+      animation: blink 0.9s steps(1, end) infinite;
+    }
+
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    .hello-sub {
+      margin-bottom: 16px;
+      color: var(--text-dim);
+      font-size: 10px;
+      text-transform: none;
+      letter-spacing: 0.04em;
+    }
+
+    /* “代码”部分 */
+    .code-box {
+      margin-top: 8px;
+      background: #050713;
+      border: 2px solid #151c30;
+      padding: 10px 10px 12px;
+      box-shadow: inset 0 0 0 2px #000;
+      position: relative;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 8px;
+      color: var(--text-dim);
+    }
+
+    .code-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .code-dot {
+      width: 8px;
+      height: 8px;
+      background: #353b56;
+      box-shadow: 0 0 0 1px #000;
+    }
+
+    .code-dot.red { background: var(--danger); }
+    .code-dot.yellow { background: var(--accent); }
+    .code-dot.green { background: var(--pixel-green); }
+
+    .code-body {
+      font-size: 11px;
+      line-height: 1.8;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow-x: auto;
+    }
+
+    .code-body::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .code-body::-webkit-scrollbar-thumb {
+      background: #222842;
+    }
+
+    .c-kw { color: #ff71b8; }
+    .c-fn { color: #ffdd33; }
+    .c-str { color: #33ff99; }
+    .c-cmt { color: #54628a; }
+
+    /* 右侧：说明 / 按钮 */
+    .info-block {
+      font-family: "Press Start 2P", system-ui, sans-serif;
+      font-size: 9px;
+      color: var(--text-dim);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .info-title {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .info-card {
+      border: 2px solid #171e39;
+      background: #050713;
+      padding: 10px;
+      box-shadow: inset 0 0 0 2px #000;
+    }
+
+    .info-list {
+      list-style: none;
+      margin-top: 8px;
+    }
+
+    .info-list li {
+      margin-bottom: 6px;
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+    }
+
+    .bullet {
+      width: 8px;
+      height: 8px;
+      background: var(--pixel-green);
+      box-shadow: 0 0 4px var(--pixel-green);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* 像素按钮 */
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .pixel-btn {
+      position: relative;
+      padding: 8px 12px 10px;
+      border: 0;
+      background: #ffdd33;
+      color: #000;
+      font-family: "Press Start 2P", system-ui, sans-serif;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      box-shadow:
+        0 0 0 2px #000,
+        0 4px 0 #b89619;
+      image-rendering: pixelated;
+      transition: transform 0.05s linear, box-shadow 0.05s linear;
+    }
+
+    .pixel-btn.secondary {
+      background: #33ff99;
+      box-shadow: 0 0 0 2px #000, 0 4px 0 #1c8a5b;
+    }
+
+    .pixel-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 0 0 2px #000, 0 2px 0 #b89619;
+    }
+
+    .pixel-btn.secondary:active {
+      box-shadow: 0 0 0 2px #000, 0 2px 0 #1c8a5b;
+    }
+
+    /* 页脚 */
+    .footer {
+      font-family: "Press Start 2P", system-ui, sans-serif;
+      font-size: 8px;
+      text-align: center;
+      color: #5d6a96;
+      margin-top: 6px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .footer span {
+      color: var(--pixel-green);
+    }
+
+    @media (max-width: 480px) {
+      .hello-title {
+        font-size: 14px;
+      }
+      .screen-inner {
+        padding: 12px;
+      }
+      .hello-block {
+        font-size: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 背景漂浮像素 -->
+  <div class="pixel-floating">
+    <div class="pixel-dot" style="left: 10%; bottom: -10%;"></div>
+    <div class="pixel-dot" style="left: 60%; bottom: -12%;"></div>
+    <div class="pixel-dot" style="left: 85%; bottom: -16%;"></div>
+    <div class="pixel-dot" style="left: 35%; bottom: -20%;"></div>
+  </div>
+
+  <div class="wrapper">
+    <div class="top-bar">
+      <span>
+        <div class="pixel-dot-mini"></div>
+        PIXEL BOOT • v1.0
+      </span>
+      <span>HELLO WORLD SYSTEM</span>
+    </div>
+
+    <main class="screen">
+      <div class="screen-inner">
+        <div class="glow"></div>
+        <div class="scanline"></div>
+
+        <div class="screen-grid">
+          <!-- 左：像素 Hello World -->
+          <section class="hello-block">
+            <div class="hello-title">
+              HELLO, WORLD
+              <span class="cursor"></span>
             </div>
-            
-            <button class="md:hidden text-2xl" id="menuToggle">
-                <i class="fa fa-bars"></i>
-            </button>
-        </div>
-        
-        <!-- 移动端菜单 -->
-        <div class="md:hidden absolute top-full left-0 right-0 bg-dark/80 backdrop-blur-xl shadow-lg rounded-b-2xl mt-2 px-6 py-4 hidden transition-all duration-300" id="mobileMenu">
-            <div class="flex flex-col space-y-4">
-                <a href="#about" class="py-2 hover:text-primary transition-colors duration-300">About</a>
-                <a href="#experience" class="py-2 hover:text-primary transition-colors duration-300">Experience</a>
-                <a href="#contact" class="py-2 hover:text-primary transition-colors duration-300">Contact</a>
-                <a href="#" class="py-2 px-4 rounded-full bg-gradient-to-r from-primary to-secondary text-center hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
-                    Get Started
-                </a>
-            </div>
-        </div>
-    </nav>
-    
-    <!-- 英雄区域 -->
-    <header class="min-h-screen flex items-center justify-center relative pt-20 overflow-hidden">
-        <div class="container mx-auto px-6 z-10 text-center">
-            <h1 class="text-[clamp(2.5rem,8vw,6rem)] font-display font-black leading-none mb-6 animate-float">
-                <span class="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 text-gradient">Hello</span>
-                <span class="block md:inline bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 text-gradient">World!</span>
-            </h1>
-            
-            <p class="text-[clamp(1rem,3vw,1.5rem)] text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed">
-                A vibrant journey into the world of web development, where creativity meets technology.
+
+            <p class="hello-sub">
+              This is a tiny pixel universe where every square glows just to say:
+              <span style="color: var(--pixel-green);">hello</span> 👾
             </p>
-            
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <a href="#explore" class="px-8 py-4 rounded-full bg-gradient-to-r from-primary to-accent text-white font-semibold hover:shadow-lg hover:shadow-primary/30 transform hover:-translate-y-1 transition-all duration-300">
-                    Explore <i class="fa fa-arrow-right ml-2"></i>
-                </a>
-                <a href="#learn-more" class="px-8 py-4 rounded-full bg-transparent border-2 border-white/30 text-white font-semibold hover:bg-white/10 transform hover:-translate-y-1 transition-all duration-300">
-                    Learn More
-                </a>
+
+            <div class="code-box" aria-label="hello world source code">
+              <div class="code-header">
+                <div class="code-dots">
+                  <div class="code-dot red"></div>
+                  <div class="code-dot yellow"></div>
+                  <div class="code-dot green"></div>
+                </div>
+                <span>hello_world.js</span>
+              </div>
+              <pre class="code-body">
+<span class="c-cmt">// pixel hello world</span>
+<span class="c-kw">function</span> <span class="c-fn">helloWorld</span>() {  
+  <span class="c-kw">return</span> <span class="c-str">"HELLO, WORLD"</span>;  
+}
+
+<span class="c-kw">const</span> screen = <span class="c-str">"#pixel-screen"</span>;
+<span class="c-fn">drawText</span>(screen, <span class="c-fn">helloWorld</span>());</pre>
             </div>
+          </section>
+
+          <!-- 右：说明与操作 -->
+          <aside class="info-block">
+            <div class="info-card">
+              <div class="info-title">PIXEL MODE</div>
+              <p>
+                Build your first web page like a retro console booting up:
+              </p>
+              <ul class="info-list">
+                <li>
+                  <span class="bullet"></span>
+                  <span>纯 HTML + CSS，零依赖，随处可部署。</span>
+                </li>
+                <li>
+                  <span class="bullet"></span>
+                  <span>像素背景 + CRT 效果，复古却清晰。</span>
+                </li>
+                <li>
+                  <span class="bullet"></span>
+                  <span>专注一件事：用像素说一句 <strong>Hello, World</strong>。</span>
+                </li>
+              </ul>
+
+              <div class="btn-row">
+                <button class="pixel-btn" type="button" onclick="scrollToFooter()">
+                  VIEW SOURCE
+                </button>
+                <button class="pixel-btn secondary" type="button" onclick="window.location.reload()">
+                  REBOOT
+                </button>
+              </div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-title">HOW TO USE</div>
+              <p>
+                直接把这个文件命名为 <span style="color: var(--accent);">index.html</span>，
+                上传到你的服务器或静态托管，即可成为你的像素风首页。
+              </p>
+            </div>
+          </aside>
         </div>
-        
-        <!-- 装饰元素 -->
-        <div class="absolute -bottom-10 -left-10 w-64 h-64 bg-primary/20 rounded-full blur-3xl"></div>
-        <div class="absolute top-1/3 -right-20 w-80 h-80 bg-secondary/20 rounded-full blur-3xl"></div>
-    </header>
-    
-    <!-- 关于区域 -->
-    <section id="about" class="py-24 relative">
-        <div class="container mx-auto px-6">
-            <div class="max-w-3xl mx-auto text-center mb-16">
-                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-display font-bold mb-6">
-                    <span class="bg-gradient-to-r from-green-400 to-blue-500 text-gradient">About This Project</span>
-                </h2>
-                <p class="text-slate-300 text-lg">
-                    This vibrant "Hello World" demonstration showcases modern web design techniques,
-                    including gradient colors, animations, and responsive layouts.
-                </p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 transform hover:-translate-y-2">
-                    <div class="w-14 h-14 bg-primary/20 rounded-xl flex items-center justify-center mb-6">
-                        <i class="fa fa-code text-2xl text-primary"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-4">Modern Code</h3>
-                    <p class="text-slate-300">
-                        Built with the latest web technologies and best practices for optimal performance.
-                    </p>
-                </div>
-                
-                <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-secondary/50 transition-all duration-300 hover:shadow-lg hover:shadow-secondary/10 transform hover:-translate-y-2">
-                    <div class="w-14 h-14 bg-secondary/20 rounded-xl flex items-center justify-center mb-6">
-                        <i class="fa fa-paint-brush text-2xl text-secondary"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-4">Vibrant Design</h3>
-                    <p class="text-slate-300">
-                        Stunning visual elements with gradient colors and dynamic animations that captivate.
-                    </p>
-                </div>
-                
-                <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-accent/50 transition-all duration-300 hover:shadow-lg hover:shadow-accent/10 transform hover:-translate-y-2">
-                    <div class="w-14 h-14 bg-accent/20 rounded-xl flex items-center justify-center mb-6">
-                        <i class="fa fa-mobile text-2xl text-accent"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-4">Responsive</h3>
-                    <p class="text-slate-300">
-                        Perfectly adapts to any screen size, providing an optimal experience on all devices.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- 体验区域 -->
-    <section id="experience" class="py-24 bg-gradient-to-b from-transparent to-white/5 relative">
-        <div class="container mx-auto px-6">
-            <div class="max-w-3xl mx-auto text-center mb-16">
-                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-display font-bold mb-6">
-                    <span class="bg-gradient-to-r from-yellow-400 to-red-500 text-gradient">Experience the Color</span>
-                </h2>
-                <p class="text-slate-300 text-lg">
-                    Interact with our colorful elements and see the magic of modern web design.
-                </p>
-            </div>
-            
-            <div class="flex flex-col items-center">
-                <div class="relative w-full max-w-2xl aspect-square mb-12 rounded-full overflow-hidden border-4 border-white/10 shadow-2xl animate-pulse-slow">
-                    <div class="absolute inset-0 bg-gradient-to-r from-primary via-purple-500 to-secondary mix-blend-overlay"></div>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="text-[clamp(2rem,5vw,4rem)] font-display font-black text-white text-shadow">Hello!</span>
-                    </div>
-                    
-                    <!-- 旋转动画环 -->
-                    <div class="absolute inset-[-20px] border-4 border-primary/30 rounded-full animate-spin-slow"></div>
-                    <div class="absolute inset-[-40px] border-2 border-secondary/20 rounded-full animate-spin-reverse-slow"></div>
-                </div>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-2xl">
-                    <div class="aspect-square rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300">
-                        <span class="font-bold text-xl">Blue</span>
-                    </div>
-                    <div class="aspect-square rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300">
-                        <span class="font-bold text-xl">Purple</span>
-                    </div>
-                    <div class="aspect-square rounded-xl bg-gradient-to-br from-pink-500 to-red-600 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300">
-                        <span class="font-bold text-xl">Pink</span>
-                    </div>
-                    <div class="aspect-square rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300">
-                        <span class="font-bold text-xl">Yellow</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- 联系区域 -->
-    <section id="contact" class="py-24 relative">
-        <div class="container mx-auto px-6">
-            <div class="max-w-4xl mx-auto bg-white/5 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-white/10 shadow-xl">
-                <div class="text-center mb-10">
-                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-display font-bold mb-4">
-                        <span class="bg-gradient-to-r from-cyan-400 to-blue-500 text-gradient">Get In Touch</span>
-                    </h2>
-                    <p class="text-slate-300">
-                        Want to create something amazing? Reach out to start your project.
-                    </p>
-                </div>
-                
-                <form class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-slate-300 mb-2">Name</label>
-                            <input type="text" id="name" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300" placeholder="Your name">
-                        </div>
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Email</label>
-                            <input type="email" id="email" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300" placeholder="Your email">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label for="message" class="block text-sm font-medium text-slate-300 mb-2">Message</label>
-                        <textarea id="message" rows="5" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300" placeholder="Your message"></textarea>
-                    </div>
-                    
-                    <button type="submit" class="w-full py-4 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-semibold hover:shadow-lg hover:shadow-primary/30 transition-all duration-300">
-                        Send Message <i class="fa fa-paper-plane ml-2"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
-    </section>
-    
-    <!-- 页脚 -->
-    <footer class="py-12 border-t border-white/10">
-        <div class="container mx-auto px-6">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-6 md:mb-0">
-                    <a href="#" class="text-2xl font-display font-bold tracking-tight">
-                        <span class="bg-gradient-to-r from-primary to-secondary text-gradient">Hello World</span>
-                    </a>
-                    <p class="text-slate-400 mt-2">A vibrant web experience</p>
-                </div>
-                
-                <div class="flex space-x-6">
-                    <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all duration-300">
-                        <i class="fa fa-twitter"></i>
-                    </a>
-                    <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all duration-300">
-                        <i class="fa fa-github"></i>
-                    </a>
-                    <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all duration-300">
-                        <i class="fa fa-linkedin"></i>
-                    </a>
-                    <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all duration-300">
-                        <i class="fa fa-instagram"></i>
-                    </a>
-                </div>
-            </div>
-            
-            <div class="mt-10 pt-6 border-t border-white/10 text-center text-slate-400 text-sm">
-                <p>&copy; 2023 Hello World. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-    
-    <!-- 粒子效果库 -->
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-    
-    <!-- 自定义脚本 -->
-    <script>
-        // 粒子背景配置
-        particlesJS("particles-js", {
-            particles: {
-                number: { value: 80, density: { enable: true, value_area: 800 } },
-                color: { value: ["#6366f1", "#ec4899", "#8b5cf6", "#3b82f6"] },
-                shape: { type: "circle" },
-                opacity: { 
-                    value: 0.5, 
-                    random: true, 
-                    anim: { enable: true, speed: 1, opacity_min: 0.1, sync: false } 
-                },
-                size: { 
-                    value: 3, 
-                    random: true, 
-                    anim: { enable: true, speed: 2, size_min: 0.1, sync: false } 
-                },
-                line_linked: {
-                    enable: true,
-                    distance: 150,
-                    color: "#ffffff",
-                    opacity: 0.1,
-                    width: 1
-                },
-                move: {
-                    enable: true,
-                    speed: 1,
-                    direction: "none",
-                    random: true,
-                    straight: false,
-                    out_mode: "out",
-                    bounce: false
-                }
-            },
-            interactivity: {
-                detect_on: "canvas",
-                events: {
-                    onhover: { enable: true, mode: "grab" },
-                    onclick: { enable: true, mode: "push" },
-                    resize: true
-                },
-                modes: {
-                    grab: { distance: 140, line_linked: { opacity: 0.3 } },
-                    push: { particles_nb: 4 }
-                }
-            },
-            retina_detect: true
-        });
-        
-        // 导航栏滚动效果
-        const navbar = document.getElementById('navbar');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                navbar.classList.add('bg-dark/80', 'backdrop-blur-xl', 'shadow-lg');
-            } else {
-                navbar.classList.remove('bg-dark/80', 'backdrop-blur-xl', 'shadow-lg');
-            }
-        });
-        
-        // 移动端菜单切换
-        const menuToggle = document.getElementById('menuToggle');
-        const mobileMenu = document.getElementById('mobileMenu');
-        
-        menuToggle.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-            const icon = menuToggle.querySelector('i');
-            if (icon.classList.contains('fa-bars')) {
-                icon.classList.replace('fa-bars', 'fa-times');
-            } else {
-                icon.classList.replace('fa-times', 'fa-bars');
-            }
-        });
-        
-        // 平滑滚动
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                
-                // 关闭移动菜单（如果打开）
-                if (!mobileMenu.classList.contains('hidden')) {
-                    mobileMenu.classList.add('hidden');
-                    const icon = menuToggle.querySelector('i');
-                    icon.classList.replace('fa-times', 'fa-bars');
-                }
-                
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
-        
-        // 添加旋转动画
-        document.head.insertAdjacentHTML('beforeend', `
-            <style>
-                @keyframes spin-slow {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-                @keyframes spin-reverse-slow {
-                    from { transform: rotate(360deg); }
-                    to { transform: rotate(0deg); }
-                }
-                .animate-spin-slow {
-                    animation: spin-slow 30s linear infinite;
-                }
-                .animate-spin-reverse-slow {
-                    animation: spin-reverse-slow 45s linear infinite;
-                }
-            </style>
-        `);
-    </script>
+      </div>
+    </main>
+
+    <div class="footer" id="footer">
+      <div>PIXEL &lt;HELLO WORLD&gt; READY</div>
+      <div>PRESS <span>F5</span> TO REBOOT UNIVERSE</div>
+    </div>
+  </div>
+
+  <script>
+    function scrollToFooter() {
+      const el = document.getElementById('footer');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  </script>
 </body>
 </html>
