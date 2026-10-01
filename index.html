@@ -3,145 +3,233 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>格子乐园 · 经典益智小游戏合集</title>
-  <meta name="description" content="格子乐园：免费在线玩经典益智休闲小游戏，2048、数独、扫雷、俄罗斯方块、贪吃蛇、华容道、五子棋、记忆翻牌，无需下载，手机电脑都能玩。">
-  <meta name="theme-color" content="#f7f2ea">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='13' height='13' rx='3' fill='%23f26b3a'/%3E%3Crect x='17' y='2' width='13' height='13' rx='3' fill='%23f5b43c'/%3E%3Crect x='2' y='17' width='13' height='13' rx='3' fill='%234fb39a'/%3E%3Crect x='17' y='17' width='13' height='13' rx='3' fill='%235b8def'/%3E%3C/svg%3E">
+  <title>游戏来了 · 经典益智小游戏合集</title>
+  <meta name="description" content="游戏来了：免费在线玩经典益智休闲小游戏，2048、数独、扫雷、俄罗斯方块、贪吃蛇、华容道、五子棋、记忆翻牌，无需下载，手机电脑都能玩。">
+  <meta name="theme-color" content="#ffd23f">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/site.css">
   <script src="assets/site.js"></script>
   <style>
+    body { --theme: #ff7a45; --theme-2: #ffd23f; --theme-soft: #fff4d6; }
+    .hero h1, .resume-text b, .section-title, .card-name { font-weight: 700 !important; }
+
     .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 0 6px;
+      padding: 14px 0 4px;
     }
 
-    .hero { padding: 18px 0 18px; }
+    /* 大标题 */
+    .hero {
+      position: relative;
+      margin: 14px 0 20px;
+      padding: 22px 20px 20px;
+      border: var(--outline);
+      border-radius: 28px;
+      background: #ffd23f;
+      color: #2d2a4a;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.55) 2.5px, transparent 3px);
+      background-size: 22px 22px;
+      pointer-events: none;
+    }
     .hero h1 {
+      position: relative;
       margin: 0;
-      font-size: clamp(26px, 6.4vw, 44px);
-      line-height: 1.2;
-      font-weight: 900;
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: clamp(44px, 13vw, 76px);
+      line-height: 1;
+      letter-spacing: 0.02em;
+      color: #fff;
+      -webkit-text-stroke: 3px #2d2a4a;
+      paint-order: stroke fill;
+      text-shadow: 0 5px 0 #2d2a4a;
     }
-    .hero h1 em { font-style: normal; color: var(--accent); }
-    .hero p { margin: 6px 0 0; color: var(--text-dim); font-size: 15px; }
+    .hero h1 span { display: inline-block; }
+    .hero h1 .c1 { color: #ff5f6d; transform: rotate(-6deg); }
+    .hero h1 .c2 { color: #4b7bff; transform: rotate(4deg) translateY(4px); }
+    .hero h1 .c3 { color: #27b36b; transform: rotate(-3deg); }
+    .hero h1 .c4 { color: #ff5fa2; transform: rotate(7deg) translateY(2px); }
+    .hero h1 .c5 { color: #fff; transform: rotate(-4deg); }
+    .hero p {
+      position: relative;
+      margin: 14px 0 0;
+      display: inline-block;
+      padding: 4px 14px 5px;
+      border: 2.5px solid #2d2a4a;
+      border-radius: 999px;
+      background: #fff;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .hero-art {
+      position: absolute;
+      right: 10px;
+      bottom: 6px;
+      width: clamp(96px, 30vw, 190px);
+      height: auto;
+      pointer-events: none;
+    }
 
+    /* 继续上次 */
     .resume {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin: 0 0 18px;
+      margin: 0 0 20px;
       padding: 10px 12px 10px 10px;
-      border-radius: var(--radius);
-      background: var(--surface);
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
+      border: var(--outline);
+      border-radius: 20px;
+      background: var(--paper);
+      box-shadow: var(--pop);
       text-decoration: none;
-      transition: transform .15s ease;
+      transition: transform .08s ease, box-shadow .08s ease;
     }
-    .resume:active { transform: scale(0.98); }
+    .resume:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
     .resume-icon {
       flex: none;
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
+      width: 48px;
+      height: 48px;
+      border: 2.5px solid var(--ink);
+      border-radius: 14px;
       overflow: hidden;
       display: grid;
       place-items: center;
-      background: var(--thumb, var(--surface-2));
+      background: var(--theme);
     }
-    .resume-icon svg { width: 70%; height: 70%; }
-    .resume-text { flex: 1; min-width: 0; line-height: 1.3; }
+    .resume-icon svg { width: 82%; height: 82%; }
+    .resume-text { flex: 1; min-width: 0; line-height: 1.25; }
     .resume-text small { display: block; color: var(--text-dim); font-size: 12px; font-weight: 700; }
-    .resume-text b { font-size: 16px; font-weight: 900; }
+    .resume-text b { font-family: var(--font-display); font-weight: 400; font-size: 21px; }
     .resume-go {
       flex: none;
       display: inline-flex;
       align-items: center;
-      height: 34px;
-      padding: 0 14px;
+      height: 38px;
+      padding: 0 16px;
+      border: 2.5px solid var(--ink);
       border-radius: 999px;
-      background: var(--accent);
-      color: var(--accent-ink);
-      font-weight: 900;
-      font-size: 14px;
+      background: var(--theme);
+      color: var(--theme-ink);
+      font-weight: 700;
+      font-size: 15px;
+      box-shadow: 0 3px 0 var(--ink);
     }
 
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px;
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 24px;
+    }
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 3px;
+      border-radius: 3px;
+      background: repeating-linear-gradient(90deg, var(--ink) 0 10px, transparent 10px 18px);
+      opacity: .25;
+    }
+
+    /* 游戏卡片 */
     .grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 16px;
+      gap: 18px;
     }
-
     .card {
       display: flex;
       flex-direction: column;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      box-shadow: var(--shadow);
+      border: var(--outline);
+      border-radius: 24px;
+      background: var(--paper);
+      box-shadow: var(--pop);
       overflow: hidden;
       text-decoration: none;
-      color: inherit;
-      transition: transform .2s ease;
+      color: var(--text);
+      transition: transform .15s cubic-bezier(.2, 1.4, .4, 1), box-shadow .08s ease;
     }
-    .card:hover { transform: translateY(-4px); }
-    .card:active { transform: scale(0.97); }
-    .card:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .card:nth-child(odd):hover { transform: translateY(-4px) rotate(-1.5deg); }
+    .card:nth-child(even):hover { transform: translateY(-4px) rotate(1.5deg); }
+    .card:active { transform: translateY(3px) !important; box-shadow: 0 1px 0 var(--ink); }
+    .card:focus-visible { outline: 3px solid var(--theme); outline-offset: 3px; }
 
     .thumb {
-      aspect-ratio: 5 / 4;
+      position: relative;
+      aspect-ratio: 4 / 3;
       display: grid;
       place-items: center;
-      background: var(--thumb, var(--surface-2));
+      background-color: var(--theme);
+      background-image: radial-gradient(rgba(255, 255, 255, 0.28) 2.5px, transparent 3px);
+      background-size: 18px 18px;
+      border-bottom: var(--outline);
     }
-    .thumb svg { width: 56%; height: 72%; }
+    .thumb svg {
+      width: 74%;
+      height: 84%;
+      transition: transform .25s cubic-bezier(.2, 1.4, .4, 1);
+    }
+    .card:hover .thumb svg { transform: scale(1.06) rotate(-2deg); }
 
     .card-body {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       justify-content: space-between;
       gap: 6px;
-      padding: 10px 14px 12px;
+      padding: 9px 12px 10px 14px;
     }
-    .card-name { font-weight: 900; font-size: 17px; white-space: nowrap; }
+    .card-name {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 21px;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
     .card-stat {
       min-width: 0;
-      color: var(--text-dim);
+      padding: 1px 8px 2px;
+      border-radius: 999px;
+      background: var(--theme-soft);
+      color: #2d2a4a;
+      border: 2px solid var(--ink);
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 700;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
-    @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) .thumb,
-      :root:not([data-theme="light"]) .resume-icon { filter: brightness(0.85); }
-    }
-    :root[data-theme="dark"] .thumb,
-    :root[data-theme="dark"] .resume-icon { filter: brightness(0.85); }
+    .card-stat:empty { display: none; }
 
     .footer {
       padding: 32px 0 calc(24px + env(safe-area-inset-bottom));
       text-align: center;
       color: var(--text-dim);
-      font-size: 12px;
+      font-size: 13px;
+      font-weight: 600;
     }
 
     @media (max-width: 760px) {
-      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-      .hero { padding: 10px 0 14px; }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+      .hero { margin: 10px 0 18px; padding: 18px 16px 16px; border-radius: 24px; }
       .hero p { font-size: 14px; }
-      .card { border-radius: 18px; }
-      .thumb { aspect-ratio: 3 / 2; }
-      .card-body { padding: 9px 12px 11px; flex-direction: column; gap: 0; }
-      .card-name { font-size: 16px; }
-      .card-stat:empty::before { content: "\00a0"; }
+      .card { border-radius: 20px; }
+      .card-body { flex-direction: column; align-items: flex-start; gap: 3px; padding: 8px 10px 10px 12px; }
+      .card-name { font-size: 19px; }
+      .card-stat { max-width: 100%; }
     }
   </style>
 </head>
@@ -149,135 +237,181 @@
   <div class="wrap">
     <header class="topbar">
       <a class="brand" href="./">
-        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-        格子乐园
+        <img class="brand-logo" src="assets/logo.svg" alt="">
+        游戏来了
       </a>
-      <button class="icon-btn theme-toggle" type="button" aria-label="切换深色/浅色模式" title="切换深色/浅色模式">
-        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <button class="icon-btn theme-toggle" type="button" aria-label="切换白天/夜间模式" title="切换白天/夜间模式">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
       </button>
     </header>
 
     <section class="hero">
-      <h1>经典益智，<em>随手一局</em></h1>
-      <p>8 款经典小游戏，打开就玩</p>
+      <h1><span class="c1">游</span><span class="c2">戏</span><span class="c3">来</span><span class="c4">了</span><span class="c5">!</span></h1>
+      <p>8 款经典小游戏 · 点开就玩</p>
+      <svg class="hero-art" viewBox="0 0 120 90" aria-hidden="true">
+        <g stroke="#2d2a4a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M24 30h60a20 20 0 0 1 20 20v6a18 18 0 0 1-32 11l-4-5H52l-4 5a18 18 0 0 1-32-11v-6a20 20 0 0 1 8-20z" fill="#ff7a45"/>
+          <path d="M30 44h8v-8h8v8h8v8h-8v8h-8v-8h-8z" fill="#fff"/>
+          <circle cx="78" cy="44" r="6" fill="#ffd23f"/>
+          <circle cx="90" cy="54" r="6" fill="#4b7bff"/>
+          <path d="M95 8l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#fff"/>
+          <path d="M10 14l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#ff5fa2"/>
+        </g>
+      </svg>
     </section>
 
     <a class="resume" id="resume" href="#" hidden>
       <span class="resume-icon" id="resume-icon"></span>
       <span class="resume-text"><small>继续上次</small><b id="resume-name"></b></span>
-      <span class="resume-go">继续 ›</span>
+      <span class="resume-go">继续 ▶</span>
     </a>
 
+    <h2 class="section-title">全部游戏</h2>
+
     <main class="grid" id="games">
-      <a class="card" href="games/2048/" data-slug="2048" style="--thumb:#f3e6d3">
+      <a class="card" href="games/2048/" data-game="2048">
         <div class="thumb">
-          <svg viewBox="0 0 90 90" aria-hidden="true">
-            <rect x="2" y="2" width="86" height="86" rx="10" fill="#bbada0"/>
-            <g font-family="Nunito, Arial, sans-serif" font-weight="900" text-anchor="middle">
-              <rect x="8" y="8" width="22" height="22" rx="4" fill="#eee4da"/><text x="19" y="25" font-size="14" fill="#776e65">2</text>
-              <rect x="34" y="8" width="22" height="22" rx="4" fill="#d6cdc4"/>
-              <rect x="60" y="8" width="22" height="22" rx="4" fill="#ede0c8"/><text x="71" y="25" font-size="14" fill="#776e65">4</text>
-              <rect x="8" y="34" width="22" height="22" rx="4" fill="#f2b179"/><text x="19" y="51" font-size="14" fill="#fff">8</text>
-              <rect x="34" y="34" width="22" height="22" rx="4" fill="#f59563"/><text x="45" y="50" font-size="12" fill="#fff">16</text>
-              <rect x="60" y="34" width="22" height="22" rx="4" fill="#d6cdc4"/>
-              <rect x="8" y="60" width="22" height="22" rx="4" fill="#f65e3b"/><text x="19" y="76" font-size="12" fill="#fff">64</text>
-              <rect x="34" y="60" width="22" height="22" rx="4" fill="#d6cdc4"/>
-              <rect x="60" y="60" width="22" height="22" rx="4" fill="#edc22e"/><text x="71" y="75" font-size="8" fill="#fff">2048</text>
+          <svg viewBox="0 0 100 80" aria-hidden="true">
+            <g stroke="#2d2a4a" stroke-width="3" stroke-linejoin="round" font-family="Fredoka, Arial, sans-serif" font-weight="700" text-anchor="middle">
+              <rect x="10" y="6" width="36" height="32" rx="8" fill="#fff3d6"/>
+              <rect x="52" y="6" width="36" height="32" rx="8" fill="#ffb35c"/>
+              <rect x="10" y="44" width="36" height="32" rx="8" fill="#ff5b5b"/>
+              <rect x="52" y="44" width="36" height="32" rx="8" fill="#ffd23f"/>
+              <text x="28" y="30" font-size="20" fill="#2d2a4a" stroke="none">2</text>
+              <text x="70" y="30" font-size="20" fill="#fff" stroke="none">8</text>
+              <text x="28" y="67" font-size="18" fill="#fff" stroke="none">64</text>
+              <text x="70" y="66" font-size="13" fill="#2d2a4a" stroke="none">2048</text>
             </g>
           </svg>
         </div>
         <div class="card-body"><span class="card-name">2048</span><span class="card-stat"></span></div>
       </a>
 
-      <a class="card" href="games/sudoku/" data-slug="sudoku" style="--thumb:#dfeaf6">
+      <a class="card" href="games/sudoku/" data-game="sudoku">
         <div class="thumb">
-          <svg viewBox="0 0 90 90" aria-hidden="true">
-            <rect x="3" y="3" width="84" height="84" rx="8" fill="#fff" stroke="#5b8def" stroke-width="3"/>
-            <path d="M31 3v84M59 3v84M3 31h84M3 59h84" stroke="#5b8def" stroke-width="2.5"/>
-            <rect x="32" y="32" width="26" height="26" fill="#cfe0fb"/>
-            <g font-family="Nunito, Arial, sans-serif" font-weight="900" font-size="18" fill="#2f5fc4" text-anchor="middle">
-              <text x="17" y="24">5</text><text x="73" y="24">3</text><text x="45" y="52">9</text><text x="17" y="80">1</text><text x="73" y="80">7</text>
+          <svg viewBox="0 0 100 80" aria-hidden="true">
+            <g stroke="#2d2a4a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+              <rect x="14" y="6" width="68" height="68" rx="8" fill="#fff"/>
+              <rect x="37" y="29" width="22" height="22" fill="#8fd3ff" stroke="none"/>
+              <path d="M36.7 6v68M59.3 6v68M14 28.7h68M14 51.3h68" stroke-width="2.5"/>
+            </g>
+            <g font-family="Fredoka, Arial, sans-serif" font-weight="700" font-size="16" text-anchor="middle" fill="#2d2a4a">
+              <text x="25" y="23">5</text><text x="71" y="23">3</text><text x="48" y="46" fill="#4b7bff">9</text><text x="25" y="68">1</text>
+            </g>
+            <g stroke="#2d2a4a" stroke-width="3" stroke-linejoin="round">
+              <path d="M70 66l18-30 7 4-18 30-9 4z" fill="#ffd23f"/>
+              <path d="M88 36l3-5 7 4-3 5z" fill="#ff5fa2"/>
             </g>
           </svg>
         </div>
         <div class="card-body"><span class="card-name">数独</span><span class="card-stat"></span></div>
       </a>
 
-      <a class="card" href="games/minesweeper/" data-slug="minesweeper" style="--thumb:#e3eee2">
+      <a class="card" href="games/minesweeper/" data-game="minesweeper">
         <div class="thumb">
-          <svg viewBox="0 0 90 90" aria-hidden="true">
-            <circle cx="45" cy="47" r="22" fill="#3a3029"/>
-            <path d="M45 13v12M45 69v12M11 47h12M67 47h12M21 23l9 9M60 62l9 9M69 23l-9 9M30 62l-9 9" stroke="#3a3029" stroke-width="5" stroke-linecap="round"/>
-            <circle cx="38" cy="40" r="6" fill="#fff"/>
+          <svg viewBox="0 0 100 80" aria-hidden="true">
+            <g stroke="#2d2a4a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+              <rect x="66" y="44" width="28" height="28" rx="6" fill="#f3e6c4"/>
+              <path d="M50 22v-8M50 72v8M24 47h-8M84 47h-8" />
+              <circle cx="50" cy="47" r="20" fill="#2d2a4a"/>
+              <path d="M60 30q8-10 14-6" fill="none"/>
+              <path d="M76 14l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#ffd23f"/>
+              <rect x="6" y="44" width="28" height="28" rx="6" fill="#b6ec5a"/>
+              <path d="M15 66V49" />
+              <path d="M15 49l13 5-13 5z" fill="#ff4d5e"/>
+            </g>
+            <circle cx="43" cy="40" r="5" fill="#fff"/>
+            <text x="80" y="65" font-family="Fredoka, Arial, sans-serif" font-weight="700" font-size="17" text-anchor="middle" fill="#4b7bff">1</text>
           </svg>
         </div>
         <div class="card-body"><span class="card-name">扫雷</span><span class="card-stat"></span></div>
       </a>
 
-      <a class="card" href="games/tetris/" data-slug="tetris" style="--thumb:#ece3f4">
+      <a class="card" href="games/tetris/" data-game="tetris">
         <div class="thumb">
-          <svg viewBox="0 0 90 90" aria-hidden="true">
-            <g stroke="#fff" stroke-width="2">
-              <rect x="25" y="5" width="20" height="20" rx="3" fill="#9a6bd6"/><rect x="45" y="5" width="20" height="20" rx="3" fill="#9a6bd6"/><rect x="45" y="25" width="20" height="20" rx="3" fill="#9a6bd6"/>
-              <rect x="5" y="65" width="20" height="20" rx="3" fill="#f5b43c"/><rect x="25" y="65" width="20" height="20" rx="3" fill="#f5b43c"/><rect x="25" y="45" width="20" height="20" rx="3" fill="#f5b43c"/>
-              <rect x="45" y="65" width="20" height="20" rx="3" fill="#4fb39a"/><rect x="65" y="65" width="20" height="20" rx="3" fill="#4fb39a"/><rect x="65" y="45" width="20" height="20" rx="3" fill="#4fb39a"/>
+          <svg viewBox="0 0 100 80" aria-hidden="true">
+            <g stroke="#2d2a4a" stroke-width="3" stroke-linejoin="round">
+              <g fill="#ff6fb5"><rect x="32" y="4" width="16" height="16" rx="3"/><rect x="48" y="4" width="16" height="16" rx="3"/><rect x="64" y="4" width="16" height="16" rx="3"/><rect x="48" y="20" width="16" height="16" rx="3"/></g>
+              <g fill="#ffd23f"><rect x="12" y="60" width="16" height="16" rx="3"/><rect x="28" y="60" width="16" height="16" rx="3"/><rect x="12" y="44" width="16" height="16" rx="3"/><rect x="28" y="44" width="16" height="16" rx="3"/></g>
+              <g fill="#5ad1ff"><rect x="44" y="60" width="16" height="16" rx="3"/><rect x="60" y="60" width="16" height="16" rx="3"/><rect x="76" y="60" width="16" height="16" rx="3"/><rect x="76" y="44" width="16" height="16" rx="3"/></g>
             </g>
+            <path d="M56 40v8M51 44l5 5 5-5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
         <div class="card-body"><span class="card-name">俄罗斯方块</span><span class="card-stat"></span></div>
       </a>
 
-      <a class="card" href="games/snake/" data-slug="snake" style="--thumb:#f6e3dc">
+      <a class="card" href="games/snake/" data-game="snake">
         <div class="thumb">
-          <svg viewBox="0 0 90 90" aria-hidden="true">
-            <path d="M12 70h40V40h26" fill="none" stroke="#4fb39a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="78" cy="40" r="3" fill="#fff"/>
-            <circle cx="66" cy="16" r="7" fill="#f26b3a"/>
+          <svg viewBox="0 0 100 80" aria-hidden="true">
+            <g stroke="#2d2a4a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+              <path d="M12 64c0-14 22-14 22 0s22 14 22 0-6-26 14-30" fill="none" stroke-width="17"/>
+              <path d="M12 64c0-14 22-14 22 0s22 14 22 0-6-26 14-30" fill="none" stroke="#6dd34f" stroke-width="11"/>
+              <ellipse cx="74" cy="32" rx="12" ry="10" fill="#6dd34f"/>
+              <circle cx="72" cy="28" r="4" fill="#fff" stroke-width="2"/>
+              <circle cx="80" cy="30" r="4" fill="#fff" stroke-width="2"/>
+              <path d="M85 36l6 1" stroke="#ff4d5e"/>
+              <circle cx="88" cy="62" r="8" fill="#ff4d5e"/>
+              <path d="M88 54q2-6 7-6" fill="none"/>
+            </g>
+            <circle cx="73" cy="28" r="1.8" fill="#2d2a4a"/><circle cx="81" cy="30" r="1.8" fill="#2d2a4a"/>
           </svg>
         </div>
         <div class="card-body"><span class="card-name">贪吃蛇</span><span class="card-stat"></span></div>
       </a>
 
-      <a class="card" href="games/klotski/" data-slug="klotski" style="--thumb:#f6eedb">
+      <a class="card" href="games/klotski/" data-game="klotski">
         <div class="thumb">
-          <svg viewBox="0 0 90 90" aria-hidden="true">
-            <rect x="3" y="3" width="84" height="84" rx="8" fill="#8c6a4f"/>
-            <g fill="#f3d9a6" stroke="#8c6a4f" stroke-width="2">
-              <rect x="7" y="7" width="18" height="38" rx="4"/><rect x="25" y="7" width="38" height="38" rx="4" fill="#f26b3a"/><rect x="63" y="7" width="20" height="38" rx="4"/>
-              <rect x="7" y="45" width="18" height="38" rx="4"/><rect x="25" y="45" width="38" height="19" rx="4"/><rect x="63" y="45" width="20" height="38" rx="4"/>
-              <rect x="25" y="64" width="19" height="19" rx="4"/>
+          <svg viewBox="0 0 100 80" aria-hidden="true">
+            <g stroke="#2d2a4a" stroke-width="3" stroke-linejoin="round">
+              <rect x="20" y="3" width="60" height="74" rx="8" fill="#a8693d"/>
+              <rect x="25" y="8" width="14" height="28" rx="4" fill="#ffc145"/>
+              <rect x="39" y="8" width="28" height="28" rx="5" fill="#fff"/>
+              <rect x="67" y="8" width="8" height="28" rx="3" fill="#ffc145"/>
+              <rect x="25" y="36" width="14" height="28" rx="4" fill="#ffc145"/>
+              <rect x="39" y="36" width="28" height="14" rx="4" fill="#5ad1ff"/>
+              <rect x="67" y="36" width="8" height="28" rx="3" fill="#ffc145"/>
+              <rect x="39" y="50" width="14" height="14" rx="4" fill="#fff3d6"/>
             </g>
+            <text x="53" y="29" font-family="ZCOOL KuaiLe, sans-serif" font-size="17" text-anchor="middle" fill="#f2483c">曹</text>
           </svg>
         </div>
         <div class="card-body"><span class="card-name">华容道</span><span class="card-stat"></span></div>
       </a>
 
-      <a class="card" href="games/gomoku/" data-slug="gomoku" style="--thumb:#e9e4dd">
+      <a class="card" href="games/gomoku/" data-game="gomoku">
         <div class="thumb">
-          <svg viewBox="0 0 90 90" aria-hidden="true">
-            <rect x="3" y="3" width="84" height="84" rx="6" fill="#e2b56e"/>
-            <path d="M15 3v84M30 3v84M45 3v84M60 3v84M75 3v84M3 15h84M3 30h84M3 45h84M3 60h84M3 75h84" stroke="#8c6a4f" stroke-width="1.5"/>
-            <circle cx="30" cy="30" r="6" fill="#222"/><circle cx="45" cy="45" r="6" fill="#222"/><circle cx="60" cy="60" r="6" fill="#222"/>
-            <circle cx="45" cy="30" r="6" fill="#fff"/><circle cx="60" cy="45" r="6" fill="#fff"/>
+          <svg viewBox="0 0 100 80" aria-hidden="true">
+            <g stroke="#2d2a4a" stroke-width="3" stroke-linejoin="round">
+              <rect x="14" y="4" width="72" height="72" rx="8" fill="#ffcf7a"/>
+              <path d="M26 4v72M38 4v72M50 4v72M62 4v72M74 4v72M14 16h72M14 28h72M14 40h72M14 52h72M14 64h72" stroke-width="1.6" opacity=".55"/>
+              <circle cx="38" cy="28" r="7" fill="#2d2a4a"/><circle cx="50" cy="40" r="7" fill="#2d2a4a"/><circle cx="62" cy="52" r="7" fill="#2d2a4a"/>
+              <circle cx="50" cy="28" r="7" fill="#fff"/><circle cx="62" cy="40" r="7" fill="#fff"/>
+            </g>
+            <circle cx="36" cy="26" r="2" fill="#fff" opacity=".7"/><circle cx="48" cy="38" r="2" fill="#fff" opacity=".7"/><circle cx="60" cy="50" r="2" fill="#fff" opacity=".7"/>
           </svg>
         </div>
         <div class="card-body"><span class="card-name">五子棋</span><span class="card-stat"></span></div>
       </a>
 
-      <a class="card" href="games/memory/" data-slug="memory" style="--thumb:#dcefee">
+      <a class="card" href="games/memory/" data-game="memory">
         <div class="thumb">
-          <svg viewBox="0 0 90 90" aria-hidden="true">
-            <rect x="6" y="14" width="24" height="30" rx="5" fill="#5b8def"/><rect x="33" y="14" width="24" height="30" rx="5" fill="#fff" stroke="#4fb39a" stroke-width="2"/><rect x="60" y="14" width="24" height="30" rx="5" fill="#5b8def"/>
-            <rect x="6" y="48" width="24" height="30" rx="5" fill="#fff" stroke="#4fb39a" stroke-width="2"/><rect x="33" y="48" width="24" height="30" rx="5" fill="#5b8def"/><rect x="60" y="48" width="24" height="30" rx="5" fill="#5b8def"/>
-            <circle cx="45" cy="29" r="6" fill="#f26b3a"/><circle cx="18" cy="63" r="6" fill="#f26b3a"/>
+          <svg viewBox="0 0 100 80" aria-hidden="true">
+            <g stroke="#2d2a4a" stroke-width="3" stroke-linejoin="round">
+              <rect x="14" y="12" width="34" height="50" rx="7" fill="#7cd3ff" transform="rotate(-10 31 37)"/>
+              <rect x="52" y="12" width="34" height="50" rx="7" fill="#fff" transform="rotate(8 69 37)"/>
+              <path d="M69 48c-9-6-12-10-12-14a5.5 5.5 0 0 1 12-2 5.5 5.5 0 0 1 12 2c0 4-3 8-12 14z" fill="#ff5fa2" transform="rotate(8 69 37)"/>
+            </g>
+            <g fill="#fff" transform="rotate(-10 31 37)"><circle cx="24" cy="24" r="2.5"/><circle cx="38" cy="24" r="2.5"/><circle cx="31" cy="37" r="2.5"/><circle cx="24" cy="50" r="2.5"/><circle cx="38" cy="50" r="2.5"/></g>
+            <path d="M88 8l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#ffd23f" stroke="#2d2a4a" stroke-width="2.5" stroke-linejoin="round"/>
           </svg>
         </div>
         <div class="card-body"><span class="card-name">记忆翻牌</span><span class="card-stat"></span></div>
       </a>
     </main>
 
-    <footer class="footer">格子乐园 · 进度和成绩只保存在你的浏览器里</footer>
+    <footer class="footer">游戏来了 · 进度和成绩只保存在你的浏览器里</footer>
   </div>
 
   <script>
@@ -288,14 +422,14 @@
 
       for (var i = 0; i < cards.length; i++) {
         var card = cards[i];
-        var slug = card.getAttribute('data-slug');
+        var slug = card.getAttribute('data-game');
         var stat = store.get('gzly.' + slug + '.homeStat', null);
         if (typeof stat === 'string' && stat) card.querySelector('.card-stat').textContent = stat;
 
         if (slug === last) {
           var resume = document.getElementById('resume');
           resume.href = card.getAttribute('href');
-          resume.style.setProperty('--thumb', card.style.getPropertyValue('--thumb'));
+          resume.setAttribute('data-game', slug);
           document.getElementById('resume-name').textContent = card.querySelector('.card-name').textContent;
           document.getElementById('resume-icon').appendChild(card.querySelector('.thumb svg').cloneNode(true));
           resume.hidden = false;

@@ -222,8 +222,25 @@
     if (soundOn) play('click');
   });
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncSoundButtons);
-  else syncSoundButtons();
+  // 结果层统一卡片化：.overlay 里没有 .overlay-card 时自动包一层
+  function wrapOverlays() {
+    var list = document.querySelectorAll('.overlay');
+    for (var i = 0; i < list.length; i++) {
+      var ov = list[i];
+      if (ov.querySelector(':scope > .overlay-card')) continue;
+      var card = document.createElement('div');
+      card.className = 'overlay-card';
+      while (ov.firstChild) card.appendChild(ov.firstChild);
+      ov.appendChild(card);
+    }
+  }
+
+  function onReady() {
+    syncSoundButtons();
+    wrapOverlays();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady);
+  else onReady();
 
   window.Site = {
     store: store,
