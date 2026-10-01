@@ -17,8 +17,56 @@
       --board: #ffb877;
       --cell: #ffe1c2;
       --slide: 110ms;
-      --stage-max: 500px;
+      /* 棋盘尽量大：宽度受屏宽限制，高度给顶栏 + 数据条留位置 */
+      --stage-max: min(540px, max(300px, calc(100vh - 190px)));
     }
+    @supports (height: 100dvh) {
+      :root { --stage-max: min(540px, max(300px, calc(100dvh - 190px))); }
+    }
+
+    /* 宽屏且足够高时整列垂直居中 */
+    @media (min-width: 600px) and (min-height: 560px) {
+      body.game-page { justify-content: center; }
+    }
+
+    /* 数据条：按钮与数据块等高 */
+    .stats { align-items: stretch; }
+    .stats .btns .btn { height: auto; min-height: 48px; }
+    /* 撤销：图标在上、小字在下，各种屏宽都一样，给分数留出宽度 */
+    #undo { flex-direction: column; gap: 1px; padding: 0 12px; }
+    #undo svg { display: block; flex: none; width: 20px; height: 20px; }
+    #undo .lbl { font-size: 12px; line-height: 1.2; letter-spacing: 0.06em; }
+    /* 位数多时在窄屏上缩小字号，避免省略号 */
+    .stat-value { line-height: 26px; }
+    @media (max-width: 380px) { .stat-value { line-height: 22px; } }
+    @media (max-width: 420px) { .stat-value.l6 { font-size: 16px; } }
+    @media (max-width: 340px) { .stat-value.l5 { font-size: 16px; } .stat-value.l6 { font-size: 13px; } }
+
+    /* 打破最高纪录：最高数据块弹一下 + 光圈 */
+    .stat.beat { animation: beat 520ms cubic-bezier(.2, 1.4, .4, 1); }
+    @keyframes beat {
+      0% { transform: scale(1); box-shadow: var(--pop-sm), 0 0 0 0 color-mix(in srgb, var(--theme-2) 80%, transparent); }
+      40% { transform: scale(1.1) rotate(-2deg); box-shadow: var(--pop-sm), 0 0 0 6px color-mix(in srgb, var(--theme-2) 70%, transparent); }
+      100% { transform: none; box-shadow: var(--pop-sm), 0 0 0 10px transparent; }
+    }
+
+    /* 结果卡里的小徽章 */
+    .rec {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 8px 2px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: var(--theme-2);
+      color: #2d2a4a;
+      font-size: 13px;
+      font-weight: 700;
+      vertical-align: 1px;
+    }
+    .overlay p { font-variant-numeric: tabular-nums; }
+    /* 确认层：即时出现，不需要结果层的延迟 */
+    #confirm, #confirm .overlay-card { animation-delay: 0ms; animation-duration: 220ms; }
+    #confirm h2 { font-size: clamp(26px, 7.5vw, 34px); }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) { --board: #5a3a2a; --cell: #6e4a37; }
     }
@@ -162,11 +210,11 @@
   <main class="gmain">
     <div class="stats">
       <div class="stat" id="score-box"><span class="stat-label">分数</span><span class="stat-value" id="score">0</span></div>
-      <div class="stat"><span class="stat-label">最高</span><span class="stat-value" id="best">0</span></div>
+      <div class="stat" id="best-box"><span class="stat-label">最高</span><span class="stat-value" id="best">0</span></div>
       <div class="btns">
-        <button class="btn" type="button" id="undo" title="撤销 (Ctrl+Z)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
-          撤销
+        <button class="btn" type="button" id="undo" title="撤销 (Ctrl+Z)" aria-label="撤销">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+          <span class="lbl">撤销</span>
         </button>
         <button class="btn primary" type="button" id="new-game">新游戏</button>
       </div>
@@ -184,19 +232,28 @@
 
         <div class="overlay" id="over" hidden>
           <h2>游戏结束</h2>
-          <p id="over-text">没有可以移动的格子了</p>
+          <p id="over-text">得分 0</p>
           <div class="row">
-            <button class="btn" type="button" data-action="undo">撤销一步</button>
+            <button class="btn" type="button" data-action="undo">撤销</button>
             <button class="btn primary" type="button" data-action="new">再来一局</button>
           </div>
         </div>
 
         <div class="overlay" id="win" hidden>
-          <h2>🎉 你赢了！</h2>
-          <p>成功拼出 2048</p>
+          <h2>你赢了！</h2>
+          <p id="win-text">得分 0</p>
           <div class="row">
+            <button class="btn" type="button" data-action="new">再来一局</button>
             <button class="btn primary" type="button" data-action="continue">继续挑战</button>
-            <button class="btn" type="button" data-action="new">新游戏</button>
+          </div>
+        </div>
+
+        <div class="overlay" id="confirm" hidden>
+          <h2>重新开始？</h2>
+          <p>当前进度会丢失</p>
+          <div class="row">
+            <button class="btn" type="button" data-action="cancel">取消</button>
+            <button class="btn primary" type="button" data-action="restart">重新开始</button>
           </div>
         </div>
       </div>
@@ -244,6 +301,8 @@
     var undoBtn = document.getElementById('undo');
     var overEl = document.getElementById('over');
     var winEl = document.getElementById('win');
+    var confirmEl = document.getElementById('confirm');
+    var bestBoxEl = document.getElementById('best-box');
 
     // 游戏状态
     var grid;           // grid[r][c] = tile | null
@@ -255,6 +314,8 @@
     var history = [];
     var nextId = 1;
     var pending = null;       // 滑动动画结束后要执行的收尾
+    var prevBest = best;      // 本局开始前的最高分
+    var celebrated = false;   // 本局是否已庆祝过破纪录
 
     window.Site.played('2048');
 
@@ -317,14 +378,27 @@
       createTile(pick[0], pick[1], Math.random() < 0.9 ? 2 : 4, true);
     }
 
+    function setNum(el, n) {
+      var len = String(n).length;
+      el.textContent = n;
+      el.classList.toggle('l5', len === 5);
+      el.classList.toggle('l6', len >= 6);
+    }
+
     function updateScore(gained) {
-      scoreEl.textContent = score;
+      setNum(scoreEl, score);
       if (score > best) {
         best = score;
         store.set(KEY_BEST, best);
       }
-      bestEl.textContent = best;
+      setNum(bestEl, best);
       if (best > 0) window.Site.setHomeStat('2048', '最高 ' + best);
+      if (!celebrated && prevBest > 0 && score > prevBest) {
+        celebrated = true;
+        bestBoxEl.classList.remove('beat');
+        void bestBoxEl.offsetWidth;
+        bestBoxEl.classList.add('beat');
+      }
       if (gained > 0 && SLIDE_MS > 0) {
         var add = document.createElement('span');
         add.className = 'score-add';
@@ -341,9 +415,28 @@
     function showOverlays() {
       winEl.hidden = !(won && !keepPlaying && !over);
       overEl.hidden = !over;
-      if (over) {
-        document.getElementById('over-text').textContent = '本局得分 ' + score + (score >= best && score > 0 ? '，刷新最高纪录！' : '');
+      if (over || won) {
+        var html = '得分 ' + score + (score > prevBest ? '<span class="rec">新纪录</span>' : '');
+        document.getElementById(over ? 'over-text' : 'win-text').innerHTML = html;
       }
+    }
+
+    // ---------- 重新开始确认 ----------
+    function inProgress() {
+      return score > 0 && !over && !(won && !keepPlaying);
+    }
+
+    function askNewGame() {
+      finishPending();
+      if (!inProgress()) { sound('start'); newGame(); return; }
+      confirmEl.hidden = false;
+      confirmEl.querySelector('[data-action="restart"]').focus({ preventScroll: true });
+    }
+
+    function closeConfirm() {
+      if (confirmEl.hidden) return;
+      confirmEl.hidden = true;
+      boardEl.focus({ preventScroll: true });
     }
 
     // ---------- 存档 ----------
@@ -410,7 +503,7 @@
 
     function move(dir) {
       finishPending();
-      if (over || (won && !keepPlaying)) return;
+      if (over || (won && !keepPlaying) || !confirmEl.hidden) return;
 
       var dr = VECTORS[dir][0];
       var dc = VECTORS[dir][1];
@@ -517,6 +610,10 @@
       keepPlaying = false;
       over = false;
       history = [];
+      prevBest = best;
+      celebrated = false;
+      bestBoxEl.classList.remove('beat');
+      confirmEl.hidden = true;
       addRandomTile();
       addRandomTile();
       updateScore(0);
@@ -526,6 +623,7 @@
     }
 
     function undo() {
+      if (!confirmEl.hidden) return;
       finishPending();
       var prev = history.pop();
       if (!prev) return;
@@ -553,6 +651,11 @@
 
     document.addEventListener('keydown', function (e) {
       if (document.querySelector('dialog[open]')) return;
+      if (!confirmEl.hidden) {
+        if (e.key === 'Escape') { e.preventDefault(); closeConfirm(); }
+        else if (KEYMAP[e.key]) e.preventDefault();
+        return;
+      }
       if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
         e.preventDefault();
         undo();
@@ -570,7 +673,7 @@
     // 触摸 / 鼠标滑动
     var start = null;
     boardEl.addEventListener('pointerdown', function (e) {
-      if (e.target.closest('button')) return;
+      if (e.target.closest('button, .overlay')) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       start = { x: e.clientX, y: e.clientY, id: e.pointerId };
       try { boardEl.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
@@ -593,13 +696,15 @@
     // iOS 旧版本兜底：阻止棋盘上的页面滚动
     boardEl.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
 
-    document.getElementById('new-game').addEventListener('click', function () { sound('start'); newGame(); });
+    document.getElementById('new-game').addEventListener('click', askNewGame);
     undoBtn.addEventListener('click', undo);
     boardEl.addEventListener('click', function (e) {
+      if (e.target === confirmEl) { closeConfirm(); return; }
       var btn = e.target.closest('[data-action]');
       if (!btn) return;
       var action = btn.getAttribute('data-action');
-      if (action === 'new') { sound('start'); newGame(); }
+      if (action === 'new' || action === 'restart') { sound('start'); newGame(); boardEl.focus({ preventScroll: true }); }
+      else if (action === 'cancel') closeConfirm();
       else if (action === 'undo') undo();
       else if (action === 'continue') continuePlaying();
     });
@@ -609,6 +714,7 @@
     if (isValidState(saved) && saved.cells.some(Boolean)) {
       history = Array.isArray(saved.history) ? saved.history.filter(isValidState).slice(-MAX_HISTORY) : [];
       load(saved);
+      if (score > 0 && score >= best) { prevBest = 0; celebrated = true; }
       updateScore(0);
       updateButtons();
       showOverlays();
