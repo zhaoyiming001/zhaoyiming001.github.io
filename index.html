@@ -2,9 +2,9 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>格子乐园 · 经典益智小游戏合集</title>
-  <meta name="description" content="格子乐园：免费在线玩经典益智休闲小游戏，2048、数独、扫雷、俄罗斯方块等，无需下载，手机电脑都能玩。">
+  <meta name="description" content="格子乐园：免费在线玩经典益智休闲小游戏，2048、数独、扫雷、俄罗斯方块、贪吃蛇、华容道、五子棋、记忆翻牌，无需下载，手机电脑都能玩。">
   <meta name="theme-color" content="#f7f2ea">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='13' height='13' rx='3' fill='%23f26b3a'/%3E%3Crect x='17' y='2' width='13' height='13' rx='3' fill='%23f5b43c'/%3E%3Crect x='2' y='17' width='13' height='13' rx='3' fill='%234fb39a'/%3E%3Crect x='17' y='17' width='13' height='13' rx='3' fill='%235b8def'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,157 +13,136 @@
   <link rel="stylesheet" href="assets/site.css">
   <script src="assets/site.js"></script>
   <style>
-    .hero {
-      padding: 36px 0 28px;
-      display: grid;
-      gap: 14px;
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0 6px;
     }
+
+    .hero { padding: 18px 0 18px; }
     .hero h1 {
       margin: 0;
-      font-size: clamp(30px, 6vw, 48px);
-      line-height: 1.15;
+      font-size: clamp(26px, 6.4vw, 44px);
+      line-height: 1.2;
       font-weight: 900;
-      letter-spacing: 0.01em;
     }
-    .hero h1 em {
-      font-style: normal;
-      color: var(--accent);
-    }
-    .hero p {
-      margin: 0;
-      max-width: 560px;
-      color: var(--text-dim);
-      font-size: 16px;
-    }
+    .hero h1 em { font-style: normal; color: var(--accent); }
+    .hero p { margin: 6px 0 0; color: var(--text-dim); font-size: 15px; }
 
-    .section-head {
+    .resume {
       display: flex;
-      align-items: baseline;
-      justify-content: space-between;
+      align-items: center;
       gap: 12px;
-      margin: 18px 0 14px;
-    }
-    .section-head h2 { margin: 0; font-size: 18px; font-weight: 800; }
-    .section-head span { color: var(--text-dim); font-size: 13px; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-      gap: 16px;
-    }
-
-    .card {
-      position: relative;
-      display: flex;
-      flex-direction: column;
+      margin: 0 0 18px;
+      padding: 10px 12px 10px 10px;
+      border-radius: var(--radius);
       background: var(--surface);
       border: 1px solid var(--line);
-      border-radius: var(--radius);
       box-shadow: var(--shadow);
-      overflow: hidden;
       text-decoration: none;
-      color: inherit;
-      transition: transform .2s ease, box-shadow .2s ease;
+      transition: transform .15s ease;
     }
-    a.card:hover { transform: translateY(-4px); }
-    a.card:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-    .card.soon { cursor: default; }
-    .card.soon .thumb > * { opacity: .55; filter: saturate(.6); }
-
-    .thumb {
-      aspect-ratio: 16 / 10;
+    .resume:active { transform: scale(0.98); }
+    .resume-icon {
+      flex: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      overflow: hidden;
       display: grid;
       place-items: center;
       background: var(--thumb, var(--surface-2));
     }
-    .thumb svg { width: 46%; height: auto; max-height: 78%; }
-
-    .card-body { padding: 14px 16px 16px; display: grid; gap: 6px; }
-    .card-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      font-weight: 800;
-      font-size: 17px;
-    }
-    .card-desc { margin: 0; color: var(--text-dim); font-size: 14px; }
-    @media (max-width: 560px) {
-      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-      .card-body { padding: 10px 12px 12px; gap: 4px; }
-      .card-title { flex-wrap: wrap; font-size: 16px; gap: 4px 8px; }
-      .card-desc { font-size: 13px; }
-      .card-meta .tag { display: none; }
-      .best { margin-left: 0; }
-      .hero { padding: 20px 0 16px; }
-    }
-    @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) .thumb { filter: brightness(0.82); }
-    }
-    :root[data-theme="dark"] .thumb { filter: brightness(0.82); }
-
-    .card-meta {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
-      margin-top: 4px;
-      font-size: 12px;
-    }
-
-    .tag {
+    .resume-icon svg { width: 70%; height: 70%; }
+    .resume-text { flex: 1; min-width: 0; line-height: 1.3; }
+    .resume-text small { display: block; color: var(--text-dim); font-size: 12px; font-weight: 700; }
+    .resume-text b { font-size: 16px; font-weight: 900; }
+    .resume-go {
+      flex: none;
       display: inline-flex;
       align-items: center;
-      height: 22px;
-      padding: 0 8px;
+      height: 34px;
+      padding: 0 14px;
       border-radius: 999px;
-      background: var(--surface-2);
-      color: var(--text-dim);
-      font-weight: 700;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 900;
+      font-size: 14px;
     }
-    .badge {
-      flex: none;
-      font-size: 12px;
-      font-weight: 800;
-      padding: 2px 8px;
-      border-radius: 999px;
-    }
-    .badge.live { background: var(--accent); color: var(--accent-ink); }
-    .badge.later { background: var(--surface-2); color: var(--text-dim); }
-    .best { margin-left: auto; color: var(--text-dim); font-weight: 700; }
-    .best b { color: var(--text); }
 
-    /* 2048 封面：迷你棋盘 */
-    .mini-2048 {
+    .grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-      gap: 6%;
-      padding: 6%;
-      height: 82%;
-      aspect-ratio: 1;
-      background: #bbada0;
-      border-radius: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
     }
-    .mini-2048 i {
-      min-width: 0;
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: transform .2s ease;
+    }
+    .card:hover { transform: translateY(-4px); }
+    .card:active { transform: scale(0.97); }
+    .card:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+    .thumb {
+      aspect-ratio: 5 / 4;
       display: grid;
       place-items: center;
-      border-radius: 6px;
-      background: rgba(238, 228, 218, 0.35);
-      font-style: normal;
-      font-weight: 900;
-      font-size: clamp(12px, 2.4vw, 18px);
-      color: #776e65;
+      background: var(--thumb, var(--surface-2));
     }
-    .mini-2048 .t2 { background: #eee4da; }
-    .mini-2048 .t4 { background: #ede0c8; }
-    .mini-2048 .t8 { background: #f2b179; color: #fff; }
-    .mini-2048 .t16 { background: #f59563; color: #fff; }
-    .mini-2048 .t64 { background: #f65e3b; color: #fff; }
-    .mini-2048 .t2048 { background: #edc22e; color: #fff; font-size: clamp(9px, 1.6vw, 12px); }
+    .thumb svg { width: 56%; height: 72%; }
 
-    .footer a { color: var(--text-dim); }
+    .card-body {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 10px 14px 12px;
+    }
+    .card-name { font-weight: 900; font-size: 17px; white-space: nowrap; }
+    .card-stat {
+      min-width: 0;
+      color: var(--text-dim);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .thumb,
+      :root:not([data-theme="light"]) .resume-icon { filter: brightness(0.85); }
+    }
+    :root[data-theme="dark"] .thumb,
+    :root[data-theme="dark"] .resume-icon { filter: brightness(0.85); }
+
+    .footer {
+      padding: 32px 0 calc(24px + env(safe-area-inset-bottom));
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .hero { padding: 10px 0 14px; }
+      .hero p { font-size: 14px; }
+      .card { border-radius: 18px; }
+      .thumb { aspect-ratio: 3 / 2; }
+      .card-body { padding: 9px 12px 11px; flex-direction: column; gap: 0; }
+      .card-name { font-size: 16px; }
+      .card-stat:empty::before { content: "\00a0"; }
+    }
   </style>
 </head>
 <body>
@@ -173,61 +152,59 @@
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
         格子乐园
       </a>
-      <div class="nav-actions">
-        <button class="icon-btn theme-toggle" type="button" aria-label="切换深色/浅色模式" title="切换深色/浅色模式">
-          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-        </button>
-      </div>
+      <button class="icon-btn theme-toggle" type="button" aria-label="切换深色/浅色模式" title="切换深色/浅色模式">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
     </header>
 
     <section class="hero">
       <h1>经典益智，<em>随手一局</em></h1>
-      <p>收录那些玩不腻的经典休闲小游戏。打开就玩，无需下载，手机和电脑都能玩，进度自动保存在本机。</p>
+      <p>8 款经典小游戏，打开就玩</p>
     </section>
 
-    <div class="section-head">
-      <h2>全部游戏</h2>
-      <span>持续更新中</span>
-    </div>
+    <a class="resume" id="resume" href="#" hidden>
+      <span class="resume-icon" id="resume-icon"></span>
+      <span class="resume-text"><small>继续上次</small><b id="resume-name"></b></span>
+      <span class="resume-go">继续 ›</span>
+    </a>
 
-    <main class="grid">
-      <a class="card" href="games/2048/" style="--thumb:#f3e6d3">
+    <main class="grid" id="games">
+      <a class="card" href="games/2048/" data-slug="2048" style="--thumb:#f3e6d3">
         <div class="thumb">
-          <div class="mini-2048" aria-hidden="true">
-            <i class="t2">2</i><i></i><i class="t4">4</i>
-            <i class="t8">8</i><i class="t16">16</i><i></i>
-            <i class="t64">64</i><i></i><i class="t2048">2048</i>
-          </div>
+          <svg viewBox="0 0 90 90" aria-hidden="true">
+            <rect x="2" y="2" width="86" height="86" rx="10" fill="#bbada0"/>
+            <g font-family="Nunito, Arial, sans-serif" font-weight="900" text-anchor="middle">
+              <rect x="8" y="8" width="22" height="22" rx="4" fill="#eee4da"/><text x="19" y="25" font-size="14" fill="#776e65">2</text>
+              <rect x="34" y="8" width="22" height="22" rx="4" fill="#d6cdc4"/>
+              <rect x="60" y="8" width="22" height="22" rx="4" fill="#ede0c8"/><text x="71" y="25" font-size="14" fill="#776e65">4</text>
+              <rect x="8" y="34" width="22" height="22" rx="4" fill="#f2b179"/><text x="19" y="51" font-size="14" fill="#fff">8</text>
+              <rect x="34" y="34" width="22" height="22" rx="4" fill="#f59563"/><text x="45" y="50" font-size="12" fill="#fff">16</text>
+              <rect x="60" y="34" width="22" height="22" rx="4" fill="#d6cdc4"/>
+              <rect x="8" y="60" width="22" height="22" rx="4" fill="#f65e3b"/><text x="19" y="76" font-size="12" fill="#fff">64</text>
+              <rect x="34" y="60" width="22" height="22" rx="4" fill="#d6cdc4"/>
+              <rect x="60" y="60" width="22" height="22" rx="4" fill="#edc22e"/><text x="71" y="75" font-size="8" fill="#fff">2048</text>
+            </g>
+          </svg>
         </div>
-        <div class="card-body">
-          <div class="card-title">2048 <span class="badge live">可以玩</span></div>
-          <p class="card-desc">滑动合并相同数字，凑出 2048 方块。</p>
-          <div class="card-meta">
-            <span class="tag">数字</span><span class="tag">策略</span>
-            <span class="best" id="best-2048" hidden>最高 <b>0</b></span>
-          </div>
-        </div>
+        <div class="card-body"><span class="card-name">2048</span><span class="card-stat"></span></div>
       </a>
 
-      <div class="card soon" style="--thumb:#dfeaf6" aria-disabled="true">
+      <a class="card" href="games/sudoku/" data-slug="sudoku" style="--thumb:#dfeaf6">
         <div class="thumb">
           <svg viewBox="0 0 90 90" aria-hidden="true">
             <rect x="3" y="3" width="84" height="84" rx="8" fill="#fff" stroke="#5b8def" stroke-width="3"/>
             <path d="M31 3v84M59 3v84M3 31h84M3 59h84" stroke="#5b8def" stroke-width="2.5"/>
-            <g font-family="Nunito, sans-serif" font-weight="900" font-size="18" fill="#2f5fc4" text-anchor="middle">
+            <rect x="32" y="32" width="26" height="26" fill="#cfe0fb"/>
+            <g font-family="Nunito, Arial, sans-serif" font-weight="900" font-size="18" fill="#2f5fc4" text-anchor="middle">
               <text x="17" y="24">5</text><text x="73" y="24">3</text><text x="45" y="52">9</text><text x="17" y="80">1</text><text x="73" y="80">7</text>
             </g>
           </svg>
         </div>
-        <div class="card-body">
-          <div class="card-title">数独 <span class="badge later">即将上线</span></div>
-          <p class="card-desc">每行、每列、每宫填满 1–9 不重复。</p>
-          <div class="card-meta"><span class="tag">逻辑</span><span class="tag">数字</span></div>
-        </div>
-      </div>
+        <div class="card-body"><span class="card-name">数独</span><span class="card-stat"></span></div>
+      </a>
 
-      <div class="card soon" style="--thumb:#e3eee2" aria-disabled="true">
+      <a class="card" href="games/minesweeper/" data-slug="minesweeper" style="--thumb:#e3eee2">
         <div class="thumb">
           <svg viewBox="0 0 90 90" aria-hidden="true">
             <circle cx="45" cy="47" r="22" fill="#3a3029"/>
@@ -235,46 +212,34 @@
             <circle cx="38" cy="40" r="6" fill="#fff"/>
           </svg>
         </div>
-        <div class="card-body">
-          <div class="card-title">扫雷 <span class="badge later">即将上线</span></div>
-          <p class="card-desc">根据数字线索，找出所有地雷。</p>
-          <div class="card-meta"><span class="tag">逻辑</span><span class="tag">推理</span></div>
-        </div>
-      </div>
+        <div class="card-body"><span class="card-name">扫雷</span><span class="card-stat"></span></div>
+      </a>
 
-      <div class="card soon" style="--thumb:#ece3f4" aria-disabled="true">
+      <a class="card" href="games/tetris/" data-slug="tetris" style="--thumb:#ece3f4">
         <div class="thumb">
           <svg viewBox="0 0 90 90" aria-hidden="true">
             <g stroke="#fff" stroke-width="2">
-              <rect x="25" y="5" width="20" height="20" fill="#9a6bd6"/><rect x="45" y="5" width="20" height="20" fill="#9a6bd6"/><rect x="45" y="25" width="20" height="20" fill="#9a6bd6"/>
-              <rect x="5" y="65" width="20" height="20" fill="#f5b43c"/><rect x="25" y="65" width="20" height="20" fill="#f5b43c"/><rect x="25" y="45" width="20" height="20" fill="#f5b43c"/>
-              <rect x="45" y="65" width="20" height="20" fill="#4fb39a"/><rect x="65" y="65" width="20" height="20" fill="#4fb39a"/><rect x="65" y="45" width="20" height="20" fill="#4fb39a"/>
+              <rect x="25" y="5" width="20" height="20" rx="3" fill="#9a6bd6"/><rect x="45" y="5" width="20" height="20" rx="3" fill="#9a6bd6"/><rect x="45" y="25" width="20" height="20" rx="3" fill="#9a6bd6"/>
+              <rect x="5" y="65" width="20" height="20" rx="3" fill="#f5b43c"/><rect x="25" y="65" width="20" height="20" rx="3" fill="#f5b43c"/><rect x="25" y="45" width="20" height="20" rx="3" fill="#f5b43c"/>
+              <rect x="45" y="65" width="20" height="20" rx="3" fill="#4fb39a"/><rect x="65" y="65" width="20" height="20" rx="3" fill="#4fb39a"/><rect x="65" y="45" width="20" height="20" rx="3" fill="#4fb39a"/>
             </g>
           </svg>
         </div>
-        <div class="card-body">
-          <div class="card-title">俄罗斯方块 <span class="badge later">即将上线</span></div>
-          <p class="card-desc">旋转下落的方块，消除整行。</p>
-          <div class="card-meta"><span class="tag">反应</span><span class="tag">空间</span></div>
-        </div>
-      </div>
+        <div class="card-body"><span class="card-name">俄罗斯方块</span><span class="card-stat"></span></div>
+      </a>
 
-      <div class="card soon" style="--thumb:#f6e3dc" aria-disabled="true">
+      <a class="card" href="games/snake/" data-slug="snake" style="--thumb:#f6e3dc">
         <div class="thumb">
           <svg viewBox="0 0 90 90" aria-hidden="true">
             <path d="M12 70h40V40h26" fill="none" stroke="#4fb39a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
             <circle cx="78" cy="40" r="3" fill="#fff"/>
-            <rect x="60" y="12" width="12" height="12" rx="3" fill="#f26b3a"/>
+            <circle cx="66" cy="16" r="7" fill="#f26b3a"/>
           </svg>
         </div>
-        <div class="card-body">
-          <div class="card-title">贪吃蛇 <span class="badge later">即将上线</span></div>
-          <p class="card-desc">吃到食物就变长，别撞到自己。</p>
-          <div class="card-meta"><span class="tag">反应</span><span class="tag">经典</span></div>
-        </div>
-      </div>
+        <div class="card-body"><span class="card-name">贪吃蛇</span><span class="card-stat"></span></div>
+      </a>
 
-      <div class="card soon" style="--thumb:#f6eedb" aria-disabled="true">
+      <a class="card" href="games/klotski/" data-slug="klotski" style="--thumb:#f6eedb">
         <div class="thumb">
           <svg viewBox="0 0 90 90" aria-hidden="true">
             <rect x="3" y="3" width="84" height="84" rx="8" fill="#8c6a4f"/>
@@ -285,14 +250,10 @@
             </g>
           </svg>
         </div>
-        <div class="card-body">
-          <div class="card-title">华容道 <span class="badge later">即将上线</span></div>
-          <p class="card-desc">移动木块，帮曹操逃出重围。</p>
-          <div class="card-meta"><span class="tag">滑块</span><span class="tag">策略</span></div>
-        </div>
-      </div>
+        <div class="card-body"><span class="card-name">华容道</span><span class="card-stat"></span></div>
+      </a>
 
-      <div class="card soon" style="--thumb:#e9e4dd" aria-disabled="true">
+      <a class="card" href="games/gomoku/" data-slug="gomoku" style="--thumb:#e9e4dd">
         <div class="thumb">
           <svg viewBox="0 0 90 90" aria-hidden="true">
             <rect x="3" y="3" width="84" height="84" rx="6" fill="#e2b56e"/>
@@ -301,14 +262,10 @@
             <circle cx="45" cy="30" r="6" fill="#fff"/><circle cx="60" cy="45" r="6" fill="#fff"/>
           </svg>
         </div>
-        <div class="card-body">
-          <div class="card-title">五子棋 <span class="badge later">即将上线</span></div>
-          <p class="card-desc">率先连成五子即获胜。</p>
-          <div class="card-meta"><span class="tag">对战</span><span class="tag">棋类</span></div>
-        </div>
-      </div>
+        <div class="card-body"><span class="card-name">五子棋</span><span class="card-stat"></span></div>
+      </a>
 
-      <div class="card soon" style="--thumb:#dcefee" aria-disabled="true">
+      <a class="card" href="games/memory/" data-slug="memory" style="--thumb:#dcefee">
         <div class="thumb">
           <svg viewBox="0 0 90 90" aria-hidden="true">
             <rect x="6" y="14" width="24" height="30" rx="5" fill="#5b8def"/><rect x="33" y="14" width="24" height="30" rx="5" fill="#fff" stroke="#4fb39a" stroke-width="2"/><rect x="60" y="14" width="24" height="30" rx="5" fill="#5b8def"/>
@@ -316,26 +273,33 @@
             <circle cx="45" cy="29" r="6" fill="#f26b3a"/><circle cx="18" cy="63" r="6" fill="#f26b3a"/>
           </svg>
         </div>
-        <div class="card-body">
-          <div class="card-title">记忆翻牌 <span class="badge later">即将上线</span></div>
-          <p class="card-desc">翻开卡片，找出所有成对的图案。</p>
-          <div class="card-meta"><span class="tag">记忆</span><span class="tag">休闲</span></div>
-        </div>
-      </div>
+        <div class="card-body"><span class="card-name">记忆翻牌</span><span class="card-stat"></span></div>
+      </a>
     </main>
 
-    <footer class="footer">
-      格子乐园 · 经典益智小游戏合集 · 游戏进度仅保存在你的浏览器中
-    </footer>
+    <footer class="footer">格子乐园 · 进度和成绩只保存在你的浏览器里</footer>
   </div>
 
   <script>
     (function () {
-      var best = window.Site.store.get('gzly.2048.best', 0);
-      if (best > 0) {
-        var el = document.getElementById('best-2048');
-        el.querySelector('b').textContent = best;
-        el.hidden = false;
+      var store = window.Site.store;
+      var cards = document.querySelectorAll('#games .card');
+      var last = store.get('gzly.last', null);
+
+      for (var i = 0; i < cards.length; i++) {
+        var card = cards[i];
+        var slug = card.getAttribute('data-slug');
+        var stat = store.get('gzly.' + slug + '.homeStat', null);
+        if (typeof stat === 'string' && stat) card.querySelector('.card-stat').textContent = stat;
+
+        if (slug === last) {
+          var resume = document.getElementById('resume');
+          resume.href = card.getAttribute('href');
+          resume.style.setProperty('--thumb', card.style.getPropertyValue('--thumb'));
+          document.getElementById('resume-name').textContent = card.querySelector('.card-name').textContent;
+          document.getElementById('resume-icon').appendChild(card.querySelector('.thumb svg').cloneNode(true));
+          resume.hidden = false;
+        }
       }
     })();
   </script>
