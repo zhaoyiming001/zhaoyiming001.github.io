@@ -369,6 +369,12 @@ kbd {
   text-align: center;
 }
 
+@media (max-width: 360px) {
+  .gbar-title { font-size: 19px; }
+  .stats { gap: 6px; }
+  .stat { padding: 5px 6px 6px; }
+  .stat-label { letter-spacing: 0; }
+}
 @media (max-width: 400px) {
   .stats .btns .btn { padding: 0 10px; }
   .stats .btns .btn svg { display: none; }
