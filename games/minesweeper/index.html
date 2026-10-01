@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>扫雷 · 格子乐园</title>
+  <meta name="description" content="在线玩扫雷：初级、中级、高级三种难度，第一下必定安全。支持右键插旗、手机长按插旗和双击开雷，自动保存进度。">
+  <meta name="theme-color" content="#f7f2ea">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1' y='1' width='30' height='30' rx='6' fill='%23e6dccd'/%3E%3Cg stroke='%233a3029' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M16 6v20M6 16h20M10 10l12 12M22 10L10 22'/%3E%3C/g%3E%3Ccircle cx='16' cy='16' r='7' fill='%233a3029'/%3E%3Ccircle cx='13.5' cy='13.5' r='2' fill='white'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/site.css">
+  <script src="../../assets/site.js"></script>
+  <style>
+    :root {
+      --stage-max: 560px;
+      --ms-board: #c6b49b;
+      --ms-up-hi: #ecdec9;
+      --ms-up: #dac8ac;
+      --ms-open: #fcf9f4;
+      --n1: #2f6fdb;
+      --n2: #2e8b3e;
+      --n3: #d8342b;
+      --n4: #2a3a9e;
+      --n5: #8e2a1c;
+      --n6: #0f8589;
+      --n7: var(--text);
+      --n8: #8a8580;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --ms-board: #15110e;
+        --ms-up-hi: #5e5044;
+        --ms-up: #4b3f35;
+        --ms-open: #2a231e;
+        --n1: #74abff; --n2: #74d083; --n3: #ff7d6e; --n4: #a9adff;
+        --n5: #e8977a; --n6: #50d2ca; --n8: #b5aca2;
+      }
+    }
+    :root[data-theme="dark"] {
+      --ms-board: #15110e;
+      --ms-up-hi: #5e5044;
+      --ms-up: #4b3f35;
+      --ms-open: #2a231e;
+      --n1: #74abff; --n2: #74d083; --n3: #ff7d6e; --n4: #a9adff;
+      --n5: #e8977a; --n6: #50d2ca; --n8: #b5aca2;
+    }
+
+    .stats .btns .face { width: 52px; padding: 0; font-size: 26px; line-height: 1; }
+
+    .ctrl { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .mode { min-width: 100px; touch-action: manipulation; }
+    .mode.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+    .stage { display: flex; justify-content: center; }
+    .board-wrap { position: relative; }
+
+    /* 棋盘：格子尺寸由脚本按屏幕计算 */
+    .board {
+      --cell: 30px;
+      --gap: 2px;
+      --pad: 5px;
+      display: grid;
+      grid-auto-rows: var(--cell);
+      gap: var(--gap);
+      padding: var(--pad);
+      border-radius: 12px;
+      background: var(--ms-board);
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      outline: none;
+    }
+    .c {
+      display: grid;
+      place-items: center;
+      position: relative;
+      border-radius: calc(var(--cell) * 0.16);
+      background: linear-gradient(var(--ms-up-hi), var(--ms-up));
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      font-size: calc(var(--cell) * 0.62);
+      font-weight: 900;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    @media (hover: hover) {
+      .c:not(.o):hover { filter: brightness(1.06); }
+    }
+    .c.press, .c.peek { background: var(--ms-open); box-shadow: none; }
+    .c.o { background: var(--ms-open); box-shadow: none; cursor: default; border-radius: calc(var(--cell) * 0.08); }
+    .c.f, .c.m { font-size: calc(var(--cell) * 0.56); }
+    .c.n1 { color: var(--n1); }
+    .c.n2 { color: var(--n2); }
+    .c.n3 { color: var(--n3); }
+    .c.n4 { color: var(--n4); }
+    .c.n5 { color: var(--n5); }
+    .c.n6 { color: var(--n6); }
+    .c.n7 { color: var(--n7); }
+    .c.n8 { color: var(--n8); }
+    .c.boom { background: var(--bad); }
+    .c.wrong::after {
+      content: "✕";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: var(--bad);
+      font-size: calc(var(--cell) * 0.8);
+      text-shadow: 0 0 2px var(--ms-open);
+    }
+    .c.o.pop { animation: pop 180ms ease; }
+    @keyframes pop { from { transform: scale(0.7); } to { transform: none; } }
+
+    .overlay { border-radius: 12px; }
+    .overlay.lose { background: color-mix(in srgb, var(--bg) 66%, transparent); -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .ov-card { display: grid; gap: 14px; }
+    /* 高级棋盘很高时，让结果卡片停在屏幕中间 */
+    .board-wrap.tall .overlay { place-content: start center; }
+    .board-wrap.tall .ov-card {
+      position: sticky;
+      top: calc(50vh - 90px);
+      margin: 20vh 0;
+      padding: 18px 22px;
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-lg);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .c.o.pop { animation: none; }
+    }
+  </style>
+</head>
+<body class="game-page">
+  <header class="gbar">
+    <a class="icon-btn" href="../../" aria-label="返回游戏大厅" title="返回游戏大厅">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <h1 class="gbar-title">扫雷</h1>
+    <div class="gbar-actions">
+      <button class="icon-btn sound-toggle" type="button" aria-label="关闭声音">
+        <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+        <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>
+      </button>
+      <button class="icon-btn" type="button" data-open="help" aria-label="玩法说明" title="玩法说明">?</button>
+    </div>
+  </header>
+
+  <main class="gmain">
+    <div class="stats">
+      <div class="stat"><span class="stat-label">剩余雷数</span><span class="stat-value" id="left">10</span></div>
+      <div class="stat"><span class="stat-label">时间</span><span class="stat-value" id="time">00:00</span></div>
+      <div class="btns">
+        <button class="btn face" type="button" id="face" title="新游戏 (N)" aria-label="新游戏">😊</button>
+      </div>
+    </div>
+
+    <div class="ctrl">
+      <div class="seg" id="diff" role="group" aria-label="难度">
+        <button type="button" data-diff="easy" aria-pressed="true">初级</button>
+        <button type="button" data-diff="medium" aria-pressed="false">中级</button>
+        <button type="button" data-diff="hard" aria-pressed="false">高级</button>
+      </div>
+      <button class="btn mode" type="button" id="mode" aria-pressed="false" title="切换挖开 / 插旗 (F)">⛏️ 挖开</button>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap" id="wrap">
+        <div class="board" id="board" aria-label="扫雷棋盘"></div>
+
+        <div class="overlay" id="over" hidden>
+          <div class="ov-card">
+            <h2 id="ov-title">踩雷了</h2>
+            <p id="ov-text"></p>
+            <div class="row">
+              <button class="btn" type="button" data-action="peek">看看棋盘</button>
+              <button class="btn primary" type="button" data-action="new">再来一局</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <dialog class="sheet" id="help">
+    <div class="sheet-head">
+      <h2>怎么玩</h2>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+    <div class="sheet-body">
+      <ul class="tips">
+        <li><b>👆</b><span>点格子挖开，数字 = 周围 8 格里的雷数。</span></li>
+        <li><b>🚩</b><span><strong>右键</strong>或<strong>长按</strong>插旗，也可切到插旗模式点按。</span></li>
+        <li><b>⚡</b><span>点旗数已够的数字，自动挖开周围。</span></li>
+        <li><b>🍀</b><span>第一下必定安全，挖开所有非雷格即胜。</span></li>
+      </ul>
+      <p style="margin:18px 0 0"><button class="btn block theme-toggle" type="button">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        切换深色 / 浅色
+      </button></p>
+    </div>
+  </dialog>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // 高级为竖版 30 行 × 16 列，宽屏时转置显示
+    var DIFFS = {
+      easy:   { name: '初级', rows: 9,  cols: 9,  mines: 10 },
+      medium: { name: '中级', rows: 16, cols: 16, mines: 40 },
+      hard:   { name: '高级', rows: 30, cols: 16, mines: 99 }
+    };
+    var P = 'gzly.minesweeper.';
+    var LONG_MS = 350;
+    var MOVE_TOL = 10;
+    var store = window.Site.store;
+    var sound = window.Site.sound;
+    var fmt = window.Site.formatTime;
+
+    var boardEl = document.getElementById('board');
+    var wrapEl = document.getElementById('wrap');
+    var stageEl = document.getElementById('stage');
+    var leftEl = document.getElementById('left');
+    var timeEl = document.getElementById('time');
+    var faceEl = document.getElementById('face');
+    var modeEl = document.getElementById('mode');
+    var diffEl = document.getElementById('diff');
+    var overEl = document.getElementById('over');
+
+    // 游戏状态
+    var diff = 'easy';
+    var R, C, N, M;
+    var mines = null;   // Uint8Array，首次挖开前为 null
+    var adj;            // 周围雷数
+    var st;             // 0 未开 1 已开 2 插旗
+    var status;         // ready / playing / won / lost
+    var exploded = -1;
+    var flags = 0;
+    var opened = 0;
+    var elapsed = 0;
+    var clockStart = 0;
+    var clockTimer = null;
+    var resumeOnShow = false;
+    var overTimer = null;
+    var mode = store.get(P + 'mode', 'dig') === 'flag' ? 'flag' : 'dig';
+    var best = store.get(P + 'best', {}) || {};
+
+    var els = [];       // els[逻辑下标] = 格子元素
+    var painted = [];
+    var rotated = false;
+    var builtKey = '';
+
+    window.Site.played('minesweeper');
+
+    function around(i, fn) {
+      var r = (i / C) | 0;
+      var c = i % C;
+      for (var dr = -1; dr <= 1; dr++) {
+        for (var dc = -1; dc <= 1; dc++) {
+          if (!dr && !dc) continue;
+          var rr = r + dr;
+          var cc = c + dc;
+          if (rr >= 0 && rr < R && cc >= 0 && cc < C) fn(rr * C + cc);
+        }
+      }
+    }
+
+    function isOver() { return status === 'won' || status === 'lost'; }
+
+    function setDiff(d) {
+      diff = d;
+      R = DIFFS[d].rows;
+      C = DIFFS[d].cols;
+      N = R * C;
+      M = DIFFS[d].mines;
+    }
+
+    function computeAdj() {
+      adj = new Uint8Array(N);
+      if (!mines) return;
+      for (var i = 0; i < N; i++) {
+        if (!mines[i]) continue;
+        around(i, function (j) { adj[j]++; });
+      }
+    }
+
+    // 首次挖开：点击格及其周围 8 格都不放雷
+    function placeMines(safe) {
+      var banned = {};
+      banned[safe] = 1;
+      around(safe, function (j) { banned[j] = 1; });
+      var pool = [];
+      for (var i = 0; i < N; i++) if (!banned[i]) pool.push(i);
+      mines = new Uint8Array(N);
+      for (var k = 0; k < M; k++) {
+        var p = k + Math.floor(Math.random() * (pool.length - k));
+        var t = pool[k]; pool[k] = pool[p]; pool[p] = t;
+        mines[pool[k]] = 1;
+      }
+      computeAdj();
+    }
+
+    // ---------- 计时 ----------
+    function curElapsed() {
+      return elapsed + (clockTimer ? (performance.now() - clockStart) / 1000 : 0);
+    }
+    function startClock() {
+      if (clockTimer || status !== 'playing' || document.hidden) return;
+      clockStart = performance.now();
+      clockTimer = setInterval(showTime, 250);
+    }
+    function stopClock() {
+      if (!clockTimer) return;
+      elapsed = curElapsed();
+      clearInterval(clockTimer);
+      clockTimer = null;
+    }
+    function showTime() { timeEl.textContent = fmt(curElapsed()); }
+
+    // ---------- 存档 ----------
+    function save() {
+      store.set(P + 'diff', diff);
+      store.set(P + 'game.' + diff, {
+        mines: mines ? Array.prototype.join.call(mines, '') : '',
+        st: Array.prototype.join.call(st, ''),
+        status: status,
+        exploded: exploded,
+        elapsed: curElapsed()
+      });
+    }
+
+    function restore(d) {
+      var s = store.get(P + 'game.' + d, null);
+      setDiff(d);
+      if (!s || typeof s.st !== 'string' || s.st.length !== N || !/^[012]+$/.test(s.st)) return false;
+      if (['ready', 'playing', 'won', 'lost'].indexOf(s.status) < 0) return false;
+      var m = null;
+      if (s.status !== 'ready') {
+        if (typeof s.mines !== 'string' || s.mines.length !== N || !/^[01]+$/.test(s.mines)) return false;
+        m = new Uint8Array(N);
+        var count = 0;
+        for (var i = 0; i < N; i++) { m[i] = s.mines.charCodeAt(i) - 48; count += m[i]; }
+        if (count !== M) return false;
+      }
+      mines = m;
+      st = new Uint8Array(N);
+      flags = 0;
+      opened = 0;
+      for (var j = 0; j < N; j++) {
+        st[j] = s.st.charCodeAt(j) - 48;
+        if (st[j] === 2) flags++;
+        else if (st[j] === 1) opened++;
+      }
+      computeAdj();
+      status = s.status;
+      exploded = typeof s.exploded === 'number' ? s.exploded : -1;
+      elapsed = Math.max(0, +s.elapsed || 0);
+      return true;
+    }
+
+    // ---------- 渲染 ----------
+    function build() {
+      var dr = rotated ? C : R;
+      var dc = rotated ? R : C;
+      boardEl.textContent = '';
+      boardEl.style.gridTemplateColumns = 'repeat(' + dc + ', var(--cell))';
+      els = new Array(N);
+      painted = new Array(N);
+      var frag = document.createDocumentFragment();
+      for (var r = 0; r < dr; r++) {
+        for (var c = 0; c < dc; c++) {
+          var i = rotated ? c * C + r : r * C + c;
+          var el = document.createElement('div');
+          el.className = 'c';
+          el.setAttribute('data-i', i);
+          els[i] = el;
+          frag.appendChild(el);
+        }
+      }
+      boardEl.appendChild(frag);
+    }
+
+    function render(popped) {
+      for (var i = 0; i < N; i++) {
+        var s = st[i];
+        var cls = 'c';
+        var txt = '';
+        if (s === 1) {
+          cls += ' o';
+          if (adj[i]) { cls += ' n' + adj[i]; txt = adj[i]; }
+        } else if (status === 'lost' && mines[i] && s !== 2) {
+          cls += ' o m' + (i === exploded ? ' boom' : '');
+          txt = '💣';
+        } else if (s === 2) {
+          cls += ' f';
+          txt = '🚩';
+          if (status === 'lost' && !mines[i]) cls += ' wrong';
+        }
+        var key = cls + '|' + txt;
+        if (painted[i] !== key) {
+          var el = els[i];
+          if (popped && s === 1 && painted[i] !== undefined) cls += ' pop';
+          el.className = cls;
+          el.textContent = txt;
+          painted[i] = key;
+        }
+      }
+      leftEl.textContent = M - flags;
+      showTime();
+      faceEl.textContent = status === 'lost' ? '😵' : status === 'won' ? '😎' : '😊';
+    }
+
+    function renderControls() {
+      var btns = diffEl.querySelectorAll('button');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-diff') === diff ? 'true' : 'false');
+      }
+      modeEl.textContent = mode === 'flag' ? '🚩 插旗' : '⛏️ 挖开';
+      modeEl.classList.toggle('active', mode === 'flag');
+      modeEl.setAttribute('aria-pressed', mode === 'flag' ? 'true' : 'false');
+    }
+
+    // 按屏幕计算格子大小；宽屏的高级局横过来
+    function layout() {
+      var wantRot = diff === 'hard' && window.innerWidth >= 720 && window.innerWidth > window.innerHeight;
+      document.documentElement.style.setProperty('--stage-max', wantRot ? '980px' : diff === 'easy' ? '460px' : '560px');
+      var key = diff + (wantRot ? 'r' : '');
+      if (key !== builtKey) {
+        rotated = wantRot;
+        builtKey = key;
+        build();
+        render();
+      }
+      var dr = rotated ? C : R;
+      var dc = rotated ? R : C;
+      var W = stageEl.clientWidth;
+      var small = W / dc < 30;
+      var gap = small ? 1 : 2;
+      var pad = small ? 3 : 5;
+      var byW = (W - pad * 2 - gap * (dc - 1)) / dc;
+      var top = stageEl.getBoundingClientRect().top + window.scrollY;
+      var H = window.innerHeight - top - 18;
+      var byH = (H - pad * 2 - gap * (dr - 1)) / dr;
+      var cell = (diff === 'hard' && !rotated) ? byW : Math.min(byW, Math.max(byH, 22));
+      cell = Math.max(14, Math.min(cell, 48));
+      cell = Math.floor(cell * 4) / 4;
+      boardEl.style.setProperty('--cell', cell + 'px');
+      boardEl.style.setProperty('--gap', gap + 'px');
+      boardEl.style.setProperty('--pad', pad + 'px');
+      var boardH = dr * cell + (dr - 1) * gap + pad * 2;
+      wrapEl.classList.toggle('tall', boardH > window.innerHeight * 0.8);
+    }
+
+    // ---------- 结果层 ----------
+    function hideOverlay() {
+      clearTimeout(overTimer);
+      overEl.hidden = true;
+    }
+
+    function showOverlay(delay) {
+      clearTimeout(overTimer);
+      if (!isOver()) { overEl.hidden = true; return; }
+      var won = status === 'won';
+      overEl.classList.toggle('lose', !won);
+      document.getElementById('ov-title').textContent = won ? '胜利！' : '踩雷了';
+      var text;
+      if (won) {
+        var b = best[diff];
+        var rec = b && elapsed <= b + 0.001;
+        text = '用时 ' + fmt(elapsed) + (rec ? ' · 新纪录！' : ' · 最快 ' + fmt(b));
+      } else {
+        var safeTotal = N - M;
+        text = '完成 ' + Math.floor(opened / safeTotal * 100) + '%';
+      }
+      document.getElementById('ov-text').textContent = text;
+      if (delay) {
+        overEl.hidden = true;
+        overTimer = setTimeout(function () { overEl.hidden = false; }, delay);
+      } else {
+        overEl.hidden = false;
+      }
+    }
+
+    function updateHomeStat() {
+      var order = ['hard', 'medium', 'easy'];
+      for (var i = 0; i < order.length; i++) {
+        var b = best[order[i]];
+        if (b) { window.Site.setHomeStat('minesweeper', DIFFS[order[i]].name + ' ' + fmt(b)); return; }
+      }
+    }
+
+    // ---------- 规则 ----------
+    function flood(i) {
+      var stack = [i];
+      while (stack.length) {
+        var k = stack.pop();
+        if (st[k] !== 0) continue;
+        st[k] = 1;
+        opened++;
+        if (adj[k] === 0) {
+          around(k, function (j) { if (st[j] === 0) stack.push(j); });
+        }
+      }
+    }
+
+    function afterMove() {
+      if (opened === N - M) { win(); return; }
+      render(true);
+      save();
+    }
+
+    function dig(i) {
+      if (isOver() || st[i] !== 0) return false;
+      if (status === 'ready') {
+        placeMines(i);
+        status = 'playing';
+      }
+      startClock();
+      if (mines[i]) { lose(i); return true; }
+      flood(i);
+      sound('reveal');
+      afterMove();
+      return true;
+    }
+
+    function chord(i) {
+      if (isOver() || st[i] !== 1 || !adj[i]) return false;
+      var f = 0;
+      var hidden = [];
+      around(i, function (j) {
+        if (st[j] === 2) f++;
+        else if (st[j] === 0) hidden.push(j);
+      });
+      if (!hidden.length) return false;
+      if (f !== adj[i]) {
+        // 旗数不够：闪一下周围的格子
+        hidden.forEach(function (j) { els[j].classList.add('peek'); });
+        setTimeout(function () { hidden.forEach(function (j) { els[j].classList.remove('peek'); }); }, 160);
+        return false;
+      }
+      startClock();
+      var hit = -1;
+      hidden.forEach(function (j) {
+        if (mines[j]) { if (hit < 0) hit = j; }
+        else flood(j);
+      });
+      if (hit >= 0) { lose(hit); return true; }
+      sound('reveal');
+      afterMove();
+      return true;
+    }
+
+    function toggleFlag(i) {
+      if (isOver() || st[i] === 1) return false;
+      st[i] = st[i] === 2 ? 0 : 2;
+      flags += st[i] === 2 ? 1 : -1;
+      startClock();
+      sound(st[i] === 2 ? 'flag' : 'click');
+      render();
+      save();
+      return true;
+    }
+
+    function lose(i) {
+      status = 'lost';
+      exploded = i;
+      stopClock();
+      sound('boom');
+      window.Site.vibrate(40);
+      render();
+      save();
+      showOverlay(700);
+    }
+
+    function win() {
+      status = 'won';
+      stopClock();
+      for (var i = 0; i < N; i++) if (mines[i]) st[i] = 2;
+      flags = M;
+      if (!best[diff] || elapsed < best[diff]) {
+        best[diff] = elapsed;
+        store.set(P + 'best', best);
+      }
+      updateHomeStat();
+      sound('win');
+      render(true);
+      save();
+      showOverlay(400);
+    }
+
+    function resetState() {
+      mines = null;
+      st = new Uint8Array(N);
+      adj = new Uint8Array(N);
+      status = 'ready';
+      exploded = -1;
+      flags = 0;
+      opened = 0;
+      elapsed = 0;
+    }
+
+    function newGame() {
+      stopClock();
+      resumeOnShow = false;
+      hideOverlay();
+      resetState();
+      render();
+      save();
+    }
+
+    function switchDiff(d) {
+      if (d === diff || !DIFFS[d]) return;
+      stopClock();
+      resumeOnShow = false;
+      save();
+      hideOverlay();
+      // 有未完成的局就接着玩，否则开新局
+      if (!(restore(d) && !isOver())) { setDiff(d); resetState(); }
+      renderControls();
+      layout();
+      render();
+      save();
+    }
+
+    // 按当前模式执行：kind = 'dig' | 'flag'
+    function act(i, kind) {
+      if (isOver()) return false;
+      if (kind === 'flag') return toggleFlag(i);
+      if (st[i] === 1) return chord(i);
+      return dig(i);
+    }
+
+    function tap(i) {
+      if (st[i] === 1) chord(i);
+      else act(i, mode);
+    }
+
+    // ---------- 输入 ----------
+    var press = null;
+
+    function cancelPress() {
+      if (!press) return;
+      clearTimeout(press.timer);
+      press.el.classList.remove('press');
+      press = null;
+      if (!isOver()) faceEl.textContent = '😊';
+    }
+
+    boardEl.addEventListener('pointerdown', function (e) {
+      var el = e.target.closest('.c');
+      if (!el) return;
+      var i = +el.getAttribute('data-i');
+      if (e.pointerType === 'mouse' && e.button === 2) {
+        e.preventDefault();
+        cancelPress();
+        act(i, 'flag');
+        return;
+      }
+      if (e.button !== 0) return;
+      cancelPress();
+      press = { i: i, el: el, id: e.pointerId, x: e.clientX, y: e.clientY, long: false };
+      if (!isOver() && st[i] !== 1) {
+        if (st[i] === 0 && mode === 'dig') el.classList.add('press');
+        faceEl.textContent = '😮';
+      }
+      if (e.pointerType !== 'mouse') {
+        var p = press;
+        p.timer = setTimeout(function () {
+          if (press !== p) return;
+          p.long = true;
+          el.classList.remove('press');
+          if (act(i, mode === 'dig' ? 'flag' : 'dig')) window.Site.vibrate(15);
+          if (!isOver()) faceEl.textContent = '😊';
+        }, LONG_MS);
+      }
+    });
+
+    boardEl.addEventListener('pointermove', function (e) {
+      if (!press || e.pointerId !== press.id) return;
+      if (Math.abs(e.clientX - press.x) > MOVE_TOL || Math.abs(e.clientY - press.y) > MOVE_TOL) cancelPress();
+    });
+
+    boardEl.addEventListener('pointerup', function (e) {
+      if (!press || e.pointerId !== press.id) return;
+      var p = press;
+      cancelPress();
+      if (!p.long) tap(p.i);
+    });
+    boardEl.addEventListener('pointercancel', cancelPress);
+    boardEl.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') cancelPress(); });
+    boardEl.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+    function toggleMode() {
+      mode = mode === 'dig' ? 'flag' : 'dig';
+      store.set(P + 'mode', mode);
+      sound('select');
+      renderControls();
+    }
+
+    function restart() {
+      sound('start');
+      newGame();
+    }
+
+    modeEl.addEventListener('click', toggleMode);
+    faceEl.addEventListener('click', restart);
+    diffEl.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-diff]');
+      if (!b) return;
+      sound('click');
+      switchDiff(b.getAttribute('data-diff'));
+    });
+    overEl.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-action]');
+      if (!b) return;
+      if (b.getAttribute('data-action') === 'new') restart();
+      else hideOverlay();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (document.querySelector('dialog[open]')) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      var k = e.key.toLowerCase();
+      if (k === 'f') toggleMode();
+      else if (k === 'n' || e.key === 'F2') { e.preventDefault(); restart(); }
+    });
+
+    // 切到后台暂停计时
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        if (clockTimer) { stopClock(); resumeOnShow = true; }
+        save();
+      } else if (resumeOnShow) {
+        resumeOnShow = false;
+        startClock();
+      }
+    });
+    window.addEventListener('pagehide', save);
+
+    var resizeTimer = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(layout, 60);
+    });
+
+    // ---------- 启动 ----------
+    var savedDiff = store.get(P + 'diff', 'easy');
+    if (!DIFFS[savedDiff]) savedDiff = 'easy';
+    // 恢复的局不自动计时，下一次操作时继续
+    if (!restore(savedDiff)) { setDiff(savedDiff); resetState(); }
+    renderControls();
+    layout();
+    render();
+    save();
+    showOverlay(0);
+    updateHomeStat();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+  })();
+  </script>
+</body>
+</html>
