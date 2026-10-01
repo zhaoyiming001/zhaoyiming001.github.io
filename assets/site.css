@@ -469,6 +469,9 @@ kbd {
   .gbar-title { font-size: 21px; padding: 3px 14px 5px; }
 }
 @media (max-width: 360px) {
+  .gbar .icon-btn { width: 36px; height: 36px; border-radius: 12px; }
+  .gbar { gap: 6px; }
+  .gbar-actions, .gbar > :first-child { gap: 6px; }
   .gbar-title { font-size: 19px; }
   .stats { gap: 6px; }
   .stat { padding: 5px 6px 6px; }
