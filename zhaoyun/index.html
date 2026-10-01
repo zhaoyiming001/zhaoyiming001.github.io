@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>赵云与阿斗 · 水墨汉字塔防</title>
-<meta name="description" content="字即是兵：水墨汉字塔防。「弓」字拉满放箭，「枪」的木旁化作长枪，「刀」的一撇飞出斩敌。与 AI 对手同守阿斗，十场三国战役。">
+<meta name="description" content="字即是兵：水墨汉字塔防。「弓」字拉满放箭，「枪」的木旁化作长枪，「刀」的一撇飞出斩敌。两字并排成将，与对手同守阿斗，经典战场与段位。">
 <meta name="theme-color" content="#efe6d3">
 <meta name="color-scheme" content="light">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -49,35 +49,27 @@
   <section id="title" class="screen">
     <canvas id="titleCv"></canvas>
     <div class="t-inner">
+      <div class="t-rank" id="titleRank"></div>
       <div class="t-tag">字即是兵 · 水墨三国汉字塔防</div>
       <div class="t-btns">
         <button class="btn btn-red" id="btnStart">出征</button>
         <button class="btn btn-ghost" id="btnTitleSound">声音：开</button>
       </div>
-      <div class="t-foot">笔画数据 Arphic PL · 与 AI 同守阿斗，先失三心者败</div>
+      <div class="t-foot">笔画数据 Arphic PL · 与对手同守阿斗，先失三心者败 · 胜升星、败降星</div>
     </div>
   </section>
 
-  <!-- 战役 -->
+  <!-- 选择战场 -->
   <section id="map" class="screen">
     <div class="map-head">
       <button class="back" id="btnMapBack" aria-label="返回">‹</button>
-      <h2>征战天下</h2>
-      <div class="map-stars"><i class="st"></i><b id="mapStars">0</b></div>
+      <h2>选择战场</h2>
+      <div class="map-rank" id="mapRank"></div>
     </div>
     <div class="map-list" id="mapList"></div>
-  </section>
-
-  <!-- 战前 -->
-  <section id="intro" class="sheet-wrap">
-    <div class="sheet scroll">
-      <button class="x" id="btnIntroClose" aria-label="关闭">×</button>
-      <div class="in-kicker" id="inKicker"></div>
-      <h2 class="in-title" id="inTitle"></h2>
-      <p class="in-blurb" id="inBlurb"></p>
-      <div class="in-rows" id="inRows"></div>
-      <div class="in-new" id="inNew"></div>
-      <button class="btn btn-red" id="btnGoLv">出战</button>
+    <div class="map-foot">
+      <span id="fightInfo"></span>
+      <button class="btn btn-red" id="btnFight">开战</button>
     </div>
   </section>
 
@@ -90,7 +82,7 @@
         <button class="btn btn-red" id="btnResume">继续</button>
         <button class="btn btn-ghost" id="btnRestart">重新开始</button>
         <button class="btn btn-ghost" id="btnSound2">声音：开</button>
-        <button class="btn btn-ghost" id="btnToMap">返回战役</button>
+        <button class="btn btn-ghost" id="btnToMap">退出 · 选战场</button>
       </div>
     </div>
   </section>
@@ -105,9 +97,9 @@
       <div class="r-stats" id="rStats"></div>
       <div class="r-unlock" id="rUnlock"></div>
       <div class="col-btns">
-        <button class="btn btn-red" id="btnNextLv">下一战</button>
+        <button class="btn btn-red" id="btnNextLv">再选战场</button>
         <button class="btn btn-ghost" id="btnRetry">再战</button>
-        <button class="btn btn-ghost" id="btnResMap">返回战役</button>
+        <button class="btn btn-ghost" id="btnResMap">回到首页</button>
       </div>
     </div>
   </section>

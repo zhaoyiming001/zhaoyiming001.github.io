@@ -121,8 +121,8 @@
       var a = p < 0.65 ? 1 : 1 - (p - 0.65) / 0.35;
       ctx.save(); ctx.translate(f.x, f.y - p * f.s * 0.3); ctx.rotate(f.rot); ctx.scale(sc, sc);
       ctx.globalAlpha = a;
-      ctx.font = f.s + 'px "ZY Brush", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.lineWidth = f.s * 0.12; ctx.strokeStyle = 'rgba(244,236,219,.85)'; ctx.strokeText(f.txt, 0, 0);
+      ctx.font = f.s + 'px "ZY Brush", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+      ctx.lineWidth = Math.max(3, f.s * 0.2); ctx.strokeStyle = 'rgba(251,246,234,.95)'; ctx.strokeText(f.txt, 0, 0);
       ctx.fillStyle = f.c; ctx.fillText(f.txt, 0, 0);
       ctx.restore(); ctx.globalAlpha = 1;
     },
@@ -199,6 +199,24 @@
     },
     skill: function (ctx, f, p) { SK[f.gk].draw(ctx, f, p); },
     noop: function () {},
+    num: function (ctx, f, p) {
+      // 伤害数字：粗体、白描边，清楚好认
+      var a = p < 0.6 ? 1 : 1 - (p - 0.6) / 0.4, sc = p < 0.12 ? lerp(1.5, 1, p / 0.12) : 1;
+      ctx.save(); ctx.translate(f.x, f.y - eo(p) * E.cell * 0.55); ctx.scale(sc, sc);
+      ctx.globalAlpha = a;
+      ctx.font = '700 ' + f.s + 'px "ZY Serif", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+      ctx.lineWidth = Math.max(3, f.s * 0.28); ctx.strokeStyle = '#1b1208'; ctx.strokeText(f.txt, 0, 0);
+      ctx.fillStyle = f.c; ctx.fillText(f.txt, 0, 0);
+      ctx.restore(); ctx.globalAlpha = 1;
+    },
+    splash: function (ctx, f, p) {
+      // 水墨泼洒：几团墨迅速炸开，再慢慢化开淡去
+      var grow = eo(cl(p / 0.18)), a = p < 0.35 ? 0.9 : 0.9 * (1 - (p - 0.35) / 0.65);
+      for (var i = 0; i < f.b.length; i++) {
+        var b = f.b[i];
+        I.blit(ctx, I.blotSprite(b[3], f.c, Math.round(f.r * b[2])), f.x + b[0] * f.r * grow, f.y + b[1] * f.r * grow, (0.4 + 0.75 * grow) * (1 + p * 0.25), a * (i ? 0.8 : 1));
+      }
+    },
     lostcard: function (ctx, f, p) {
       // 作废 / 回收的字牌：牌身淡去，字的笔画化作墨烟升起
       var C = E.cell, it = f.it, sc = f.sink ? 1 - p * 0.6 : 1;
@@ -235,12 +253,24 @@
       ctx.restore(); ctx.globalAlpha = 1;
     }
   };
+  // 大片泼墨（武将大招）
+  function splash(x, y, R, color) {
+    var b = [];
+    for (var i = 0; i < 7; i++) { var a = Math.random() * TAU, d = i ? rnd(0.3, 0.9) : 0; b.push([Math.cos(a) * d, Math.sin(a) * d, i ? rnd(0.35, 0.6) : 0.85, (Math.random() * 6) | 0]); }
+    addFx({ k: 'splash', x: x, y: y, r: R, b: b, c: color || INK, life: 1.1 });
+    drops(x, y, 14, R * 2.2, R * 0.12, color || INK);
+  }
+  function num(x, y, v, big, side) {
+    var C = E.cell, txt = v >= 10000 ? (v / 1000).toFixed(0) + 'k' : v >= 1000 ? (v / 1000).toFixed(1) + 'k' : String(Math.round(v));
+    var s = Math.round(C * (big ? 0.42 : 0.3) * (side ? 0.8 : 1));
+    return addFx({ k: 'num', x: x + rnd(-0.15, 0.15) * C, y: y - C * 0.35, txt: txt, s: Math.max(11, s), c: big ? '#ffb21a' : '#fff4dc', life: 0.75 });
+  }
   function banner(x, y, txt, size, seal, color) { return addFx({ k: 'banner', x: x, y: y, txt: txt, s: size, seal: seal, c: color, life: 1.5 }); }
 
   // ---------- 字牌几何 ----------
   function tileFace(X, Y) { var d = I.tileDims(E.cell); return Y - d.t / 2; }
-  function unitSize() { return Math.round(E.cell * 0.64); }
-  function genSize() { return Math.round(E.cell * 0.42); }
+  function unitSize() { return Math.round(E.cell * 0.72); }
+  function genSize() { return Math.round(E.cell * 0.7); }
   // 字框坐标 -> 世界坐标
   function gx(g, i, cx, size) { return cx + (g.cx[i] - 512) * size / 1024; }
   function gy(g, i, cy, size) { return cy + (g.cy[i] - 512) * size / 1024; }
@@ -630,15 +660,16 @@
   };
 
   // ---------- 武将普攻 ----------
-  // 两字并排；按出手方式复用兵器动画，兵器笔画取自名字
+  // 武将占两格：两字各在一格；按出手方式复用兵器动画，兵器笔画取自名字
   var GW = {
-    liubei: { ci: 1, w: 0 }, guanyu: { ci: 1, w: 0 }, zhangfei: { ci: 0, w: 'straight' }, zhaoyun: { ci: 0, w: 'straight' },
-    machao: { ci: 0, w: 'all' }, huangzhong: { ci: 1, w: 3 }, kongming: { ci: 1, w: 0 }, pangtong: { ci: 1, w: 2 },
-    weiyan: { ci: 1, w: 5 }, jiangwei: { ci: 1, w: 'straight' }, guanping: { ci: 1, w: 2 }
+    zhaoyun: { ci: 1, w: 'straight' }, liubei: { ci: 1, w: 'straight' }, guanyu: { ci: 1, w: 0 }, zhangfei: { ci: 0, w: 'straight' },
+    machao: { ci: 0, w: 'all' }, huangzhong: { ci: 1, w: 3 }, guanping: { ci: 1, w: 2 }, guanxing: { ci: 1, w: 'straight' },
+    zhangbao: { ci: 1, w: 'straight' }, zhangyi: { ci: 1, w: 'straight' }, huanggai: { ci: 1, w: 0 }, huangzu: { ci: 1, w: 'straight' },
+    kongming: { ci: 1, w: 0 }, pangtong: { ci: 1, w: 2 }, weiyan: { ci: 1, w: 5 }, jiangwei: { ci: 1, w: 'straight' }
   };
-  function genPos(a, ci) { var C = E.cell; return { x: a.X + (ci ? 1 : -1) * C * 0.205, y: a.FY }; }
+  function genPos(a, ci) { var C = E.cell; return { x: a.X + (ci ? 0.5 : -0.5) * C, y: a.FY }; }
   function genWeapon(gk) {
-    var d = GW[gk], ch = Z.GENERALS[gk].chars[d.ci], g = I.glyph(ch);
+    var d = GW[gk] || { ci: 1, w: 0 }, ch = Z.GENERALS[gk].chars[d.ci], g = I.glyph(ch);
     var w = d.w === 'straight' ? straightest(ch) : d.w === 'all' ? -1 : d.w;
     return { ch: ch, g: g, ci: d.ci, w: w };
   }
@@ -646,18 +677,20 @@
     var gw = a.f.gw || (a.f.gw = genWeapon(a.gk));
     var other = Z.GENERALS[a.gk].chars[1 - gw.ci];
     var S = genSize(), p = genPos(a, gw.ci), po = genPos(a, 1 - gw.ci);
-    I.blit(ctx, I.glyphSprite(other, S, INK), po.x, po.y);
-    var g = gw.g, mode = a.mode, col = '#2a1d08';
+    // 另一字随之一振
+    var kick = Math.sin(seg(a.t, 0, 0.3) * PI) * 0.12;
+    I.blit(ctx, I.glyphSprite(other, S, INK), po.x, po.y, 1 + kick);
+    var g = gw.g, mode = a.mode, col = '#1b1206';
     if (mode === 'gallop' && gw.w === -1) { drawGallop(ctx, a, g, allStrokes(g), p.x, p.y, S, col, 0.24); return; }
     var skip = gw.w >= 0 ? mask([gw.w]) : null;
     if (mode === 'thrust') {
       I.blit(ctx, I.glyphSprite(gw.ch, S, INK, { skip: skip }), p.x, p.y);
-      drawSpear(ctx, a, g, gw.w, [], null, p.x, p.y, S * 1.25, col);
+      drawSpear(ctx, a, g, gw.w, [], null, p.x, p.y, S * 1.2, col);
       return;
     }
     if (mode === 'melee' || mode === 'gallop') {
       I.blit(ctx, I.glyphSprite(gw.ch, S, INK, { skip: skip }), p.x, p.y);
-      drawBlade(ctx, a, g, gw.w, p.x, p.y, S * 1.5, col);
+      drawBlade(ctx, a, g, gw.w, p.x, p.y, S * 1.3, col);
       return;
     }
     // arrow / fire：笔画发光后射出（投射物另画）
@@ -676,125 +709,162 @@
   function allStrokes(g) { var l = []; for (var i = 0; i < g.n; i++) l.push(i); return l; }
 
   // ---------- 字牌 ----------
-  // it: 牌；X,Y 牌中心；o: { lift, alpha, anim, t（全局时间）, hide }
+  var NAME_INK = '#9c1a10';
+  function inkOf(it) { return it.t === 'u' ? I.tierInk(it.lv || 1) : it.t === 'c' ? NAME_INK : '#5e3e1c'; }
+  function chOf(it) { return it.t === 'u' ? Z.UNITS[it.k].ch : it.t === 'c' ? it.ch : it.t === 's' ? '铲' : null; }
+  // it: 牌；X,Y 牌中心；o: { lift, alpha, anim, t（全局时间）, scale }
   function drawTile(ctx, it, X, Y, o) {
     o = o || {};
     var C = E.cell, d = I.tileDims(C), FY = Y - d.t / 2;
     var kind = it.t, tier = it.lv || 1;
-    var ts = I.tileSprite(kind, kind === 'u' ? tier : 1, C, o.lift);
     var sc = o.scale || 1;
-    I.blit(ctx, ts, X, Y, sc, o.alpha);
-    if (sc !== 1) { FY = Y - d.t / 2 * sc; }
     var a = o.anim;
-    if (o.alpha != null && o.alpha < 1) ctx.globalAlpha = o.alpha;
-    if (a && a.type === 'atk' && !o.lift) {
+    if (a && a.type === 'atk' && !o.lift && kind === 'u') {
+      I.blit(ctx, I.tileSprite('u', tier, C), X, Y);
       a.X = X; a.Y = Y; a.FY = FY;
-      if (it.t === 'g') drawGenAtk(ctx, a); else if (UA[it.k]) UA[it.k](ctx, a);
-      ctx.globalAlpha = 1;
+      if (UA[it.k]) UA[it.k](ctx, a);
       return;
     }
-    if (a && (a.type === 'write' || a.type === 'merge' || a.type === 'general')) { drawTileWrite(ctx, it, X, FY, a, sc); ctx.globalAlpha = 1; return; }
+    if (a && (a.type === 'write' || a.type === 'merge')) {
+      I.blit(ctx, I.tileSprite(kind, tier, C, o.lift), X, Y, sc, o.alpha);
+      if (sc !== 1) FY = Y - d.t / 2 * sc;
+      drawTileWrite(ctx, it, X, FY, a, sc);
+      return;
+    }
     // 呼吸：每块牌每隔几秒轻轻一「吸」；其余时间整块牌一次贴图（省绘制）
     var ph = ((o.t || 0) * 0.33 + ((X * 7.13 + Y * 3.71) % 1 + 1)) % 1;
-    var breathe = ph < 0.14 ? 1 + Math.sin(ph / 0.14 * PI) * 0.045 : 1;
-    if (breathe === 1 && sc === 1 && !o.lift && !o.hide && (o.alpha == null || o.alpha >= 1) && !(it.t === 'u' && it.k === 'huo')) {
-      I.blit(ctx, fullSprite(it, C), X, Y);
-      if (it.t === 'u') {
-        if (it.buffed) { ctx.fillStyle = GOLD; ctx.beginPath(); ctx.arc(X + d.w * 0.36, FY - d.h * 0.36, Math.max(1.6, C * 0.035), 0, TAU); ctx.fill(); }
-        if (it.haste > 0) { ctx.fillStyle = '#c86a1e'; ctx.beginPath(); ctx.arc(X - d.w * 0.36, FY - d.h * 0.36, Math.max(1.4, C * 0.03), 0, TAU); ctx.fill(); }
-        if (tier >= 4) I.blit(ctx, I.glowSprite(tier === 5 ? 'rgba(240,150,50,.3)' : 'rgba(150,90,210,.24)', Math.round(C * 0.4)), X, FY, 1 + Math.sin((o.t || 0) * 3) * 0.06);
-      } else if (it.t === 'g' && it.skLeft != null && it.skLeft < 1.2) {
-        I.blit(ctx, I.glowSprite('rgba(255,210,110,.5)', Math.round(C * 0.5)), X, FY, 1, 0.3 + (0.5 + 0.5 * Math.sin((o.t || 0) * 10)) * 0.4);
-      }
-      return;
-    }
-    if (it.t === 'u') {
-      var S = Math.round(C * 0.64);
-      if (tier >= 4) I.blit(ctx, I.glowSprite(tier === 5 ? 'rgba(240,150,50,.35)' : 'rgba(150,90,210,.28)', Math.round(S * 0.62)), X, FY, (1 + Math.sin((o.t || 0) * 3) * 0.06) * sc);
-      if (it.k === 'huo' && !o.lift) {
+    var breathe = !o.lift && ph < 0.14 ? 1 + Math.sin(ph / 0.14 * PI) * 0.045 : 1;
+    if (breathe === 1 && !(kind === 'u' && it.k === 'huo' && !o.lift)) {
+      I.blit(ctx, fullSprite(it, C, o.lift), X, Y, sc, o.alpha);
+    } else {
+      I.blit(ctx, I.tileSprite(kind, tier, C, o.lift), X, Y, sc, o.alpha);
+      if (o.alpha != null) ctx.globalAlpha = o.alpha;
+      var S = Math.round(C * (kind === 'u' ? 0.72 : 0.7));
+      if (kind === 'u' && it.k === 'huo') {
         var g = I.glyph('火'), col = I.tierInk(tier), tt = o.t || 0;
         for (var i = 0; i < 4; i++) I.strokeAt(ctx, g, i, gx(g, i, X, S * sc), gy(g, i, FY, S * sc) - (i > 1 ? Math.sin(tt * 6 + i) * S * 0.012 : 0), S * sc, { rot: Math.sin(tt * 5 + i * 1.7) * 0.03, color: col });
-      } else I.blit(ctx, I.glyphSprite(Z.UNITS[it.k].ch, S, I.tierInk(tier), { bleed: 1 }), X, FY, breathe * sc);
-      if (it.buffed && !o.lift) { ctx.fillStyle = GOLD; ctx.beginPath(); ctx.arc(X + d.w * 0.36 * sc, FY - d.h * 0.36 * sc, Math.max(1.6, C * 0.035), 0, TAU); ctx.fill(); }
-      if (it.haste > 0 && !o.lift) { ctx.fillStyle = '#c86a1e'; ctx.beginPath(); ctx.arc(X - d.w * 0.36 * sc, FY - d.h * 0.36 * sc, Math.max(1.4, C * 0.03), 0, TAU); ctx.fill(); }
-    } else if (it.t === 'g') {
-      var G2 = Z.GENERALS[it.k], gs = genSize();
-      var hide = o.hide || null;
-      for (var c2 = 0; c2 < 2; c2++) {
-        var px = X + (c2 ? 1 : -1) * C * 0.205 * sc;
-        if (hide && hide.ci === c2) {
-          if (hide.list === 'all') continue;
-          I.blit(ctx, I.glyphSprite(G2.chars[c2], gs, INK, { skip: hide.mask }), px, FY, sc);
-        } else I.blit(ctx, I.glyphSprite(G2.chars[c2], gs, INK, { bleed: 1 }), px, FY, breathe * sc);
-      }
-      if (it.skLeft != null && it.skLeft < 1.2 && !o.lift) {
-        var pulse = 0.5 + 0.5 * Math.sin((o.t || 0) * 10);
-        I.blit(ctx, I.glowSprite('rgba(255,210,110,.5)', Math.round(C * 0.5)), X, FY, 1, 0.3 + pulse * 0.4);
-      }
-    } else if (it.t === 'c') {
-      var gc = I.glyphSprite(it.ch, Math.round(C * 0.6), VERM, { bleed: 1 });
-      I.blit(ctx, gc, X, FY, breathe * sc);
-      var part2 = partnerOf(it.ch);
-      if (part2) { ctx.globalAlpha = (o.alpha != null ? o.alpha : 1) * 0.28; I.blit(ctx, I.glyphSprite(part2, Math.round(C * 0.22), VERM), X + d.w * 0.3 * sc, FY + d.h * 0.3 * sc, sc); ctx.globalAlpha = 1; }
-    } else if (it.t === 's') {
-      I.blit(ctx, I.glyphSprite('铲', Math.round(C * 0.6), '#6b4a26', { bleed: 1 }), X, FY, breathe * sc);
+      } else I.blit(ctx, I.glyphSprite(chOf(it), S, inkOf(it), { bleed: 1 }), X, FY, breathe * sc);
+      ctx.globalAlpha = 1;
     }
-    ctx.globalAlpha = 1;
+    if (kind === 'u' && !o.lift) {
+      if (tier >= 4) I.blit(ctx, I.glowSprite(tier === 5 ? 'rgba(240,150,50,.3)' : 'rgba(150,90,210,.24)', Math.round(C * 0.42)), X, FY, 1 + Math.sin((o.t || 0) * 3) * 0.06);
+      if (it.buffed) { ctx.fillStyle = GOLD; ctx.strokeStyle = '#3a2a10'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(X + d.w * 0.38, FY - d.h * 0.38, Math.max(2.2, C * 0.05), 0, TAU); ctx.fill(); ctx.stroke(); }
+      if (it.haste > 0) { ctx.fillStyle = '#d0601a'; ctx.beginPath(); ctx.arc(X - d.w * 0.38, FY - d.h * 0.38, Math.max(2, C * 0.045), 0, TAU); ctx.fill(); }
+    }
   }
   // 整块牌（牌身 + 字）合成一张贴图
-  function fullSprite(it, C) {
-    var key = 'F|' + it.t + (it.k || '') + (it.ch || '') + (it.lv || 1) + '|' + C;
-    var ts = I.tileSprite(it.t, it.t === 'u' ? it.lv || 1 : 1, C), d = I.tileDims(C);
+  function fullSprite(it, C, lift) {
+    var key = 'F|' + it.t + (it.k || '') + (it.ch || '') + (it.lv || 1) + '|' + C + '|' + (lift ? 1 : 0);
+    var ts = I.tileSprite(it.t, it.lv || 1, C, lift), d = I.tileDims(C);
     return I.sprite(key, ts.w, ts.h, function (x, w, h) {
       x.drawImage(ts.c, 0, 0, w, h);
       var fy = h / 2 - d.t / 2;
-      if (it.t === 'u') I.blit(x, I.glyphSprite(Z.UNITS[it.k].ch, Math.round(C * 0.64), I.tierInk(it.lv || 1), { bleed: 1 }), w / 2, fy);
-      else if (it.t === 'g') { var G2 = Z.GENERALS[it.k]; for (var c2 = 0; c2 < 2; c2++) I.blit(x, I.glyphSprite(G2.chars[c2], genSize(), INK, { bleed: 1 }), w / 2 + (c2 ? 1 : -1) * C * 0.205, fy); }
-      else if (it.t === 'c') {
-        I.blit(x, I.glyphSprite(it.ch, Math.round(C * 0.6), VERM, { bleed: 1 }), w / 2, fy);
-        var p2 = partnerOf(it.ch);
-        if (p2) { x.globalAlpha = 0.28; I.blit(x, I.glyphSprite(p2, Math.round(C * 0.22), VERM), w / 2 + d.w * 0.3, fy + d.h * 0.3); x.globalAlpha = 1; }
-      } else if (it.t === 's') I.blit(x, I.glyphSprite('铲', Math.round(C * 0.6), '#6b4a26', { bleed: 1 }), w / 2, fy);
+      var ch = chOf(it);
+      I.blit(x, I.glyphSprite(ch, Math.round(C * (it.t === 'u' ? 0.72 : 0.7)), inkOf(it), { bleed: 1 }), w / 2, fy);
+      if (it.t === 'c') {
+        // 角上小字提示搭档在哪一侧（「→云」 / 「赵←」）
+        var pr = partnerSide(it.ch);
+        if (pr) {
+          x.globalAlpha = 0.75;
+          x.font = 'bold ' + Math.round(C * 0.2) + 'px "ZY Serif", serif'; x.textBaseline = 'alphabetic';
+          x.fillStyle = '#6a4a12';
+          x.textAlign = pr.left ? 'right' : 'left';
+          x.fillText(pr.left ? pr.ch + '→' : '←' + pr.ch, pr.left ? w / 2 + d.w / 2 - 3 : w / 2 - d.w / 2 + 3, fy + d.h / 2 - 3);
+          x.globalAlpha = 1;
+        }
+      }
     });
   }
   var partners = null;
-  function partnerOf(ch) {
-    if (!partners) { partners = {}; Z.NAME_RECIPES.forEach(function (r) { (partners[r[0]] = partners[r[0]] || []).push(r[1]); (partners[r[1]] = partners[r[1]] || []).push(r[0]); }); }
+  // 名字牌的唯一搭档；left=true 表示本字在左
+  function partnerSide(ch) {
+    if (!partners) {
+      partners = {};
+      Z.NAME_RECIPES.forEach(function (r) { (partners[r[0]] = partners[r[0]] || []).push({ ch: r[1], left: true }); (partners[r[1]] = partners[r[1]] || []).push({ ch: r[0], left: false }); });
+    }
     var l = partners[ch];
     return l && l.length === 1 ? l[0] : null;
   }
-  // 落子书写 / 合并重写 / 武将现身
+  function partnerOf(ch) { var p = partnerSide(ch); return p ? p.ch : null; }
+
+  // ---------- 武将双格 ----------
+  // g: 核心里的武将；X,Y 为两格正中；o: { anim, t, hide, ready }
+  function pairBaseSprite(lv, C) {
+    var d = I.tileDims(C), ts = I.tileSprite('g', 1, C);
+    var W = C * 2 + ts.w - C, H = ts.h;
+    return I.sprite('PB|' + lv + '|' + C, W, H, function (x, w, h) {
+      x.drawImage(ts.c, w / 2 - C / 2 - ts.w / 2, 0, ts.w, ts.h);
+      x.drawImage(ts.c, w / 2 + C / 2 - ts.w / 2, 0, ts.w, ts.h);
+      var T = I.TIER[lv - 1];
+      // 一个框框住两格：阶色外框 + 金色内线
+      var fx = w / 2 - C * 0.985, fw = C * 1.97, fy = h / 2 - (d.h + d.t) / 2 - C * 0.045, fh = d.h + d.t + C * 0.08, r = C * 0.14;
+      I.rr(x, fx, fy, fw, fh, r); x.lineWidth = Math.max(2.5, C * 0.07); x.strokeStyle = lv > 1 ? T.edge : '#a07018'; x.stroke();
+      I.rr(x, fx + C * 0.05, fy + C * 0.05, fw - C * 0.1, fh - C * 0.1, r * 0.7); x.lineWidth = 1.2; x.strokeStyle = '#e8c35a'; x.stroke();
+      // 角饰
+      x.fillStyle = '#c9962e';
+      [[fx, fy], [fx + fw, fy], [fx, fy + fh], [fx + fw, fy + fh]].forEach(function (q) { x.beginPath(); x.arc(q[0], q[1], C * 0.065, 0, 7); x.fill(); x.strokeStyle = '#5a3c0c'; x.lineWidth = 1; x.stroke(); });
+      // 底部漆牌：等级点
+      var pw = C * (0.3 + lv * 0.12), ph = C * 0.17, px = w / 2 - pw / 2, py = fy + fh - ph * 0.55;
+      I.rr(x, px, py, pw, ph, ph * 0.4); x.fillStyle = '#3a1a0e'; x.fill(); x.strokeStyle = '#e8c35a'; x.lineWidth = 1; x.stroke();
+      x.fillStyle = lv > 1 ? T.edge : '#f0c75a';
+      for (var i = 0; i < lv; i++) { x.beginPath(); x.arc(w / 2 + (i - (lv - 1) / 2) * C * 0.12, py + ph / 2, C * 0.038, 0, 7); x.fill(); }
+    });
+  }
+  function pairSprite(k, lv, C) {
+    var base = pairBaseSprite(lv, C), d = I.tileDims(C), G2 = Z.GENERALS[k];
+    return I.sprite('PS|' + k + '|' + lv + '|' + C, base.w, base.h, function (x, w, h) {
+      x.drawImage(base.c, 0, 0, w, h);
+      var fy = h / 2 - d.t / 2;
+      for (var c2 = 0; c2 < 2; c2++) I.blit(x, I.glyphSprite(G2.chars[c2], genSize(), INK, { bleed: 1 }), w / 2 + (c2 ? 0.5 : -0.5) * C, fy);
+    });
+  }
+  function drawPair(ctx, g, X, Y, o) {
+    o = o || {};
+    var C = E.cell, d = I.tileDims(C), FY = Y - d.t / 2, lv = g.lv || 1;
+    var a = o.anim, hide = o.hide;
+    if (g.skLeft != null && g.skLeft < 1.2 && !a) {
+      var pulse = 0.5 + 0.5 * Math.sin((o.t || 0) * 10);
+      I.blit(ctx, I.glowSprite('rgba(255,200,90,.55)', Math.round(C * 0.9)), X, FY, 1, 0.35 + pulse * 0.45);
+    }
+    if (!a && !hide) {
+      I.blit(ctx, pairSprite(g.k, lv, C), X, Y, o.scale, o.alpha);
+    } else {
+      I.blit(ctx, pairBaseSprite(lv, C), X, Y, o.scale, o.alpha);
+      var G2 = Z.GENERALS[g.k], gs = genSize();
+      if (a && a.type === 'atk') { a.X = X; a.Y = Y; a.FY = FY; drawGenAtk(ctx, a); }
+      else if (a && a.type === 'general') {
+        var pw = seg(a.t, 0.05, 0.75);
+        for (var c3 = 0; c3 < 2; c3++) I.drawWriting(ctx, I.glyph(G2.chars[c3]), X + (c3 ? 0.5 : -0.5) * C, FY, gs, INK, eo(cl(pw * 2 - c3)));
+      } else {
+        for (var c2 = 0; c2 < 2; c2++) {
+          var px = X + (c2 ? 0.5 : -0.5) * C;
+          if (hide && hide.ci === c2) { if (hide.list !== 'all') I.blit(ctx, I.glyphSprite(G2.chars[c2], gs, INK, { skip: hide.mask }), px, FY); }
+          else if (hide && hide.both) continue;
+          else I.blit(ctx, I.glyphSprite(G2.chars[c2], gs, INK, { bleed: 1 }), px, FY);
+        }
+      }
+    }
+    if (g.rushT > 0 || g.burnT > 0) { ctx.strokeStyle = g.burnT > 0 ? 'rgba(200,70,20,.7)' : 'rgba(201,150,46,.8)'; ctx.lineWidth = 2; I.rr(ctx, X - C, Y - (d.h + d.t) / 2 - C * 0.07, C * 2, d.h + d.t + C * 0.12, C * 0.15); ctx.stroke(); }
+  }
+  // 落子书写 / 合并重写
   function drawTileWrite(ctx, it, X, FY, a, sc) {
-    var C = E.cell, t = a.t;
+    var C = E.cell, t = a.t, ch = chOf(it), size = Math.round(C * (it.t === 'u' ? 0.72 : 0.7)) * (sc || 1);
+    if (!ch) return;
     if (a.type === 'merge') {
-      // 先炸开再按笔顺写成新阶
-      var col = I.tierInk(it.lv || 1);
+      var prev = it.t === 'u' ? I.tierInk((it.lv || 2) - 1) : NAME_INK;
       if (t < 0.14) {
-        var g = I.glyph(Z.UNITS[it.k].ch), S = Math.round(C * 0.64), k = S / 1024, p = eo(t / 0.14);
+        var g = I.glyph(ch), k = size / 1024, p = eo(t / 0.14);
         for (var i = 0; i < g.n; i++) {
           var dx = (g.cx[i] - g.gx) * k * 0.9 * p, dy = (g.cy[i] - g.gy) * k * 0.9 * p;
-          I.strokeAt(ctx, g, i, gx(g, i, X, S) + dx, gy(g, i, FY, S) + dy, S, { rot: (i % 2 ? 1 : -1) * p * 0.8, color: I.tierInk((it.lv || 2) - 1) });
+          I.strokeAt(ctx, g, i, gx(g, i, X, size) + dx, gy(g, i, FY, size) + dy, size, { rot: (i % 2 ? 1 : -1) * p * 0.8, color: prev });
         }
       } else {
         var pw = seg(t, 0.14, 0.42);
-        I.drawWriting(ctx, I.glyph(Z.UNITS[it.k].ch), X, FY, Math.round(C * 0.64) * (1 + 0.15 * (1 - pw)), col, eo(pw));
+        I.drawWriting(ctx, I.glyph(ch), X, FY, size * (1 + 0.15 * (1 - pw)), inkOf(it), eo(pw));
       }
       return;
     }
-    if (a.type === 'general') {
-      var G2 = Z.GENERALS[it.k], gs = genSize(), pw2 = seg(t, 0.05, 0.75);
-      for (var c2 = 0; c2 < 2; c2++) {
-        var pp = cl(pw2 * 2 - c2);
-        I.drawWriting(ctx, I.glyph(G2.chars[c2]), X + (c2 ? 1 : -1) * C * 0.205, FY, gs, INK, eo(pp));
-      }
-      return;
-    }
-    // write
-    var ch = it.t === 'u' ? Z.UNITS[it.k].ch : it.t === 'c' ? it.ch : it.t === 's' ? '铲' : null;
-    var colw = it.t === 'u' ? I.tierInk(it.lv || 1) : it.t === 'c' ? VERM : '#6b4a26';
-    var size = it.t === 'u' ? Math.round(C * 0.64) : Math.round(C * 0.6);
-    if (it.t === 'g') { a.type = 'general'; drawTileWrite(ctx, it, X, FY, a, sc); return; }
-    if (ch) I.drawWriting(ctx, I.glyph(ch), X, FY, size * sc, colw, eo(seg(t, 0, a.dur * 0.95)));
+    I.drawWriting(ctx, I.glyph(ch), X, FY, size, inkOf(it), eo(seg(t, 0, a.dur * 0.95)));
   }
 
   // ---------- 投射物 ----------
@@ -869,13 +939,13 @@
     var ts = I.enemyTileSprite(size, edge, boss);
     return I.sprite('E|' + ch + '|' + size + '|' + edge + '|' + frame, ts.w, ts.h, function (x, w, h) {
       x.drawImage(ts.c, 0, 0, w, h);
-      I.blit(x, marchSprite(ch, Math.round(size * 0.8), frame), w / 2, h / 2);
+      I.blit(x, marchSprite(ch, Math.round(size * 0.86), frame), w / 2, h / 2);
     });
   }
   function clearCaches() { march = {}; straightCache = {}; }
   function drawEnemy(ctx, e, X, Y, facColor, now) {
     var C = E.cell;
-    var size = Math.round(e.r * 2 * C * (e.boss ? 1.05 : 1.08));
+    var size = Math.round(e.r * 2 * C * (e.boss ? 1.12 : 1.22));
     var step = e.d * 2.2;
     var bob = e.stun > 0 ? 0 : -Math.abs(Math.sin(step * PI)) * C * 0.045;
     var tilt = e.stun > 0 ? Math.sin(now * 20) * 0.05 : Math.sin(step * PI) * 0.06;
@@ -902,16 +972,19 @@
       for (var s = 0; s < 3; s++) { var a = now * 6 + s * TAU / 3; ctx.beginPath(); ctx.arc(X + Math.cos(a) * size * 0.45, Y - size * 0.62 + Math.sin(a) * size * 0.12, Math.max(1.2, C * 0.03), 0, TAU); ctx.fill(); }
     }
     if (e.shield > 0) { ctx.strokeStyle = 'rgba(70,110,170,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y, size * 0.75, 0, TAU); ctx.stroke(); }
-    // 血条
+    // 血条：粗、带深色描边，红得醒目
     if (e.hp < e.maxHp || e.boss) {
-      var w = e.boss ? C * 0.95 : size * 0.9, y2 = Y - size * 0.62 + bob, f = Math.max(0, e.hp / e.maxHp);
-      ctx.fillStyle = 'rgba(27,23,18,.35)'; ctx.fillRect(X - w / 2, y2, w, e.boss ? 3.5 : 2.5);
-      ctx.fillStyle = e.boss ? VERM : '#8a2a1a'; ctx.fillRect(X - w / 2, y2, w * f, e.boss ? 3.5 : 2.5);
+      var w = e.boss ? C * 1.1 : size * 0.95, bh = e.boss ? Math.max(5, C * 0.11) : Math.max(4, C * 0.085), y2 = Y - size * 0.5 - bh - 2 + bob, f = Math.max(0, e.hp / e.maxHp);
+      ctx.fillStyle = '#14110d'; ctx.fillRect(X - w / 2 - 1, y2 - 1, w + 2, bh + 2);
+      ctx.fillStyle = '#5a4a3a'; ctx.fillRect(X - w / 2, y2, w, bh);
+      ctx.fillStyle = f > 0.5 ? '#e0402a' : f > 0.25 ? '#f07a1a' : '#ffb21a'; ctx.fillRect(X - w / 2, y2, w * f, bh);
+      if (e.shield > 0) { ctx.fillStyle = '#6aa0e0'; ctx.fillRect(X - w / 2, y2, w * Math.min(1, e.shield / e.maxHp * 4), Math.max(2, bh * 0.4)); }
     }
     if (e.boss) {
-      ctx.font = Math.round(C * 0.28) + 'px "ZY Brush", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(244,236,219,.9)'; ctx.strokeText(e.name, X, Y - size * 0.66 + bob);
-      ctx.fillStyle = VERM; ctx.fillText(e.name, X, Y - size * 0.66 + bob);
+      var fs = Math.round(Math.max(13, C * 0.34));
+      ctx.font = 'bold ' + fs + 'px "ZY Serif", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.lineWidth = 4; ctx.strokeStyle = '#fbf6ea'; ctx.lineJoin = 'round'; ctx.strokeText(e.name, X, Y - size * 0.5 - C * 0.16 + bob);
+      ctx.fillStyle = '#9c1a10'; ctx.fillText(e.name, X, Y - size * 0.5 - C * 0.16 + bob);
     }
   }
   function deathFx(ch, X, Y, size, boss) {
@@ -931,78 +1004,67 @@
   // ---------- 武将技能 ----------
   // f: { gk, s, X, Y, FY, ev, pts（屏幕）, x2,y2, t, life }
   var SK = {};
-  function genGlyphPos(f, ci) { return { x: f.X + (ci ? 1 : -1) * E.cell * 0.205, y: f.FY }; }
+  function genGlyphPos(f, ci) { return { x: f.X + (ci ? 0.5 : -0.5) * E.cell, y: f.FY }; }
   function homePos(g, i, base, size) { return { x: gx(g, i, base.x, size), y: gy(g, i, base.y, size) }; }
   function skillBanner(f, txt, sealCh) {
     var C = E.cell, up = f.s === 1;
     banner(E.W / 2 + (f.X < E.W / 2 ? 1 : -1) * C * 2.6, f.Y + (up ? 1 : -1) * C * 0.2, txt, Math.round(C * (up ? 0.5 : 0.62)), sealCh);
   }
 
+  // 关羽「跳斩」：「羽」化青龙偃月刀，连环跳斩三敌，月牙溅射并击退
+  function drawGuandao(ctx, x, y, ang, L, t, C) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+    ctx.shadowColor = HALO; ctx.shadowBlur = 5 * (window.devicePixelRatio || 1);
+    ctx.fillStyle = '#1c2a24'; ctx.fillRect(-L * 0.9, -L * 0.035, L * 0.9, L * 0.07);
+    var gb = ctx.createLinearGradient(0, -L * 0.2, 0, L * 0.4); gb.addColorStop(0, '#0f2a20'); gb.addColorStop(1, '#2f7a62');
+    ctx.fillStyle = gb;
+    ctx.beginPath(); ctx.moveTo(-L * 0.05, -L * 0.1); ctx.lineTo(-L * 0.05, L * 0.12);
+    ctx.quadraticCurveTo(L * 0.45, L * 0.48, L * 1.0, L * 0.3); ctx.quadraticCurveTo(L * 0.86, L * 0.12, L * 0.92, -L * 0.04); ctx.quadraticCurveTo(L * 0.5, -L * 0.02, -L * 0.05, -L * 0.1); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(240,250,240,.85)'; ctx.lineWidth = Math.max(1, L * 0.03);
+    ctx.beginPath(); ctx.moveTo(L * 0.05, L * 0.15); ctx.quadraticCurveTo(L * 0.45, L * 0.42, L * 0.95, L * 0.28); ctx.stroke();
+    ctx.strokeStyle = VERM; ctx.lineWidth = L * 0.04; ctx.lineCap = 'round';
+    for (var tq = 0; tq < 4; tq++) { ctx.beginPath(); ctx.moveTo(-L * 0.05, 0); ctx.quadraticCurveTo(-L * 0.2, -L * 0.15 - tq * L * 0.03, -L * (0.3 + tq * 0.04), -L * (0.05 + tq * 0.06) + Math.sin(t * 30 + tq) * L * 0.04); ctx.stroke(); }
+    ctx.restore();
+  }
   SK.guanyu = {
-    life: 1.2, hide: { ci: 1, list: 'all' },
-    start: function (f) { skillBanner(f, '青龙偃月', '关'); E.sfx('skill', 'guanyu'); },
-    draw: function (ctx, f, p) {
-      var t = f.t, C = E.cell, g = I.glyph('羽'), gs = genSize(), base = genGlyphPos(f, 1);
-      var R = (f.ev.rad || 2.1) * C, a0 = (f.ev.ang || 0) - 2.2;
-      var pA = seg(t, 0, 0.28), pB = seg(t, 0.28, 0.72), pC = seg(t, 0.75, 1.2);
-      var sweep = a0 + eio(pB) * TAU * 0.95;
-      var form = eo(pA) * (1 - eio(pC));
-      var bigS = gs * 3.2;
-      // 扫过的墨色月弧（拖尾）
-      if (t > 0.28 && t < 0.95) {
-        var fade = t < 0.72 ? 1 : 1 - seg(t, 0.72, 0.95);
-        var span = 1.4 * Math.min(1, pB * 3);
-        for (var i = 0; i < 14; i++) {
-          var aa = sweep - span * (i / 14), ab = sweep - span * ((i + 1) / 14);
-          ctx.fillStyle = 'rgba(22,58,46,' + (0.42 * (1 - i / 14) * fade) + ')';
-          ctx.beginPath(); ctx.arc(f.X, f.Y, R * 1.02, ab, aa); ctx.arc(f.X, f.Y, R * (0.55 + 0.2 * i / 14), aa, ab, true); ctx.closePath(); ctx.fill();
+    life: 1.55, hide: { ci: 1, list: 'all' },
+    start: function (f) { skillBanner(f, '跳斩', '关'); E.sfx('skill', 'guanyu'); f.hits = 0; },
+    pos: function (f, t, out) {
+      var C = E.cell, base = genGlyphPos(f, 1), P = f.pts.length ? f.pts : [[f.X, f.Y - C]];
+      var stops = [[base.x, base.y]].concat(P.slice(0, 3)).concat([[base.x, base.y]]);
+      var times = [0.05, 0.35, 0.7, 1.05, 1.45];
+      for (var i = 0; i < 4; i++) {
+        if (t <= times[i + 1]) {
+          var q = cl((t - times[i] - (i ? 0.05 : 0)) / (times[i + 1] - times[i] - (i ? 0.05 : 0))), A = stops[i], B = stops[Math.min(i + 1, stops.length - 1)];
+          var e = eio(q);
+          out.x = lerp(A[0], B[0], e); out.y = lerp(A[1], B[1], e) - Math.sin(q * PI) * C * 1.3; out.q = q; out.seg = i;
+          return out;
         }
-        ctx.strokeStyle = 'rgba(22,58,46,' + 0.6 * fade + ')'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(f.X, f.Y, R * 1.04, sweep - span, sweep); ctx.stroke();
       }
-      // 刀杆：关字的「丿」拉长成杆
-      var gp = I.glyph('关'), pole = 4, kp = gs / 1024;
-      var ang = t < 0.28 ? a0 : sweep;
-      var poleL = R * 0.48 * form;
-      if (form > 0.02) {
-        I.strokeAt(ctx, gp, pole, f.X, f.Y, gs, { align: ang, along: Math.max(0.2, poleL / (gp.len[pole] * kp)), across: 2.6, px: gp.med[pole][0], py: gp.med[pole][1], color: '#1c2a24', halo: HALO, hb: 3 });
-      }
-      // 偃月刀刃：浓墨月牙，刃口由「羽」六笔排成
-      var bx = f.X + Math.cos(ang) * poleL, by = f.Y + Math.sin(ang) * poleL, L = C * 1.5 * form;
-      if (form > 0.05) {
-        ctx.save(); ctx.translate(bx, by); ctx.rotate(ang);
-        ctx.shadowColor = HALO; ctx.shadowBlur = 5 * (window.devicePixelRatio || 1);
-        var gb = ctx.createLinearGradient(0, -L * 0.2, 0, L * 0.4);
-        gb.addColorStop(0, '#0f2a20'); gb.addColorStop(1, '#2f6e5a');
-        ctx.fillStyle = gb;
-        ctx.beginPath();
-        ctx.moveTo(-L * 0.05, -L * 0.1); ctx.lineTo(-L * 0.05, L * 0.12);
-        ctx.quadraticCurveTo(L * 0.45, L * 0.48, L * 1.0, L * 0.3);
-        ctx.quadraticCurveTo(L * 0.86, L * 0.12, L * 0.92, -L * 0.04);
-        ctx.quadraticCurveTo(L * 0.5, -L * 0.02, -L * 0.05, -L * 0.1);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        // 刃口一线白光
-        ctx.strokeStyle = 'rgba(240,250,240,.75)'; ctx.lineWidth = Math.max(1, L * 0.025);
-        ctx.beginPath(); ctx.moveTo(L * 0.05, L * 0.15); ctx.quadraticCurveTo(L * 0.45, L * 0.42, L * 0.95, L * 0.28); ctx.stroke();
-        // 红缨
-        ctx.strokeStyle = VERM; ctx.lineWidth = L * 0.035; ctx.lineCap = 'round';
-        for (var tq = 0; tq < 4; tq++) { ctx.beginPath(); ctx.moveTo(-L * 0.05, 0); ctx.quadraticCurveTo(-L * 0.2, -L * 0.15 - tq * L * 0.03, -L * (0.3 + tq * 0.04), -L * (0.05 + tq * 0.06) + Math.sin(t * 30 + tq) * L * 0.04); ctx.stroke(); }
-        ctx.restore();
-      }
-      // 「羽」六笔：飞出，贴在刃脊上（青龙鳞）
-      for (var j = 0; j < g.n; j++) {
-        var home = homePos(g, j, base, gs);
-        var u = 0.08 + j * 0.15;
-        var lx = L * (u), ly = L * (0.1 + 0.32 * Math.sin(u * PI * 0.9)) - L * 0.12;
-        var tx = bx + Math.cos(ang) * lx - Math.sin(ang) * ly, ty = by + Math.sin(ang) * lx + Math.cos(ang) * ly;
-        var d = cl(form * 1.3 - j * 0.05);
-        I.strokeAt(ctx, g, j, lerp(home.x, tx, d), lerp(home.y, ty, d), lerp(gs, gs * 2.1, d), { rot: lerp(0, ang + (j % 3 === 0 ? 0.6 : 0), d), color: d > 0.5 ? '#e9f1e4' : INK });
-      }
-      if (t >= 0.5 && !f.h) {
-        f.h = 1;
-        E.enemiesNear(f.s, f.X, f.Y, R, function (x, y) { slash(x, y, Math.atan2(y - f.Y, x - f.X) + PI / 2, C * 1.1, '#173f30', 0.35); drops(x, y, 5, C * 2, C * 0.1); });
-        E.shake(4); E.sfx('blade');
+      out.x = base.x; out.y = base.y; out.q = 1; out.seg = 4; return out;
+    },
+    draw: function (ctx, f, p) {
+      var t = f.t, C = E.cell, g = I.glyph('羽'), gs = genSize();
+      var o = SK.guanyu.pos(f, t, {});
+      // 跳跃残影
+      for (var k = 3; k >= 1; k--) { var oo = SK.guanyu.pos(f, Math.max(0, t - k * 0.03), {}); ctx.globalAlpha = 0.14 * (4 - k); I.draw(ctx, g, oo.x, oo.y, gs * 1.7, '#173f30'); }
+      ctx.globalAlpha = 1;
+      var spin = o.seg < 4 ? o.q * TAU * 0.75 : 0;
+      var big = t > 0.05 && t < 1.4 ? 1 : 0;
+      if (big) drawGuandao(ctx, o.x, o.y, -PI / 2 + spin - 0.6, C * 1.2, t, C);
+      ctx.save(); ctx.shadowColor = HALO; ctx.shadowBlur = big ? 5 * (window.devicePixelRatio || 1) : 0;
+      I.draw(ctx, g, o.x, o.y, lerp(gs, gs * 1.7, big), big ? '#173f30' : INK);
+      ctx.restore();
+      while (f.hits < 3 && f.pts[f.hits] && t >= 0.35 + f.hits * 0.35) {
+        var q = f.pts[f.hits];
+        slash(q[0], q[1], -0.6 + f.hits, C * 1.9, '#173f30', 0.4);
+        slash(q[0], q[1], 0.9 + f.hits, C * 1.4, VERM, 0.35);
+        splash(q[0], q[1], C * 0.75, '#173f30');
+        ring(q[0], q[1], C * 0.3, C * 1.0, '23,63,48', 0.4, 5);
+        word(q[0] + C * 0.5, q[1] - C * 0.7, '斩', C * 0.6, VERM, 0.6, -0.15);
+        E.shake(3); E.sfx('blade');
+        f.hits++;
       }
     }
   };
@@ -1042,6 +1104,7 @@
         var R = (f.ev.rad || 2.5) * C;
         ring(f.X, f.Y, C * 0.5, R, '27,23,18', 0.55, 8);
         ring(f.X, f.Y, C * 0.3, R * 0.8, '179,38,30', 0.5, 4);
+        splash(f.X, f.Y, C * 1.2, INK);
         E.shake(6);
       }
       if (t >= 0.42 && !f.h2) { f.h2 = 1; ring(f.X, f.Y, C * 0.3, (f.ev.rad || 2.5) * C * 1.05, '27,23,18', 0.5, 4); E.enemiesNear(f.s, f.X, f.Y, (f.ev.rad || 2.5) * C, function (x, y) { drops(x, y, 3, C, C * 0.07); }); }
@@ -1125,7 +1188,9 @@
       f.hi = f.hi || 0;
       while (f.hi < f.pts.length && t >= 0.35 + f.hi * 0.09) {
         var q = f.pts[f.hi];
-        slash(q[0], q[1], rnd(0, TAU), C * 1.0, '#14243a', 0.3);
+        slash(q[0], q[1], rnd(0, TAU), C * 1.2, '#14243a', 0.3);
+        slash(q[0], q[1], rnd(0, TAU), C * 0.9, VERM, 0.25);
+        if (f.hi % 2 === 0) splash(q[0], q[1], C * 0.6, '#14243a');
         drops(q[0], q[1], 5, C * 1.8, C * 0.09);
         if (f.hi % 2 === 0) E.sfx('blade');
         f.hi++;
@@ -1133,67 +1198,49 @@
     }
   };
 
+  // 黄忠「火箭烈」：「忠」字八笔升空化火箭，万箭齐发覆盖全场，击退
   SK.huangzhong = {
-    life: 1.15, hide: { ci: 1, list: [0, 1, 2, 3] },
-    start: function (f) { skillBanner(f, '百步穿杨', '黄'); E.sfx('skill', 'huangzhong'); },
+    life: 1.7, hide: { ci: 1, list: 'all' },
+    start: function (f) {
+      skillBanner(f, '火箭烈', '黄'); E.sfx('skill', 'huangzhong');
+      f.arrows = [];
+      var n = Math.max(8, f.pts.length * 2);
+      for (var i = 0; i < n; i++) { var q = f.pts.length ? f.pts[i % f.pts.length] : [f.X + rnd(-3, 3) * E.cell, f.Y + rnd(-2, 2) * E.cell]; f.arrows.push({ x: q[0] + rnd(-0.3, 0.3) * E.cell, y: q[1] + rnd(-0.2, 0.2) * E.cell, t0: 0.5 + (i % 8) * 0.06 + rnd(0, 0.05), hit: 0 }); }
+    },
     draw: function (ctx, f, p) {
       var t = f.t, C = E.cell, g = I.glyph('忠'), gs = genSize(), base = genGlyphPos(f, 1);
-      var tgt = E.enemyPos(f.s, f.ev.eid);
-      if (tgt) { f.x2 = tgt.x; f.y2 = tgt.y; }
-      var pA = seg(t, 0, 0.3), pC = seg(t, 0.85, 1.15);
-      var go = eo(pA);
-      var mid = [0, 1, 2, 3];
-      var S = lerp(gs, C * 1.5, go);
-      var cx = f.x2, cy = f.y2;
-      if (t < 0.72) {
-        // 「中」飞到敌人头上，化作箭靶
-        for (var i = 0; i < 4; i++) {
-          var home = homePos(g, mid[i], base, gs);
-          var tx = cx + (g.cx[mid[i]] - 512) * S / 1024, ty = cy + (g.cy[mid[i]] - 512) * S / 1024 + C * 0.05;
-          I.strokeAt(ctx, g, mid[i], lerp(home.x, tx, go), lerp(home.y, ty, go), S, { color: go > 0.5 ? VERM : INK });
+      var up = eo(seg(t, 0, 0.35)) * (1 - eio(seg(t, 1.25, 1.65)));
+      var dirY = f.s === 1 ? 1 : -1, hy = f.Y + dirY * C * 1.5;
+      // 「忠」八笔升空，燃成火箭
+      I.blit(ctx, I.glowSprite('rgba(255,120,30,.6)', Math.round(C * 1.2)), f.X, hy, 0.5 + up * 0.8, up);
+      for (var i = 0; i < g.n; i++) {
+        var h = homePos(g, i, base, gs), a = -PI / 2 + (i - (g.n - 1) / 2) * 0.22;
+        var tx = f.X + Math.cos(a) * C * 0.9, ty = hy + Math.sin(a) * C * 0.5 * -dirY;
+        I.strokeAt(ctx, g, i, lerp(h.x, tx, up), lerp(h.y, ty, up), lerp(gs, gs * 1.8, up), { rot: up * (a + PI / 2), color: up > 0.4 ? '#ff7a1a' : INK, halo: up > 0.3 ? 'rgba(90,20,4,.95)' : null, hb: 3 });
+      }
+      // 火箭雨
+      for (var j = 0; j < f.arrows.length; j++) {
+        var ar = f.arrows[j], q = seg(t, ar.t0, ar.t0 + 0.28);
+        if (q <= 0) continue;
+        if (q < 1) {
+          var sx = ar.x - C * 2.2, sy = ar.y + dirY * C * 3.2, x = lerp(sx, ar.x, ei(q)), y = lerp(sy, ar.y, ei(q)), ang = Math.atan2(ar.y - sy, ar.x - sx);
+          ctx.fillStyle = 'rgba(255,120,20,.75)';
+          I.ribbon(ctx, [x, y, x - Math.cos(ang) * C * 0.6, y - Math.sin(ang) * C * 0.6, x - Math.cos(ang) * C * 1.4, y - Math.sin(ang) * C * 1.4], 3, C * 0.26, 0);
+          ctx.fillStyle = 'rgba(255,230,140,.9)';
+          I.ribbon(ctx, [x, y, x - Math.cos(ang) * C * 0.7, y - Math.sin(ang) * C * 0.7], 2, C * 0.09, 0);
+          I.blit(ctx, I.glowSprite('rgba(255,150,40,.8)', Math.round(C * 0.32)), x, y);
+          ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+          ctx.fillStyle = '#2a1206'; ctx.fillRect(-C * 0.6, -C * 0.035, C * 0.6, C * 0.07);
+          ctx.fillStyle = '#fff0b0'; ctx.strokeStyle = '#7a2a08'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(C * 0.22, 0); ctx.lineTo(-C * 0.05, -C * 0.1); ctx.lineTo(-C * 0.05, C * 0.1); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.restore();
+        } else if (!ar.hit) {
+          ar.hit = 1;
+          embers(ar.x, ar.y, 5, C * 0.6);
+          if (j % 2 === 0) splash(ar.x, ar.y, C * 0.45, '#8a2a10');
+          if (j % 4 === 0) E.sfx('fire');
         }
-        if (go > 0.3) {
-          ctx.strokeStyle = 'rgba(179,38,30,' + go * 0.8 + ')'; ctx.lineWidth = 1.5;
-          var rr = C * 0.75 * (1.3 - 0.3 * go) + Math.sin(t * 20) * 1.5;
-          ctx.beginPath(); ctx.arc(cx, cy, rr, 0, TAU); ctx.stroke();
-          ctx.beginPath(); ctx.arc(cx, cy, rr * 1.35, 0, TAU); ctx.stroke();
-        }
-      } else if (!f.burst) {
-        f.burst = 1;
-        deathFxColor(g, mid, cx, cy, S, VERM);
       }
-      // 金箭：先在黄忠身前蓄势，再一线贯出
-      if (t > 0.28 && t < 0.74) {
-        var ang = Math.atan2(cy - f.Y, cx - f.X);
-        var charge = seg(t, 0.28, 0.5), pa = ei(seg(t, 0.5, 0.7));
-        var ax = lerp(f.X, cx, pa), ay = lerp(f.Y, cy, pa);
-        var ga = I.glyph('黄'), wi = straightest('黄'), AL = C * 1.5;
-        if (pa > 0) {
-          ctx.fillStyle = 'rgba(214,160,50,.55)';
-          I.ribbon(ctx, [ax, ay, lerp(f.X, cx, pa * 0.6), lerp(f.Y, cy, pa * 0.6), f.X, f.Y], 3, C * 0.16, 0);
-        }
-        I.blit(ctx, I.glowSprite('rgba(255,210,110,.85)', Math.round(C * (0.4 + 0.3 * charge))), ax, ay, 1, 0.5 + charge * 0.5);
-        I.strokeAt(ctx, ga, wi, ax - Math.cos(ang) * AL * 0.5, ay - Math.sin(ang) * AL * 0.5, gs, { align: ang, along: AL / (ga.len[wi] * gs / 1024), across: 2.4, px: ga.med[wi][0], py: ga.med[wi][1], color: '#6a4408', halo: 'rgba(255,230,160,.95)', hb: 5 });
-        ctx.save(); ctx.translate(ax + Math.cos(ang) * AL * 0.5, ay + Math.sin(ang) * AL * 0.5); ctx.rotate(ang);
-        ctx.fillStyle = '#6a4408';
-        ctx.beginPath(); ctx.moveTo(C * 0.24, 0); ctx.lineTo(-C * 0.04, -C * 0.1); ctx.lineTo(0, 0); ctx.lineTo(-C * 0.04, C * 0.1); ctx.fill();
-        ctx.translate(-AL, 0); ctx.fillStyle = VERM;
-        ctx.beginPath(); ctx.moveTo(C * 0.12, 0); ctx.lineTo(-C * 0.06, -C * 0.1); ctx.lineTo(0, 0); ctx.lineTo(-C * 0.06, C * 0.1); ctx.fill();
-        ctx.restore();
-      }
-      if (t >= 0.7 && !f.h) {
-        f.h = 1;
-        sparks(cx, cy, 22, C * 3);
-        drops(cx, cy, 10, C * 2.2, C * 0.12);
-        ring(cx, cy, C * 0.3, C * 1.6, '200,150,50', 0.5, 5);
-        word(cx + C * 0.6, cy - C * 0.7, '穿', C * 0.6, VERM, 0.8, -0.1);
-        E.shake(3); E.sfx('bolt');
-      }
-      if (t > 0.85) {
-        // 「中」写回
-        for (var j = 0; j < 4; j++) { var hm = homePos(g, mid[j], base, gs); ctx.globalAlpha = pC; I.strokeAt(ctx, g, mid[j], hm.x, hm.y, gs, { color: INK }); }
-        ctx.globalAlpha = 1;
-      }
+      if (t >= 0.6 && !f.h) { f.h = 1; E.shake(4); addFx({ k: 'flash', x: E.W / 2, y: f.Y + dirY * C * 2, r: C * 5, c: 'rgba(255,140,40,.35)', life: 0.6, a: 0.5 }); }
     }
   };
   function deathFxColor(g, list, X, Y, size, color) {
@@ -1210,42 +1257,44 @@
     ctx.globalAlpha = 1;
   };
 
+  // 刘备「圣剑」：「备」字八笔聚成一柄金色圣剑，从天而降，击倒一片
   SK.liubei = {
-    life: 1.35, hide: { ci: 1, list: 'all' },
-    start: function (f) { skillBanner(f, '仁德', '刘'); E.sfx('skill', 'liubei'); },
+    life: 1.45, hide: { ci: 1, list: 'all' },
+    start: function (f) { skillBanner(f, '圣剑', '刘'); E.sfx('skill', 'liubei'); },
     draw: function (ctx, f, p) {
       var t = f.t, C = E.cell, g = I.glyph('备'), gs = genSize(), base = genGlyphPos(f, 1);
-      var pA = seg(t, 0, 0.5), pC = seg(t, 0.95, 1.35);
-      var up = eo(pA) * (1 - eio(pC));
-      var hx = f.X, hy = f.Y - C * 0.9 * (f.s === 1 ? -1 : 1);
-      I.blit(ctx, I.glowSprite('rgba(255,214,120,.7)', Math.round(C * 1.3)), hx, hy, 0.6 + up * 0.7, up);
-      // 金色光芒
-      if (up > 0.05) {
-        ctx.strokeStyle = 'rgba(220,170,60,' + 0.5 * up + ')'; ctx.lineWidth = 1.5;
-        for (var ry = 0; ry < 16; ry++) { var ra = ry / 16 * TAU + t * 0.8, r0 = C * 0.95, r1 = C * (1.2 + (ry % 2) * 0.35) * up; ctx.beginPath(); ctx.moveTo(hx + Math.cos(ra) * r0, hy + Math.sin(ra) * r0); ctx.lineTo(hx + Math.cos(ra) * (r0 + r1 * 0.5), hy + Math.sin(ra) * (r0 + r1 * 0.5)); ctx.stroke(); }
+      var tx = f.x2 != null ? f.x2 : f.X, ty = f.y2 != null ? f.y2 : f.Y - C;
+      var form = eo(seg(t, 0, 0.45)), drop = ei(seg(t, 0.45, 0.7)), back2 = eio(seg(t, 1.05, 1.45));
+      var L = C * 2.6, hang = C * 2.4;
+      var sx = tx, sy = ty - hang * (1 - drop) - L * 0.45;
+      var vis = form * (1 - back2);
+      if (vis > 0.02) {
+        // 金光与剑身
+        I.blit(ctx, I.glowSprite('rgba(255,220,120,.75)', Math.round(C * 1.4)), sx, sy + L * 0.2, 0.6 + vis * 0.6, vis);
+        ctx.save(); ctx.translate(sx, sy); ctx.globalAlpha = vis;
+        ctx.shadowColor = 'rgba(255,240,190,.95)'; ctx.shadowBlur = 8 * (window.devicePixelRatio || 1);
+        var gb = ctx.createLinearGradient(-C * 0.2, 0, C * 0.2, 0); gb.addColorStop(0, '#b8861e'); gb.addColorStop(0.5, '#fff1b8'); gb.addColorStop(1, '#a87412');
+        ctx.fillStyle = gb;
+        ctx.beginPath(); ctx.moveTo(-C * 0.16, -L * 0.25); ctx.lineTo(C * 0.16, -L * 0.25); ctx.lineTo(C * 0.12, L * 0.62); ctx.lineTo(0, L * 0.8); ctx.lineTo(-C * 0.12, L * 0.62); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#7a4e0c'; ctx.fillRect(-C * 0.55, -L * 0.3, C * 1.1, C * 0.14);
+        ctx.fillRect(-C * 0.07, -L * 0.52, C * 0.14, L * 0.22);
+        ctx.beginPath(); ctx.arc(0, -L * 0.55, C * 0.1, 0, TAU); ctx.fill();
+        ctx.restore(); ctx.globalAlpha = 1;
       }
+      // 「备」八笔：飞上剑身，作铭文
       for (var i = 0; i < g.n; i++) {
-        var home = homePos(g, i, base, gs);
-        var a = i / g.n * TAU + t * 2;
-        var tx = hx + Math.cos(a) * C * 0.75, ty = hy + Math.sin(a) * C * 0.75;
-        var d = cl(up * 1.4 - i * 0.05);
-        I.strokeAt(ctx, g, i, lerp(home.x, tx, d), lerp(home.y, ty, d), lerp(gs, gs * 2.1, d), { rot: lerp(0, a + PI / 2, d), color: d > 0.4 ? '#9a6208' : INK, halo: d > 0.3 ? 'rgba(255,236,170,.95)' : null, hb: 5 });
+        var h = homePos(g, i, base, gs);
+        var px = sx + ((i % 2) ? 1 : -1) * C * 0.04, py = sy - L * 0.18 + i * L * 0.09;
+        var d2 = cl(form * 1.3 - i * 0.04) * (1 - back2);
+        I.strokeAt(ctx, g, i, lerp(h.x, px, d2), lerp(h.y, py, d2), lerp(gs, gs * 0.75, d2), { rot: d2 * 0.2, color: d2 > 0.5 ? '#5a3608' : INK });
       }
-      if (up > 0.3 && t < 0.55) { ctx.globalAlpha = seg(t, 0.25, 0.45) * (1 - seg(t, 0.5, 0.55)); I.draw(ctx, I.glyph('仁'), hx, hy, C * 1.1, '#8a5a0c'); ctx.globalAlpha = 1; }
-      if (t > 0.5 && t < 0.95) {
-        var pq = eio(seg(t, 0.5, 0.92));
-        var dst = f.ev.gold ? { x: f.X, y: f.Y - C } : E.aduPos(f.s);
-        var x = lerp(hx, dst.x, pq), y = lerp(hy, dst.y, pq) - Math.sin(pq * PI) * C;
-        I.blit(ctx, I.glowSprite('rgba(255,220,130,.9)', Math.round(C * 0.8)), x, y);
-        I.draw(ctx, I.glyph('仁'), x, y, C * 1.1, '#8a5a0c');
-      }
-      if (t >= 0.92 && !f.h) {
+      if (t >= 0.7 && !f.h) {
         f.h = 1;
-        var d2 = f.ev.gold ? { x: f.X, y: f.Y - C } : E.aduPos(f.s);
-        sparks(d2.x, d2.y, 20, C * 2.5);
-        addFx({ k: 'hearts', x: d2.x, y: d2.y, r: C * 0.9, life: 0.7 });
-        if (f.ev.gold) word(d2.x, d2.y - C * 0.3, '+' + f.ev.gold, C * 0.45, '#8a5a0c', 0.9);
-        E.sfx('heal');
+        splash(tx, ty, C * 1.3, '#4a3008');
+        ring(tx, ty, C * 0.4, (f.ev.rad || 1.5) * C * 1.1, '201,150,46', 0.6, 7);
+        sparks(tx, ty, 26, C * 3);
+        word(tx, ty - C * 1.1, '圣剑', C * 0.55, '#8a5a0c', 0.9);
+        E.shake(6); E.sfx('boom');
       }
     }
   };
@@ -1304,7 +1353,7 @@
         I.strokeAt(ctx, gf, 2 + (i % 2), q[0], q[1] - C * 0.2 * hh, C * 0.7 * (0.6 + hh * 0.5), { rot: Math.sin(t * 30 + i) * 0.15, color: 'rgba(168,36,14,' + (0.4 + 0.5 * hh) + ')' });
         if (Math.random() < 0.12) embers(q[0], q[1], 1, C * 0.5);
       }
-      if (t >= 0.55 && !f.h) { f.h = 1; E.sfx('fire'); E.shake(2); }
+      if (t >= 0.55 && !f.h) { f.h = 1; E.sfx('fire'); E.shake(2); if (f.pts.length) splash(f.pts[(f.pts.length / 2) | 0][0], f.pts[(f.pts.length / 2) | 0][1], C * 1.0, '#8a2a10'); }
     }
   };
 
@@ -1346,7 +1395,7 @@
       if (t >= 0.45 && !f.h) {
         f.h = 1;
         addFx({ k: 'pierce', x: f.X, y: f.Y, ang: ang, len: L, w: C * 0.9, life: 0.4 });
-        E.enemiesLine(f.s, f.X, f.Y, ang, L, C * 0.5, function (x, y) { drops(x, y, 5, C * 1.8, C * 0.1); slash(x, y, ang + PI / 2, C * 0.8, INK, 0.25); });
+        E.enemiesLine(f.s, f.X, f.Y, ang, L, C * 0.5, function (x, y) { drops(x, y, 5, C * 1.8, C * 0.1); slash(x, y, ang + PI / 2, C * 0.9, VERM, 0.25); splash(x, y, C * 0.5, INK); });
         E.shake(3); E.sfx('hoof');
       }
     }
@@ -1424,7 +1473,7 @@
         I.draw(ctx, I.glyph('破'), f.X, f.Y, lerp(C * 3, C * 1.6, eo(pq)), VERM);
         ctx.globalAlpha = 1;
       }
-      if (t >= 0.3 && !f.h) { f.h = 1; ring(f.X, f.Y, C * 0.4, (f.ev.rad || 2.5) * C, '179,38,30', 0.5, 6); E.shake(4); E.enemiesNear(f.s, f.X, f.Y, (f.ev.rad || 2.5) * C, function (x, y) { drops(x, y, 4, C * 1.6, C * 0.09); }); }
+      if (t >= 0.3 && !f.h) { f.h = 1; ring(f.X, f.Y, C * 0.4, (f.ev.rad || 2.5) * C, '179,38,30', 0.5, 6); splash(f.X, f.Y, C * 1.1, '#5a1410'); E.shake(4); E.enemiesNear(f.s, f.X, f.Y, (f.ev.rad || 2.5) * C, function (x, y) { drops(x, y, 4, C * 1.6, C * 0.09); }); }
     }
   };
 
@@ -1468,50 +1517,222 @@
       if (t >= 0.42 && !f.h) {
         f.h = 1;
         dust(f.x2, f.y2, 10, C * 0.6);
-        drops(f.x2, f.y2, 10, C * 2, C * 0.1);
+        splash(f.x2, f.y2, C * 0.9, INK);
         word(f.x2, f.y2 - C * 0.9, '伏', C * 0.7, VERM, 0.8);
         E.shake(3); E.sfx('boom');
       }
     }
   };
 
+  // 关平「震地」：「平」字五笔高举后砸地，震晕身边敌人
   SK.guanping = {
     life: 1.05, hide: { ci: 1, list: 'all' },
-    start: function (f) { skillBanner(f, '驰援', '关'); E.sfx('skill', 'guanping'); },
+    start: function (f) { skillBanner(f, '震地', '关'); E.sfx('skill', 'guanping'); },
     draw: function (ctx, f, p) {
-      var t = f.t, C = E.cell, g = I.glyph('平'), gs = genSize(), base = genGlyphPos(f, 1), k = gs / 1024;
-      var up = eo(seg(t, 0, 0.3)) * (1 - eio(seg(t, 0.75, 1.05)));
+      var t = f.t, C = E.cell, g = I.glyph('平'), gs = genSize(), base = genGlyphPos(f, 1);
+      var lift = eo(seg(t, 0, 0.25)), slam = ei(seg(t, 0.25, 0.38)), back2 = eio(seg(t, 0.7, 1.05));
       var dirY = f.s === 1 ? 1 : -1;
-      // 旗杆「丨」拉长，「一」化作红旗
-      var poleX = lerp(base.x, f.X + C * 0.1, up), poleY = lerp(base.y + gs * 0.4, f.Y + C * 0.35, up);
-      var poleH = lerp(g.len[4] * k, C * 1.7, up);
-      void dirY;
-      I.strokeAt(ctx, g, 4, poleX, poleY, gs, { align: -PI / 2, along: poleH / (g.len[4] * k), across: 1.6, px: g.med[4][0], py: g.med[4][1], color: '#3a2a14', halo: up > 0.3 ? HALO : null, hb: 3 });
-      var topY = poleY - poleH;
-      if (up > 0.05) {
-        ctx.fillStyle = 'rgba(179,38,30,' + 0.9 * up + ')';
-        ctx.beginPath(); ctx.moveTo(poleX, topY);
-        var fw = C * 0.9 * up, fh = C * 0.6;
-        for (var i = 0; i <= 8; i++) { var xx = poleX + fw * i / 8; ctx.lineTo(xx, topY + Math.sin(t * 14 - i * 0.8) * C * 0.06 * i / 8); }
-        for (var j = 8; j >= 0; j--) { var x2 = poleX + fw * j / 8; ctx.lineTo(x2, topY + fh + Math.sin(t * 14 - j * 0.8) * C * 0.06 * j / 8); }
-        ctx.closePath(); ctx.fill();
-        I.draw(ctx, I.glyph('关'), poleX + fw * 0.5, topY + fh * 0.5 + Math.sin(t * 14 - 4) * C * 0.03, C * 0.45 * up, PAPER);
+      for (var i = 0; i < g.n; i++) {
+        var h = homePos(g, i, base, gs), a = i / g.n * TAU;
+        var up = { x: f.X + Math.cos(a) * C * 0.5, y: f.Y + dirY * C * 1.3 + Math.sin(a) * C * 0.3 };
+        var dn = { x: f.X + Math.cos(a) * C * 1.1, y: f.Y + Math.sin(a) * C * 0.7 };
+        var x = t < 0.25 ? lerp(h.x, up.x, lift) : lerp(up.x, dn.x, slam), y = t < 0.25 ? lerp(h.y, up.y, lift) : lerp(up.y, dn.y, slam);
+        x = lerp(x, h.x, back2); y = lerp(y, h.y, back2);
+        I.strokeAt(ctx, g, i, x, y, lerp(gs, gs * 2, (t < 0.25 ? lift : 1) * (1 - back2)), { rot: a * (1 - back2) * 0.4, color: '#2a1d10', halo: t > 0.05 && t < 0.8 ? HALO : null, hb: 4 });
       }
-      [0, 1, 2, 3].forEach(function (si) { var h = homePos(g, si, base, gs); ctx.globalAlpha = 1 - up; I.strokeAt(ctx, g, si, h.x, h.y, gs, { color: INK }); });
+      if (t >= 0.38 && !f.h) {
+        f.h = 1;
+        ring(f.X, f.Y, C * 0.4, (f.ev.rad || 1.8) * C, '27,23,18', 0.5, 8);
+        for (var si = 0; si < 5; si++) { var sa = si / 5 * TAU + 0.6; splash(f.X + Math.cos(sa) * C * 1.35, f.Y + Math.sin(sa) * C * 1.0, C * 0.42, INK); }
+        dust(f.X, f.Y + C * 0.3, 10, C * 0.7);
+        word(f.X, f.Y + dirY * C * 1.0, '震', C * 0.6, VERM, 0.7);
+        E.shake(5); E.sfx('boom');
+      }
+    }
+  };
+
+  // 关兴「青龙斩」：「兴」字笔画聚成巨刃，对单个强敌一刀重斩
+  SK.guanxing = {
+    life: 1.2, hide: { ci: 1, list: 'all' },
+    start: function (f) { skillBanner(f, '青龙斩', '关'); E.sfx('skill', 'guanyu'); },
+    draw: function (ctx, f, p) {
+      var t = f.t, C = E.cell, g = I.glyph('兴'), gs = genSize(), base = genGlyphPos(f, 1);
+      var tg = E.enemyPos(f.s, f.ev.eid); if (tg) { f.x2 = tg.x; f.y2 = tg.y; }
+      var go = eo(seg(t, 0, 0.35)), back2 = eio(seg(t, 0.8, 1.2));
+      var cx = f.x2, cy = f.y2 - C * 1.4;
+      // 笔画环绕敌人上方旋转聚拢
+      for (var i = 0; i < g.n; i++) {
+        var h = homePos(g, i, base, gs), a = i / g.n * TAU + t * 8;
+        var tx = cx + Math.cos(a) * C * 0.7 * (1 - seg(t, 0.35, 0.5)), ty = cy + Math.sin(a) * C * 0.35;
+        var d2 = go * (1 - back2);
+        I.strokeAt(ctx, g, i, lerp(h.x, tx, d2), lerp(h.y, ty, d2), lerp(gs, gs * 1.6, d2), { rot: d2 * a, color: d2 > 0.5 ? '#173f30' : INK, halo: d2 > 0.3 ? HALO : null, hb: 4 });
+      }
+      // 巨刃劈下
+      if (t > 0.38 && t < 0.75) {
+        var q = seg(t, 0.38, 0.55);
+        ctx.save(); ctx.globalAlpha = 1 - seg(t, 0.6, 0.75);
+        ctx.fillStyle = '#173f30';
+        I.crescent(ctx, f.x2 - C * 0.6, f.y2 - C * 0.2, C * 1.8, -1.4, -1.4 + 2.2 * eo(q), C * 0.55);
+        ctx.restore();
+      }
+      if (t >= 0.55 && !f.h) {
+        f.h = 1;
+        splash(f.x2, f.y2, C * 1.1, '#173f30');
+        slash(f.x2, f.y2, 0.9, C * 2.2, VERM, 0.45);
+        word(f.x2 + C * 0.6, f.y2 - C * 0.8, '斩', C * 0.7, VERM, 0.8, -0.1);
+        E.shake(5); E.sfx('blade');
+      }
+    }
+  };
+
+  // 张苞「蛇矛突」：「苞」化丈八蛇矛，蛇形矛杆一突贯穿强敌
+  SK.zhangbao = {
+    life: 1.05, hide: { ci: 1, list: 'all' },
+    start: function (f) { skillBanner(f, '蛇矛突', '张'); E.sfx('skill', 'zhangfei'); },
+    draw: function (ctx, f, p) {
+      var t = f.t, C = E.cell, g = I.glyph('苞'), gs = genSize(), base = genGlyphPos(f, 1);
+      var tg = E.enemyPos(f.s, f.ev.eid); if (tg) { f.x2 = tg.x; f.y2 = tg.y; }
+      var ang = Math.atan2(f.y2 - base.y, f.x2 - base.x), D = Math.hypot(f.x2 - base.x, f.y2 - base.y) + C * 1.0;
+      var ext = eo(seg(t, 0.2, 0.45)) * (1 - eio(seg(t, 0.75, 1.0)));
+      var gather = eo(seg(t, 0, 0.2)) * (1 - eio(seg(t, 0.85, 1.05)));
+      var L = lerp(C * 0.6, D, ext);
+      // 蛇形矛杆（波浪墨带）
+      if (gather > 0.05) {
+        var pts = [], n = 18;
+        for (var i = 0; i <= n; i++) {
+          var u = i / n, wv = Math.sin(u * PI * 3 - t * 20) * C * 0.08 * (1 - u);
+          pts.push(base.x + Math.cos(ang) * L * u - Math.sin(ang) * wv, base.y + Math.sin(ang) * L * u + Math.cos(ang) * wv);
+        }
+        ctx.globalAlpha = gather;
+        ctx.fillStyle = '#1b1712'; I.ribbon(ctx, pts, n + 1, C * 0.12, C * 0.06);
+        // 蛇头矛刃（波形）
+        var hx = base.x + Math.cos(ang) * L, hy = base.y + Math.sin(ang) * L;
+        ctx.save(); ctx.translate(hx, hy); ctx.rotate(ang); ctx.fillStyle = '#1b1712';
+        ctx.shadowColor = HALO; ctx.shadowBlur = 4 * (window.devicePixelRatio || 1);
+        ctx.beginPath(); ctx.moveTo(C * 0.55, 0); ctx.quadraticCurveTo(C * 0.3, -C * 0.14, C * 0.15, -C * 0.02); ctx.quadraticCurveTo(0, -C * 0.12, -C * 0.1, 0); ctx.quadraticCurveTo(0, C * 0.12, C * 0.15, C * 0.02); ctx.quadraticCurveTo(C * 0.3, C * 0.14, C * 0.55, 0); ctx.fill();
+        ctx.shadowBlur = 0; ctx.strokeStyle = VERM; ctx.lineWidth = C * 0.04; ctx.lineCap = 'round';
+        for (var r = 0; r < 4; r++) { ctx.beginPath(); ctx.moveTo(-C * 0.1, 0); ctx.quadraticCurveTo(-C * 0.3, (r - 1.5) * C * 0.06, -C * (0.45 + r * 0.04), (r - 1.5) * C * 0.1 + Math.sin(t * 30 + r) * C * 0.04); ctx.stroke(); }
+        ctx.restore(); ctx.globalAlpha = 1;
+      }
+      // 「苞」笔画沿矛杆排开
+      for (var j = 0; j < g.n; j++) {
+        var h = homePos(g, j, base, gs), u2 = 0.2 + 0.7 * j / g.n;
+        var px = base.x + Math.cos(ang) * L * u2, py = base.y + Math.sin(ang) * L * u2;
+        I.strokeAt(ctx, g, j, lerp(h.x, px, gather), lerp(h.y, py, gather), lerp(gs, gs * 0.9, gather), { rot: gather * ang, color: INK });
+      }
+      if (t >= 0.45 && !f.h) {
+        f.h = 1;
+        splash(f.x2, f.y2, C * 0.9, INK);
+        addFx({ k: 'pierce', x: base.x, y: base.y, ang: ang, len: D + C, w: C * 0.5, life: 0.3 });
+        word(f.x2 + C * 0.5, f.y2 - C * 0.7, '突', C * 0.6, VERM, 0.7);
+        E.shake(4); E.sfx('spear');
+      }
+    }
+  };
+
+  // 张翼「拒马阵」：「翼」字笔画化作尖桩，交叉钉入地面，困住一片敌人
+  SK.zhangyi = {
+    life: 1.5, hide: { ci: 1, list: 'all' },
+    start: function (f) { skillBanner(f, '拒马阵', '张'); E.sfx('skill', 'jiangwei'); },
+    draw: function (ctx, f, p) {
+      var t = f.t, C = E.cell, g = I.glyph('翼'), gs = genSize(), base = genGlyphPos(f, 1);
+      var R = (f.ev.rad || 1.4) * C, fly = eo(seg(t, 0.05, 0.42)), fade = 1 - seg(t, 1.15, 1.5);
+      var n = Math.min(g.n, 12);
+      ctx.globalAlpha = fade;
+      if (t > 0.42) { ctx.strokeStyle = 'rgba(40,30,20,.55)'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.ellipse(f.x2, f.y2, R, R * 0.62, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+      for (var i = 0; i < n; i++) {
+        var h = homePos(g, i, base, gs), a = i / n * TAU;
+        var px = f.x2 + Math.cos(a) * R, py = f.y2 + Math.sin(a) * R * 0.62;
+        var x = lerp(h.x, px, fly), y = lerp(h.y, py, fly) - Math.sin(fly * PI) * C * 1.0;
+        // 两两交叉成「×」形拒马
+        var rot = fly * ((i % 2 ? 0.7 : -0.7) + PI / 2);
+        I.strokeAt(ctx, g, i, x, y, lerp(gs, gs * 1.5, fly), { align: rot - PI / 2 + (i % 2 ? 0.5 : -0.5) * fly, along: lerp(1, 1.4, fly), across: lerp(1, 1.5, fly), color: '#2a1d10', halo: fly > 0.3 ? HALO : null, hb: 3 });
+      }
       ctx.globalAlpha = 1;
-      // 金色援线
-      if (t > 0.3 && t < 0.9) {
-        var pr = eo(seg(t, 0.3, 0.6)), fd = 1 - seg(t, 0.7, 0.9);
-        (f.pts || []).forEach(function (q) {
-          ctx.strokeStyle = 'rgba(210,160,60,' + 0.8 * fd + ')'; ctx.lineWidth = 2;
-          var mx = (poleX + q[0]) / 2, my = Math.min(topY, q[1]) - C * 0.4;
-          ctx.beginPath(); ctx.moveTo(poleX, topY);
-          var steps = 10;
-          for (var s = 1; s <= steps * pr; s++) { var u = s / steps; ctx.lineTo(bez(poleX, mx, q[0], u), bez(topY, my, q[1], u)); }
-          ctx.stroke();
-        });
+      if (t >= 0.45 && !f.h) {
+        f.h = 1;
+        dust(f.x2, f.y2, 10, C * 0.6);
+        splash(f.x2, f.y2, C * 0.8, '#3a2a14');
+        word(f.x2, f.y2 - C * 1.1, '定', C * 0.65, VERM, 0.9);
+        E.shake(3); E.sfx('chain');
       }
-      if (t >= 0.6 && !f.h) { f.h = 1; (f.pts || []).forEach(function (q) { sparks(q[0], q[1], 6, C * 1.5); }); if (f.x2 != null) { slash(f.x2, f.y2, 0.5, C, INK, 0.3); drops(f.x2, f.y2, 5, C * 1.5, C * 0.08); } E.sfx('drum'); }
+    }
+  };
+
+  // 黄盖「火船」：「盖」字化作一艘火船沿路冲撞，所过之处烈焰腾起
+  SK.huanggai = {
+    life: 1.8, hide: { ci: 1, list: 'all' },
+    start: function (f) { skillBanner(f, '火船', '黄'); E.sfx('skill', 'kongming'); },
+    draw: function (ctx, f, p) {
+      var t = f.t, C = E.cell, g = I.glyph('盖'), gs = genSize(), base = genGlyphPos(f, 1);
+      var L = f.pts, n = L.length;
+      if (!n) return;
+      var q = seg(t, 0.3, 1.3), idx = Math.min(n - 1, q * (n - 1)), i0 = Math.floor(idx), fr = idx - i0;
+      var A = L[i0], B = L[Math.min(n - 1, i0 + 1)];
+      var bx = t < 0.3 ? lerp(base.x, L[0][0], eo(t / 0.3)) : lerp(A[0], B[0], fr), by = t < 0.3 ? lerp(base.y, L[0][1], eo(t / 0.3)) : lerp(A[1], B[1], fr);
+      var ang = Math.atan2(B[1] - A[1], B[0] - A[0] || 0.001);
+      var vis = 1 - seg(t, 1.35, 1.6);
+      // 船尾火焰
+      for (var j = 0; j <= i0 && t >= 0.3; j++) {
+        var pf = seg(t, 0.3 + j / Math.max(1, n - 1), 0.3 + j / Math.max(1, n - 1) + 0.6);
+        if (pf <= 0 || pf >= 1) continue;
+        var hh = Math.sin(pf * PI);
+        I.blit(ctx, I.glowSprite('rgba(255,110,30,.6)', Math.round(C * 0.45)), L[j][0], L[j][1] - C * 0.1, 0.7 + hh * 0.4, hh);
+        I.strokeAt(ctx, I.glyph('火'), 2 + (j % 2), L[j][0], L[j][1] - C * 0.25 * hh, C * 0.8 * (0.6 + hh * 0.4), { rot: Math.sin(t * 30 + j) * 0.15, color: 'rgba(178,40,14,' + (0.4 + 0.5 * hh) + ')' });
+      }
+      if (vis > 0.02) {
+        // 船身
+        ctx.save(); ctx.translate(bx, by); ctx.rotate(ang); ctx.globalAlpha = vis;
+        I.blit(ctx, I.glowSprite('rgba(255,120,30,.7)', Math.round(C * 0.8)), 0, 0);
+        ctx.fillStyle = '#3a1f0c'; ctx.beginPath(); ctx.moveTo(-C * 0.7, -C * 0.12); ctx.lineTo(C * 0.75, -C * 0.12); ctx.quadraticCurveTo(C * 0.55, C * 0.35, 0, C * 0.32); ctx.quadraticCurveTo(-C * 0.55, C * 0.32, -C * 0.7, -C * 0.12); ctx.fill();
+        ctx.restore(); ctx.globalAlpha = 1;
+        // 「盖」字立在船上作帆
+        ctx.save(); ctx.globalAlpha = vis; ctx.shadowColor = 'rgba(255,200,120,.9)'; ctx.shadowBlur = 6 * (window.devicePixelRatio || 1);
+        I.draw(ctx, g, bx, by - C * 0.45, lerp(gs, C * 1.0, Math.min(1, t / 0.3)), '#a8240e');
+        ctx.restore();
+        if (Math.random() < 0.5) embers(bx, by, 2, C * 0.6);
+      }
+      if (t > 1.55) { ctx.globalAlpha = seg(t, 1.55, 1.8); I.draw(ctx, g, base.x, base.y, gs, INK); ctx.globalAlpha = 1; }
+      if (t >= 0.5 && !f.h) { f.h = 1; E.shake(3); E.sfx('fire'); }
+      if (t >= 1.3 && !f.h2) { f.h2 = 1; splash(bx, by, C * 0.9, '#8a2a10'); E.sfx('boom'); }
+    }
+  };
+
+  // 黄祖「连珠箭」：「祖」字笔画化作连珠箭，接连射向五敌，中者迟滞
+  SK.huangzu = {
+    life: 1.2, hide: { ci: 1, list: 'all' },
+    start: function (f) { skillBanner(f, '连珠箭', '黄'); E.sfx('skill', 'huangzhong'); f.hi = 0; },
+    draw: function (ctx, f, p) {
+      var t = f.t, C = E.cell, g = I.glyph('祖'), gs = genSize(), base = genGlyphPos(f, 1);
+      var ready = eo(seg(t, 0, 0.25)), back2 = eio(seg(t, 0.95, 1.2));
+      var L = f.pts;
+      for (var i = 0; i < g.n; i++) {
+        var h = homePos(g, i, base, gs), k = i % Math.max(1, L.length), tgt = L[k];
+        var t0 = 0.4 + k * 0.08 - 0.25, q = tgt ? seg(t, t0, t0 + 0.25) : 0;
+        if (!tgt) { I.strokeAt(ctx, g, i, h.x, h.y, gs, { color: INK }); continue; }
+        var ang = Math.atan2(tgt[1] - h.y, tgt[0] - h.x);
+        if (q <= 0) {
+          var hx = lerp(h.x, f.X + Math.cos(ang) * C * 0.6, ready), hy = lerp(h.y, f.Y + Math.sin(ang) * C * 0.6, ready);
+          I.strokeAt(ctx, g, i, hx, hy, gs, { align: angLerp(g.ang[i], ang, ready), along: lerp(1, 1.6, ready), across: 0.9, color: ready > 0.5 ? '#1c2433' : INK, halo: ready > 0.3 ? HALO : null, hb: 3 });
+        } else if (q < 1) {
+          var sx = f.X + Math.cos(ang) * C * 0.6, sy = f.Y + Math.sin(ang) * C * 0.6, x = lerp(sx, tgt[0], ei(q)), y = lerp(sy, tgt[1], ei(q));
+          var tx = x - Math.cos(ang) * C * 1.4, ty = y - Math.sin(ang) * C * 1.4, gr = ctx.createLinearGradient(tx, ty, x, y);
+          gr.addColorStop(0, 'rgba(20,40,70,0)'); gr.addColorStop(1, 'rgba(20,40,70,.85)');
+          ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = C * 0.13; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(x, y); ctx.stroke();
+          ctx.strokeStyle = gr; ctx.lineWidth = C * 0.07; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(x, y); ctx.stroke();
+          I.strokeAt(ctx, g, i, x, y, gs * 1.15, { align: ang, along: 2.0, across: 1.3, color: '#14243c', halo: HALO, hb: 4 });
+        } else if (back2 > 0) {
+          ctx.globalAlpha = back2; I.strokeAt(ctx, g, i, h.x, h.y, gs, { color: INK }); ctx.globalAlpha = 1;
+        }
+      }
+      while (f.hi < L.length && t >= 0.4 + f.hi * 0.08) {
+        var q2 = L[f.hi];
+        ring(q2[0], q2[1], C * 0.2, C * 0.8, '30,60,110', 0.75, 4);
+        splash(q2[0], q2[1], C * 0.45, '#1c2c44');
+        drops(q2[0], q2[1], 5, C * 1.4, C * 0.09, '#1c2433');
+        if (f.hi === 0) E.sfx('bow');
+        f.hi++;
+      }
     }
   };
 
@@ -1547,11 +1768,11 @@
   }
 
   window.ZYAnim = {
-    init: init, DUR: DUR, UA: UA, drawTile: drawTile, drawProj: drawProj, drawEnemy: drawEnemy, deathFx: deathFx,
+    init: init, DUR: DUR, UA: UA, drawTile: drawTile, drawPair: drawPair, pairBaseSprite: pairBaseSprite, partnerSide: partnerSide, drawProj: drawProj, drawEnemy: drawEnemy, deathFx: deathFx,
     startSkill: startSkill, skillHide: skillHide, activeSkill: activeSkill, drawLinks: drawLinks,
     parts: function () { return parts; }, fx: function () { return fx; },
     updParts: updParts, drawParts: drawParts, drawFx: drawFx, addFx: addFx, slash: slash, ring: ring, word: word, banner: banner,
-    drops: drops, dust: dust, sparks: sparks, embers: embers, clearCaches: clearCaches, reset: function () { parts.length = 0; fx.length = 0; },
+    drops: drops, dust: dust, sparks: sparks, embers: embers, splash: splash, num: num, clearCaches: clearCaches, reset: function () { parts.length = 0; fx.length = 0; },
     seg: seg, eo: eo, ei: ei, eio: eio, lerp: lerp, INK: INK, VERM: VERM, GOLD: GOLD, PAPER: PAPER
   };
 })();
