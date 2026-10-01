@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>记忆翻牌 · 格子乐园</title>
+  <meta name="description" content="在线玩记忆翻牌：翻开卡片，找出所有相同的图案。三种难度，步数越少星越多，自动保存进度。">
+  <meta name="theme-color" content="#f7f2ea">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='15' height='21' rx='3' fill='%23f26b3a' transform='rotate(-10 10 16)'/%3E%3Crect x='14' y='6' width='15' height='21' rx='3' fill='%23fffdf9' stroke='%235b8def' stroke-width='2' transform='rotate(8 21 16)'/%3E%3Ccircle cx='21.5' cy='16.5' r='4' fill='%234fb39a' transform='rotate(8 21 16)'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/site.css">
+  <script src="../../assets/site.js"></script>
+  <style>
+    :root {
+      --stage-max: 520px;
+      --card-back: #f26b3a;
+      --flip: 380ms;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) { --card-back: #d9603a; }
+    }
+    :root[data-theme="dark"] { --card-back: #d9603a; }
+
+    .gcontrols { min-height: 40px; }
+    .best-mini {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-dim);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .combo-pop {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -6px;
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--good);
+      pointer-events: none;
+      white-space: nowrap;
+      animation: float-up 800ms ease-out forwards;
+    }
+    @keyframes float-up {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-30px); opacity: 0; }
+    }
+
+    /* 牌桌 */
+    .board {
+      --cols: 4;
+      --cw: 72px;
+      --ch: 88px;
+      --gap: 8px;
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(var(--cols), var(--cw));
+      grid-auto-rows: var(--ch);
+      gap: var(--gap);
+      width: max-content;
+      margin: 0 auto;
+      padding: var(--gap);
+      border-radius: 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .card {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      border-radius: calc(var(--cw) * 0.14);
+      background: none;
+      perspective: 700px;
+      cursor: pointer;
+      touch-action: manipulation;
+      outline: none;
+    }
+    .card:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+    .card.up, .card.matched { cursor: default; }
+
+    .card-inner {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      transition: transform var(--flip) cubic-bezier(.3, .7, .3, 1);
+    }
+    .card.up .card-inner,
+    .card.matched .card-inner { transform: rotateY(180deg); }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      border-radius: inherit;
+      border-radius: calc(var(--cw) * 0.14);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+
+    /* 牌背：品牌四色方块 + 圆点纹理 */
+    .back {
+      background-color: var(--card-back);
+      background-image:
+        radial-gradient(rgba(255, 255, 255, 0.2) 1.3px, transparent 1.5px),
+        linear-gradient(150deg, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.1));
+      background-size: 9px 9px, 100% 100%;
+      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.3), 0 2px 0 rgba(0, 0, 0, 0.1);
+      transition: filter .15s ease;
+    }
+    .mark {
+      --m: calc(var(--cw) * 0.13);
+      display: grid;
+      grid-template-columns: repeat(2, var(--m));
+      grid-template-rows: repeat(2, var(--m));
+      gap: calc(var(--m) * 0.28);
+      padding: calc(var(--m) * 0.42);
+      border-radius: calc(var(--m) * 0.55);
+      background: #fffdf9;
+      box-shadow: 0 2px 6px rgba(80, 30, 10, 0.25);
+      transform: rotate(45deg);
+    }
+    .mark i { display: block; border-radius: calc(var(--m) * 0.28); }
+    .mark i:nth-child(1) { background: #f26b3a; }
+    .mark i:nth-child(2) { background: #f5b43c; }
+    .mark i:nth-child(3) { background: #4fb39a; }
+    .mark i:nth-child(4) { background: #5b8def; }
+    @media (hover: hover) {
+      .card:not(.up):not(.matched):hover .back { filter: brightness(1.08); }
+    }
+
+    .front {
+      transform: rotateY(180deg);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.06);
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", var(--font);
+      font-size: var(--ef, 40px);
+      line-height: 1;
+      transition: opacity .4s ease, box-shadow .2s ease;
+    }
+
+    /* 配对成功 */
+    .card.matched .front { box-shadow: inset 0 0 0 2.5px var(--good); }
+    .card.matched.done .front { opacity: 0.55; transition-delay: .5s; }
+    .card.just { animation: pulse 420ms ease calc(var(--flip) - 80ms); }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      45% { transform: scale(1.1); }
+    }
+
+    /* 配对失败 */
+    .card.miss .front { box-shadow: inset 0 0 0 2.5px var(--bad); }
+    .card.miss { animation: shake 340ms ease calc(var(--flip) - 40ms); }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-5px) rotate(-2deg); }
+      40% { transform: translateX(5px) rotate(2deg); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(3px); }
+    }
+
+    .board.instant .card-inner,
+    .board.instant .front { transition: none; }
+
+    .overlay h2 { font-size: clamp(26px, 8vw, 40px); }
+    .stars { font-size: 34px; line-height: 1; letter-spacing: 4px; color: var(--surface-3); }
+    .stars b { color: #f5b43c; font-weight: inherit; }
+    .overlay .rec {
+      display: inline-block;
+      margin-left: 4px;
+      padding: 0 6px;
+      border-radius: 6px;
+      background: var(--good);
+      color: #fff;
+      font-size: 12px;
+      vertical-align: 1px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    @media (max-width: 340px) {
+      .stats { gap: 6px; }
+      .stat { padding-left: 4px; padding-right: 4px; }
+      .stat-value { font-size: 16px; }
+      .stats .btns .btn { padding: 0 8px; }
+      .seg button { padding: 0 7px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      :root { --flip: 0ms; }
+      .card-inner, .front { transition: none; }
+    }
+  </style>
+</head>
+<body class="game-page">
+  <header class="gbar">
+    <a class="icon-btn" href="../../" aria-label="返回游戏大厅" title="返回游戏大厅">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <h1 class="gbar-title">记忆翻牌</h1>
+    <div class="gbar-actions">
+      <button class="icon-btn sound-toggle" type="button" aria-label="关闭声音">
+        <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+        <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>
+      </button>
+      <button class="icon-btn" type="button" data-open="help" aria-label="玩法说明" title="玩法说明">?</button>
+    </div>
+  </header>
+
+  <main class="gmain">
+    <div class="stats">
+      <div class="stat"><span class="stat-label">步数</span><span class="stat-value" id="moves">0</span></div>
+      <div class="stat"><span class="stat-label">时间</span><span class="stat-value" id="time">00:00</span></div>
+      <div class="stat" id="pairs-box"><span class="stat-label">配对</span><span class="stat-value" id="pairs">0/8</span></div>
+      <div class="btns">
+        <button class="btn primary" type="button" id="new-game">新游戏</button>
+      </div>
+    </div>
+
+    <div class="gcontrols">
+      <div class="seg" id="diff" role="group" aria-label="难度">
+        <button type="button" data-diff="easy" aria-pressed="true">简单 4×4</button>
+        <button type="button" data-diff="normal" aria-pressed="false">普通 4×5</button>
+        <button type="button" data-diff="hard" aria-pressed="false">困难 6×6</button>
+      </div>
+      <span class="best-mini" id="best-mini"></span>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="board" id="board" role="grid" aria-label="记忆翻牌牌桌">
+        <div class="overlay" id="win" hidden>
+          <h2>全部配对！</h2>
+          <div class="stars" id="win-stars" aria-hidden="true"></div>
+          <p id="win-text"></p>
+          <p id="win-best"></p>
+          <div class="row">
+            <button class="btn primary" type="button" data-action="new">再来一局</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <span class="sr-only" id="live" aria-live="polite"></span>
+  </main>
+
+  <dialog class="sheet" id="help">
+    <div class="sheet-head">
+      <h2>怎么玩</h2>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+    <div class="sheet-body">
+      <ul class="tips">
+        <li><b>👆</b><span>每次翻开两张牌。</span></li>
+        <li><b>🎯</b><span>图案相同就<strong>配对成功</strong>，不同会翻回去。</span></li>
+        <li><b>⭐</b><span>步数越少，星星越多。</span></li>
+        <li><b>⌨️</b><span>方向键选牌，<kbd>Enter</kbd> 翻开。</span></li>
+      </ul>
+      <p style="margin:18px 0 0"><button class="btn block theme-toggle" type="button">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        切换深色 / 浅色
+      </button></p>
+    </div>
+  </dialog>
+
+  <script>
+  (function () {
+    'use strict';
+
+    var DIFFS = {
+      easy:   { cols: 4, rows: 4, name: '简单' },
+      normal: { cols: 4, rows: 5, name: '普通' },
+      hard:   { cols: 6, rows: 6, name: '困难' }
+    };
+    var ORDER = ['easy', 'normal', 'hard'];
+    var POOL = [
+      ['🍎', '苹果'], ['🍊', '橘子'], ['🍋', '柠檬'], ['🍉', '西瓜'], ['🍇', '葡萄'], ['🍓', '草莓'],
+      ['🍑', '桃子'], ['🍒', '樱桃'], ['🥝', '猕猴桃'], ['🍍', '菠萝'], ['🥥', '椰子'], ['🥕', '胡萝卜'],
+      ['🌽', '玉米'], ['🍄', '蘑菇'], ['🐶', '小狗'], ['🐱', '小猫'], ['🐼', '熊猫'], ['🦊', '狐狸'],
+      ['🐸', '青蛙'], ['🐧', '企鹅'], ['🦁', '狮子'], ['🐯', '老虎'], ['🐰', '兔子'], ['🐨', '考拉'],
+      ['🐷', '小猪'], ['🐵', '猴子'], ['🐙', '章鱼'], ['🦄', '独角兽'], ['🐝', '蜜蜂'], ['🦋', '蝴蝶'],
+      ['🐢', '乌龟'], ['🐳', '鲸鱼']
+    ];
+    var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var FLIP_MS = REDUCED ? 0 : 380;
+    var MISS_MS = 800;   // 不匹配时停留多久再翻回
+    var KEY_DIFF = 'gzly.memory.diff';
+    var KEY_BEST = 'gzly.memory.best';
+    function stateKey(d) { return 'gzly.memory.state.' + d; }
+
+    var store = window.Site.store;
+    var sound = window.Site.sound;
+
+    var boardEl = document.getElementById('board');
+    var stageEl = document.getElementById('stage');
+    var winEl = document.getElementById('win');
+    var movesEl = document.getElementById('moves');
+    var timeEl = document.getElementById('time');
+    var pairsEl = document.getElementById('pairs');
+    var pairsBox = document.getElementById('pairs-box');
+    var bestMiniEl = document.getElementById('best-mini');
+    var liveEl = document.getElementById('live');
+    var diffBtns = document.querySelectorAll('#diff button');
+
+    var diff = DIFFS[store.get(KEY_DIFF, 'easy')] ? store.get(KEY_DIFF, 'easy') : 'easy';
+    var bests = store.get(KEY_BEST, null);
+    if (!bests || typeof bests !== 'object') bests = {};
+
+    // 局面
+    var deck = [];       // 每张牌对应 POOL 下标
+    var matched = [];
+    var up = [];         // 翻开但未配对的牌
+    var moves = 0;
+    var elapsed = 0;     // 毫秒
+    var running = false;
+    var won = false;
+    var combo = 0;
+    var rec = null;      // 本局是否破纪录 {moves, time}
+    var pending = null;  // 不匹配后待翻回的两张
+    var cards = [];
+    var lastTick = performance.now();
+    var shownSec = -1;
+
+    window.Site.played('memory');
+
+    function pairsTotal() { return deck.length / 2; }
+    function pairsDone() {
+      var n = 0;
+      for (var i = 0; i < matched.length; i++) if (matched[i]) n++;
+      return n / 2;
+    }
+
+    function shuffle(a) {
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+
+    // ---------- 渲染 ----------
+    function buildBoard() {
+      var cfg = DIFFS[diff];
+      cards.forEach(function (c) { c.remove(); });
+      cards = [];
+      boardEl.style.setProperty('--cols', cfg.cols);
+      boardEl.classList.add('instant');
+      var frag = document.createDocumentFragment();
+      for (var i = 0; i < deck.length; i++) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'card';
+        b.setAttribute('data-i', i);
+        b.setAttribute('role', 'gridcell');
+        b.tabIndex = i === 0 ? 0 : -1;
+        b.innerHTML = '<span class="card-inner" aria-hidden="true">' +
+          '<span class="face back"><span class="mark"><i></i><i></i><i></i><i></i></span></span>' +
+          '<span class="face front">' + POOL[deck[i]][0] + '</span></span>';
+        frag.appendChild(b);
+        cards.push(b);
+      }
+      boardEl.insertBefore(frag, winEl);
+      for (var k = 0; k < deck.length; k++) paintCard(k);
+      layout();
+      void boardEl.offsetWidth;
+      requestAnimationFrame(function () { boardEl.classList.remove('instant'); });
+    }
+
+    function paintCard(i) {
+      var el = cards[i];
+      var cfg = DIFFS[diff];
+      var isUp = up.indexOf(i) !== -1;
+      el.classList.toggle('up', isUp);
+      el.classList.toggle('matched', !!matched[i]);
+      el.classList.toggle('done', !!matched[i]);
+      var pos = '第' + (Math.floor(i / cfg.cols) + 1) + '行第' + (i % cfg.cols + 1) + '张';
+      var name = POOL[deck[i]][1];
+      el.setAttribute('aria-label', matched[i] ? pos + '，' + name + '，已配对' : isUp ? pos + '，' + name : pos + '，未翻开');
+    }
+
+    function retrigger(el, cls) {
+      el.classList.remove(cls);
+      void el.offsetWidth;
+      el.classList.add(cls);
+    }
+
+    function updateStats() {
+      movesEl.textContent = moves;
+      pairsEl.textContent = pairsDone() + '/' + pairsTotal();
+      renderTime(true);
+    }
+
+    function renderTime(force) {
+      var s = Math.floor(elapsed / 1000);
+      if (s === shownSec && !force) return;
+      shownSec = s;
+      timeEl.textContent = window.Site.formatTime(s);
+    }
+
+    function updateDiffButtons() {
+      for (var i = 0; i < diffBtns.length; i++) {
+        diffBtns[i].setAttribute('aria-pressed', diffBtns[i].getAttribute('data-diff') === diff ? 'true' : 'false');
+      }
+    }
+
+    function updateBestMini() {
+      var b = bests[diff];
+      bestMiniEl.textContent = b && b.moves ? '🏆 ' + b.moves + ' 步' : '';
+      bestMiniEl.title = b && b.moves ? '最佳：' + b.moves + ' 步，最快 ' + window.Site.formatTime(b.time) : '';
+    }
+
+    function updateHomeStat() {
+      for (var i = ORDER.length - 1; i >= 0; i--) {
+        var b = bests[ORDER[i]];
+        if (b && b.moves) {
+          window.Site.setHomeStat('memory', DIFFS[ORDER[i]].name + ' ' + b.moves + ' 步');
+          return;
+        }
+      }
+    }
+
+    function starCount(m, n) {
+      if (m <= Math.ceil(n * 1.5) + 1) return 3;
+      if (m <= Math.ceil(n * 2.25)) return 2;
+      return 1;
+    }
+
+    function showWin() {
+      winEl.hidden = !won;
+      if (!won) return;
+      var n = pairsTotal();
+      var s = starCount(moves, n);
+      var stars = '';
+      for (var i = 0; i < 3; i++) stars += i < s ? '<b>★</b>' : '★';
+      document.getElementById('win-stars').innerHTML = stars;
+      var sec = Math.floor(elapsed / 1000);
+      document.getElementById('win-text').textContent = moves + ' 步 · ' + window.Site.formatTime(sec);
+      var b = bests[diff] || {};
+      var bestEl = document.getElementById('win-best');
+      bestEl.textContent = '最佳 ' + b.moves + ' 步 · ' + window.Site.formatTime(b.time);
+      if (rec && (rec.moves || rec.time)) {
+        var tag = document.createElement('span');
+        tag.className = 'rec';
+        tag.textContent = '新纪录';
+        bestEl.appendChild(tag);
+      }
+    }
+
+    // 根据可用空间计算卡片尺寸，保证整页不滚动
+    function layout() {
+      var cfg = DIFFS[diff];
+      var bodyStyle = getComputedStyle(document.body);
+      var bottom = parseFloat(bodyStyle.paddingBottom) || 16;
+      var top = stageEl.getBoundingClientRect().top + window.scrollY;
+      var availW = stageEl.clientWidth;
+      var availH = Math.max(200, window.innerHeight - top - bottom);
+      var ratio = 1.22;
+      var gap = cfg.cols >= 6 ? 6 : 8;
+      var cw = 0;
+      for (var pass = 0; pass < 2; pass++) {
+        var pad = 2 * (gap + 1);
+        var w1 = (availW - pad - (cfg.cols - 1) * gap) / cfg.cols;
+        var h1 = (availH - pad - (cfg.rows - 1) * gap) / cfg.rows;
+        cw = Math.floor(Math.max(28, Math.min(w1, h1 / ratio, 124)));
+        if (cw >= 88 && gap < 10) gap = 10;
+        else break;
+      }
+      var ch = Math.floor(cw * ratio);
+      boardEl.style.setProperty('--cw', cw + 'px');
+      boardEl.style.setProperty('--ch', ch + 'px');
+      boardEl.style.setProperty('--gap', gap + 'px');
+      boardEl.style.setProperty('--ef', Math.round(Math.min(cw * 0.62, ch * 0.5)) + 'px');
+    }
+
+    function announce(text) { liveEl.textContent = text; }
+
+    // ---------- 存档 ----------
+    function save() {
+      // 存档时不保留“待翻回”的两张
+      store.set(stateKey(diff), {
+        deck: deck,
+        matched: matched,
+        up: up.length === 1 ? up.slice() : [],
+        moves: moves,
+        elapsed: Math.round(elapsed),
+        won: won,
+        combo: up.length === 2 ? 0 : combo,
+        rec: rec
+      });
+    }
+
+    function isValid(s, d) {
+      var n = DIFFS[d].cols * DIFFS[d].rows;
+      if (!s || !Array.isArray(s.deck) || s.deck.length !== n) return false;
+      if (!Array.isArray(s.matched) || s.matched.length !== n) return false;
+      var count = {};
+      for (var i = 0; i < n; i++) {
+        var v = s.deck[i];
+        if (typeof v !== 'number' || v < 0 || v >= POOL.length || v % 1) return false;
+        count[v] = (count[v] || 0) + 1;
+      }
+      for (var k in count) if (count[k] !== 2) return false;
+      for (var j = 0; j < n; j++) {
+        if (s.matched[j]) {
+          var other = s.deck.indexOf(s.deck[j]) === j ? s.deck.lastIndexOf(s.deck[j]) : s.deck.indexOf(s.deck[j]);
+          if (!s.matched[other]) return false;
+        }
+      }
+      if (!Array.isArray(s.up) || s.up.length > 1) return false;
+      if (s.up.length && (typeof s.up[0] !== 'number' || s.up[0] < 0 || s.up[0] >= n || s.matched[s.up[0]])) return false;
+      if (typeof s.moves !== 'number' || s.moves < 0 || typeof s.elapsed !== 'number' || s.elapsed < 0) return false;
+      return true;
+    }
+
+    function load(s) {
+      deck = s.deck.slice();
+      matched = s.matched.map(Boolean);
+      up = s.up.slice();
+      moves = s.moves;
+      elapsed = s.elapsed;
+      won = !!s.won && matched.every(Boolean);
+      combo = s.combo || 0;
+      rec = s.rec || null;
+      running = false; // 下次翻牌时继续计时
+    }
+
+    // ---------- 规则 ----------
+    function newGame() {
+      clearPending(false);
+      var cfg = DIFFS[diff];
+      var n = cfg.cols * cfg.rows / 2;
+      var picks = shuffle(POOL.map(function (_, i) { return i; })).slice(0, n);
+      deck = shuffle(picks.concat(picks));
+      matched = deck.map(function () { return false; });
+      up = [];
+      moves = 0;
+      elapsed = 0;
+      running = false;
+      won = false;
+      combo = 0;
+      rec = null;
+      buildBoard();
+      updateStats();
+      showWin();
+      save();
+    }
+
+    function clearPending(repaint) {
+      if (!pending) return;
+      var p = pending;
+      pending = null;
+      clearTimeout(p.timer);
+      up = up.filter(function (i) { return p.cards.indexOf(i) === -1; });
+      p.cards.forEach(function (i) {
+        cards[i] && cards[i].classList.remove('miss');
+        if (repaint && cards[i]) paintCard(i);
+      });
+    }
+
+    function flip(i) {
+      if (won || i < 0 || i >= deck.length) return;
+      if (pending) clearPending(true); // 等待翻回时又点了牌：立刻翻回，再处理这次点击
+      if (matched[i] || up.indexOf(i) !== -1) return;
+
+      if (!running) { running = true; lastTick = performance.now(); }
+      up.push(i);
+      cards[i].classList.remove('just', 'miss');
+      paintCard(i);
+      sound('flip');
+
+      if (up.length === 2) {
+        var a = up[0];
+        var b = up[1];
+        moves++;
+        if (deck[a] === deck[b]) {
+          matched[a] = matched[b] = true;
+          up = [];
+          combo++;
+          [a, b].forEach(function (k) {
+            paintCard(k);
+            cards[k].classList.remove('done');
+            retrigger(cards[k], 'just');
+            setTimeout(function () { if (matched[k]) cards[k].classList.add('done'); }, FLIP_MS + 300);
+          });
+          setTimeout(function () { sound('match'); }, Math.min(FLIP_MS, 200));
+          if (combo >= 2) showCombo();
+          announce(POOL[deck[a]][1] + '，配对成功');
+          if (pairsDone() === pairsTotal()) finish();
+        } else {
+          combo = 0;
+          cards[a].classList.remove('just');
+          retrigger(cards[a], 'miss');
+          retrigger(cards[b], 'miss');
+          setTimeout(function () { sound('error'); }, Math.min(FLIP_MS, 250));
+          pending = { cards: [a, b], timer: setTimeout(function () { clearPending(true); }, MISS_MS + FLIP_MS) };
+          announce('不一样');
+        }
+      }
+      updateStats();
+      save();
+    }
+
+    function showCombo() {
+      if (REDUCED) return;
+      var el = document.createElement('span');
+      el.className = 'combo-pop';
+      el.textContent = '连击 ×' + combo;
+      pairsBox.appendChild(el);
+      setTimeout(function () { el.remove(); }, 800);
+    }
+
+    function finish() {
+      tick();
+      running = false;
+      won = true;
+      var sec = Math.floor(elapsed / 1000);
+      var b = bests[diff] || {};
+      rec = { moves: !b.moves || moves < b.moves, time: !b.time && b.time !== 0 || sec < b.time };
+      if (rec.moves) b.moves = moves;
+      if (rec.time) b.time = sec;
+      bests[diff] = b;
+      store.set(KEY_BEST, bests);
+      updateBestMini();
+      updateHomeStat();
+      announce('全部配对！' + moves + ' 步');
+      setTimeout(function () {
+        if (!won) return;
+        sound('win');
+        showWin();
+        var btn = winEl.querySelector('[data-action="new"]');
+        if (btn) btn.focus({ preventScroll: true });
+      }, FLIP_MS + 450);
+    }
+
+    function setDiff(d) {
+      if (!DIFFS[d] || d === diff) return;
+      if (pending) clearPending(true);
+      tick();
+      save();
+      diff = d;
+      store.set(KEY_DIFF, diff);
+      updateDiffButtons();
+      updateBestMini();
+      sound('click');
+      var s = store.get(stateKey(diff), null);
+      if (isValid(s, diff) && !s.won) {
+        load(s);
+        buildBoard();
+        updateStats();
+        showWin();
+      } else {
+        newGame();
+      }
+    }
+
+    // ---------- 计时 ----------
+    function tick() {
+      var now = performance.now();
+      if (running && !document.hidden) {
+        elapsed += now - lastTick;
+        renderTime(false);
+      }
+      lastTick = now;
+    }
+    setInterval(tick, 250);
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        tick();
+        save();
+      } else {
+        lastTick = performance.now();
+      }
+    });
+    window.addEventListener('pagehide', function () { tick(); save(); });
+
+    // ---------- 操作 ----------
+    boardEl.addEventListener('click', function (e) {
+      var action = e.target.closest('[data-action]');
+      if (action) {
+        if (action.getAttribute('data-action') === 'new') { sound('start'); newGame(); }
+        return;
+      }
+      var card = e.target.closest('.card');
+      if (!card) return;
+      flip(+card.getAttribute('data-i'));
+    });
+
+    // 方向键在牌之间移动焦点
+    boardEl.addEventListener('keydown', function (e) {
+      var card = e.target.closest && e.target.closest('.card');
+      if (!card) return;
+      var cols = DIFFS[diff].cols;
+      var i = +card.getAttribute('data-i');
+      var j = i;
+      if (e.key === 'ArrowLeft') j = i - 1;
+      else if (e.key === 'ArrowRight') j = i + 1;
+      else if (e.key === 'ArrowUp') j = i - cols;
+      else if (e.key === 'ArrowDown') j = i + cols;
+      else if (e.key === 'Home') j = 0;
+      else if (e.key === 'End') j = cards.length - 1;
+      else return;
+      e.preventDefault();
+      if (j < 0 || j >= cards.length) return;
+      card.tabIndex = -1;
+      cards[j].tabIndex = 0;
+      cards[j].focus();
+    });
+    boardEl.addEventListener('focusin', function (e) {
+      var card = e.target.closest && e.target.closest('.card');
+      if (!card) return;
+      cards.forEach(function (c) { c.tabIndex = c === card ? 0 : -1; });
+    });
+
+    document.getElementById('new-game').addEventListener('click', function () { sound('start'); newGame(); });
+    document.getElementById('diff').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-diff]');
+      if (b) setDiff(b.getAttribute('data-diff'));
+    });
+
+    var resizeRaf = 0;
+    window.addEventListener('resize', function () {
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(layout);
+    });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+
+    // ---------- 启动 ----------
+    updateDiffButtons();
+    updateBestMini();
+    updateHomeStat();
+    var saved = store.get(stateKey(diff), null);
+    if (isValid(saved, diff)) {
+      load(saved);
+      buildBoard();
+      updateStats();
+      showWin();
+    } else {
+      newGame();
+    }
+  })();
+  </script>
+</body>
+</html>
