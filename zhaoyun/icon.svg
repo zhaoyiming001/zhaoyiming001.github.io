@@ -1,17 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fff0b0"/><stop offset=".4" stop-color="#b8862a"/><stop offset=".7" stop-color="#ffe08a"/><stop offset="1" stop-color="#5e3e0c"/>
-    </linearGradient>
-    <linearGradient id="lac" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#8a1616"/><stop offset="1" stop-color="#2e0505"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="12" fill="#15110d"/>
-  <path d="M14 22 Q14 8 32 8 Q50 8 50 22 V52 L46 56 H18 L14 52 Z" fill="url(#gold)" stroke="#0d0906" stroke-width="2"/>
-  <path d="M19 24 Q19 13 32 13 Q45 13 45 24 V49 L42 52 H22 L19 49 Z" fill="url(#lac)" stroke="#f3d68a" stroke-width="1.2"/>
-  <path d="M24 46 L40 18" stroke="#f3d68a" stroke-width="3" stroke-linecap="round"/>
-  <path d="M40 18 L43 12 L42.6 20.5 Z" fill="#fff4d0" stroke="#3a2400" stroke-width="1"/>
-  <path d="M36.5 23.5 l4.5 3" stroke="#e8423a" stroke-width="3" stroke-linecap="round"/>
-  <path d="M30 54 v6 M34 54 v6" stroke="#c42020" stroke-width="2.5" stroke-linecap="round"/>
+  <rect width="64" height="64" rx="12" fill="#efe6d3"/>
+  <rect x="11" y="8" width="42" height="50" rx="7" fill="#2f6e48"/>
+  <rect x="11" y="6" width="42" height="45" rx="7" fill="#fffaf0" stroke="#c9b892" stroke-width="1"/>
+  <rect x="14" y="9" width="36" height="39" rx="4" fill="none" stroke="#3f9a63" stroke-width="1.2"/>
+  <g transform="translate(13 8) scale(0.037)" fill="#1b1712"><path d="M484 279Q599 254 707 244Q732 243 737 255Q746 277 739 332Q715 534 671 641Q649 708 625 728Q612 740 586 731Q552 721 521 708Q496 699 513 723Q559 778 582 819Q592 841 614 836Q638 833 668 801Q755 713 792 383Q799 310 829 266Q848 241 838 229Q820 207 779 189Q751 173 719 187Q622 223 474 245Q347 263 273 260Q248 256 248 270Q247 282 272 300Q303 324 335 314Q389 299 442 289L484 279Z"/><path d="M442 289Q442 490 281 653Q233 708 116 800Q107 809 115 812Q122 815 136 810Q314 732 401 593Q450 523 496 406Q511 370 531 337Q540 327 533 314Q518 290 484 279C456 267 443 262 442 289Z"/></g>
+  <rect x="44" y="44" width="12" height="12" rx="1.5" fill="#b3261e"/>
 </svg>

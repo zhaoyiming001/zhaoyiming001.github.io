@@ -1,12 +1,12 @@
 赵云与阿斗 — bundled fonts, all under the SIL Open Font License, Version 1.1
 
-fonts/brush.woff2        subset of Ma Shan Zheng   — Copyright 2018 The Ma Shan Zheng Project Authors (https://github.com/googlefonts/mashanzheng)
-fonts/wild.woff2         subset of Zhi Mang Xing   — Copyright 2018 The Zhi Mang Xing Project Authors (https://github.com/googlefonts/zhimangxing)
-fonts/serif.woff2,       instances (wght 600 / 900) and subsets of Noto Serif SC
-fonts/serif-black.woff2  — Copyright 2012 Google Inc. All Rights Reserved.
+fonts/brush.woff2   subset of Ma Shan Zheng — Copyright 2018 The Ma Shan Zheng Project Authors (https://github.com/googlefonts/mashanzheng)
+fonts/serif.woff2   weight-600 instance and subset of Noto Serif SC — Copyright 2012 Google Inc. All Rights Reserved.
 
 Subsetted to the characters used by the game (modified versions; no Reserved Font Names are used).
-Sources: https://github.com/google/fonts (ofl/mashanzheng, ofl/zhimangxing, ofl/notoserifsc)
+Sources: https://github.com/google/fonts (ofl/mashanzheng, ofl/notoserifsc)
+
+(Character stroke outlines in strokes.js come from hanzi-writer-data under the Arphic Public License; see ../ARPHICPL.TXT.)
 
 -----------------------------------------------------------------
 SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
