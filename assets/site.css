@@ -293,8 +293,8 @@ button { font: inherit; color: inherit; }
 
 /* 数据条：分数 / 时间 / 步数 */
 .stats { display: flex; align-items: center; gap: 8px; }
-.stats .btns { display: flex; gap: 8px; flex: none; }
-.stats .btns .btn { height: 54px; }
+.stats .btns { display: flex; gap: 8px; flex: none; align-self: stretch; }
+.stats .btns .btn { height: auto; min-height: 50px; }
 .stat {
   position: relative;
   flex: 1;
@@ -473,6 +473,7 @@ kbd {
 .sheet-label:first-child { margin-top: 0; }
 .choices { display: grid; gap: 10px; }
 .choices.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.choices.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .choice {
   display: flex;
   align-items: center;
@@ -561,17 +562,20 @@ kbd {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 30px;
-  padding: 0 12px;
+  height: 40px;
+  padding: 0 14px;
   border: 2.5px solid var(--ink);
   border-radius: 999px;
   background: var(--theme-soft);
   color: #2d2a4a;
-  font-size: 13px;
+  box-shadow: var(--pop-sm);
+  font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
+  transition: transform .08s ease, box-shadow .08s ease;
 }
+.chip:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
 
 @media (max-width: 400px) {
   .stats .btns .btn { padding: 0 10px; }
