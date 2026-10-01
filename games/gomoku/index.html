@@ -14,7 +14,8 @@
   <script src="../../assets/site.js"></script>
   <style>
     :root {
-      --stage-max: 520px;
+      /* 棋盘尽量大：顶栏 + 数据条约占 164px，其余都给棋盘；顶栏、数据条与棋盘同宽 */
+      --stage-max: clamp(300px, calc(100vh - 164px), 600px);
       /* 卡通蜂蜜色木棋盘 */
       --wood: #f6c672;
       --wood-grain: rgba(178, 104, 30, 0.2);
@@ -41,12 +42,11 @@
       --stone-w-shade: #c4bedd;
     }
 
-    .stage {
-      width: min(100%, calc(100dvh - 236px));
-      min-width: 260px;
-      align-self: center;
-      margin-bottom: 6px;
+    @supports (height: 100dvh) {
+      :root { --stage-max: clamp(300px, calc(100dvh - 164px), 600px); }
     }
+
+    .stage { margin-bottom: 6px; }
     .board {
       position: relative;
       width: 100%;
@@ -127,9 +127,14 @@
     .dots i:nth-child(3) { animation-delay: 0.3s; }
     @keyframes dot-bounce { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(-6px); } }
 
-    .gcontrols { justify-content: center; }
-    #mode-chip { border-radius: 999px; padding: 0 16px; }
-    #mode-chip svg { width: 17px; height: 17px; color: var(--theme); }
+    /* 轮到玩家落子时，回合格子亮起来 */
+    .stat { transition: background-color .2s ease; }
+    .stat.hot { background: color-mix(in srgb, var(--theme) 22%, var(--paper)); }
+    /* 按钮与数据格同高 */
+    .stats { align-items: stretch; }
+    .stats .btns .btn { height: auto; min-height: 50px; }
+    @media (min-width: 401px) { .stats .btns .btn { padding: 0 12px; } }
+    .stat-value small { font-size: 0.66em; font-weight: 700; color: var(--text-dim); margin-right: 1px; }
 
     /* 结果卡片 */
     .over-stones { display: flex; gap: 2px; margin-top: 2px; }
@@ -144,32 +149,26 @@
     .overlay h2.lose { color: #a69ee6; }
     .overlay h2.draw { color: var(--theme-2); }
 
-    /* 设置面板 */
-    .set-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 12px 0;
-      border-bottom: 2px dashed var(--line);
-      transition: opacity .15s ease;
-    }
-    .set-row:last-of-type { border-bottom: 0; }
-    .set-row > span { font-weight: 700; font-size: 16px; }
-    .set-row.off { opacity: 0.38; pointer-events: none; }
-    .set-note {
-      margin: 8px 0 0;
-      padding: 8px 12px;
-      border-radius: 12px;
-      background: var(--theme-soft);
-      color: #2d2a4a;
-      font-size: 13px;
-      font-weight: 600;
+    /* 新游戏弹窗：紧凑的横排选项 */
+    .choices.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .choices.tight .choice {
+      flex-direction: column;
+      justify-content: center;
+      gap: 1px;
+      padding: 8px 6px;
       text-align: center;
     }
+    .choices.tight .choice b { white-space: nowrap; }
+    .choices.tight .choice small { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .choice .ic { width: 15px; height: 15px; margin-right: 6px; vertical-align: -1px; animation: none; }
+    #ai-opts > .sheet-label:first-child, #opt-nums-row { margin-top: 16px; }
 
     @media (max-width: 380px) {
       .stat-value { font-size: 17px; }
+    }
+    @media (max-width: 340px) {
+      #rec { font-size: 15px; }
+      .choices.tight .choice b { font-size: 15px; }
     }
     @media (prefers-reduced-motion: reduce) {
       .win-glow, .ghost .ring, .dots i { animation: none; }
@@ -193,8 +192,8 @@
 
   <main class="gmain">
     <div class="stats">
-      <div class="stat"><span class="stat-label">回合</span><span class="stat-value" id="turn"></span></div>
-      <div class="stat"><span class="stat-label" id="rec-label">战绩</span><span class="stat-value" id="rec">胜 0 负 0</span></div>
+      <div class="stat" id="turn-stat"><span class="stat-label">回合</span><span class="stat-value" id="turn" aria-live="polite"></span></div>
+      <div class="stat"><span class="stat-label" id="rec-label">战绩</span><span class="stat-value" id="rec"></span></div>
       <div class="btns">
         <button class="btn" type="button" id="undo" title="悔棋 (Ctrl+Z)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
@@ -246,34 +245,36 @@
         </div>
       </div>
     </div>
-
-    <div class="gcontrols">
-      <button class="btn sm" type="button" data-open="settings" id="mode-chip" title="设置">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
-        <span id="mode-text">人机 · 普通 · 执黑</span>
-      </button>
-    </div>
   </main>
 
-  <dialog class="sheet" id="settings">
+  <dialog class="sheet" id="newgame">
     <div class="sheet-head">
-      <h2>设置</h2>
+      <h2>新游戏</h2>
       <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
     </div>
     <div class="sheet-body">
-      <div class="set-row"><span>模式</span>
-        <div class="seg" data-key="mode"><button type="button" data-v="ai">人机</button><button type="button" data-v="pvp">双人</button></div>
+      <p class="sheet-label">模式</p>
+      <div class="choices cols-2 tight">
+        <button class="choice" type="button" data-k="mode" data-v="ai"><b>人机对战</b><small>和 AI 下棋</small></button>
+        <button class="choice" type="button" data-k="mode" data-v="pvp"><b>双人对战</b><small>同屏轮流</small></button>
       </div>
-      <div class="set-row" id="row-diff"><span>难度</span>
-        <div class="seg" data-key="diff"><button type="button" data-v="easy">简单</button><button type="button" data-v="normal">普通</button><button type="button" data-v="hard">困难</button></div>
+      <div id="ai-opts">
+        <p class="sheet-label">难度</p>
+        <div class="choices cols-3 tight">
+          <button class="choice" type="button" data-k="diff" data-v="easy"><b>简单</b><small id="rec-easy"></small></button>
+          <button class="choice" type="button" data-k="diff" data-v="normal"><b>普通</b><small id="rec-normal"></small></button>
+          <button class="choice" type="button" data-k="diff" data-v="hard"><b>困难</b><small id="rec-hard"></small></button>
+        </div>
+        <p class="sheet-label">执子</p>
+        <div class="choices cols-2 tight">
+          <button class="choice" type="button" data-k="side" data-v="1"><b><i class="ic b"></i>执黑先手</b></button>
+          <button class="choice" type="button" data-k="side" data-v="2"><b><i class="ic w"></i>执白后手</b></button>
+        </div>
       </div>
-      <div class="set-row" id="row-side"><span>执子</span>
-        <div class="seg" data-key="side"><button type="button" data-v="1">执黑先手</button><button type="button" data-v="2">执白后手</button></div>
+      <label class="switch-row" id="opt-nums-row"><span>显示手数<small>棋子上标出第几手</small></span><input type="checkbox" class="switch" id="opt-nums"></label>
+      <div class="sheet-foot">
+        <button class="btn primary block" type="button" id="start">开始</button>
       </div>
-      <div class="set-row"><span>手数</span>
-        <div class="seg" data-key="nums"><button type="button" data-v="0">隐藏</button><button type="button" data-v="1">显示</button></div>
-      </div>
-      <p class="set-note">更改模式、难度或执子会开始新局</p>
     </div>
   </dialog>
 
@@ -286,8 +287,8 @@
       <ul class="tips">
         <li><b>🏆</b><span>黑先白后，横竖斜连成 <strong>五子</strong> 就赢。</span></li>
         <li><b>👆</b><span>手机上点一下预览，<strong>再点一下</strong>落子。</span></li>
-        <li><b>↶</b><span>人机悔棋会同时退回你和 AI 的一步。</span></li>
-        <li><b>⚙️</b><span>棋盘下方按钮切换模式和难度。</span></li>
+        <li><b>↶</b><span>人机模式悔棋，一次退回 <strong>两步</strong>。</span></li>
+        <li><b>⚙️</b><span>点 <strong>新局</strong> 选择模式、难度和执子。</span></li>
       </ul>
       <p style="margin:18px 0 0"><button class="btn block theme-toggle" type="button">
         <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
@@ -689,7 +690,9 @@
     var recLabel = document.getElementById('rec-label');
     var undoBtn = document.getElementById('undo');
     var overEl = document.getElementById('over');
-    var modeText = document.getElementById('mode-text');
+    var turnStat = document.getElementById('turn-stat');
+    var sheetEl = document.getElementById('newgame');
+    var numsSw = document.getElementById('opt-nums');
 
     var settings = { mode: 'ai', diff: 'normal', side: 1, nums: false };
     var moves = [];
@@ -782,40 +785,35 @@
       }
     }
 
-    function recText() {
-      var r = record[settings.diff];
-      return '胜 ' + r.w + ' 负 ' + r.l;
-    }
-
     function renderStatus() {
-      var color = turnColor(), text, cls = '';
-      if (winner === 3) { turnEl.innerHTML = '平局'; }
+      var color = turnColor(), text, cls = '', html;
+      if (winner === 3) html = '平局';
       else {
         if (winner) {
           color = winner;
           text = settings.mode === 'ai' ? (winner === settings.side ? '你胜' : 'AI 胜') : (winner === 1 ? '黑胜' : '白胜');
         } else if (settings.mode === 'ai') {
-          if (thinking || isAiTurn()) { text = '思考<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>'; cls = 'thinking'; }
+          if (thinking || isAiTurn()) { text = 'AI<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>'; cls = 'thinking'; }
           else text = '你';
         } else {
           text = color === 1 ? '黑方' : '白方';
         }
-        turnEl.innerHTML = '<span class="' + cls + '"><i class="ic ' + (color === 1 ? 'b' : 'w') + '"></i>' + text + '</span>';
+        html = '<span class="' + cls + '"><i class="ic ' + (color === 1 ? 'b' : 'w') + '"></i>' + text + '</span>';
       }
-      if (settings.mode === 'ai') { recLabel.textContent = '战绩'; recEl.textContent = recText(); }
-      else { recLabel.textContent = '手数'; recEl.textContent = moves.length; }
-      modeText.textContent = settings.mode === 'ai'
-        ? '人机 · ' + DIFF_NAME[settings.diff] + ' · ' + (settings.side === 1 ? '执黑' : '执白')
-        : '双人对弈';
+      // 只在内容变化时重写，避免棋子图标的弹跳动画反复播放
+      if (turnEl.getAttribute('data-h') !== html) { turnEl.innerHTML = html; turnEl.setAttribute('data-h', html); }
+      turnEl.title = cls ? 'AI 思考中' : '';
+      turnStat.classList.toggle('hot', canHumanPlay());
+      if (settings.mode === 'ai') {
+        var r = record[settings.diff];
+        recLabel.textContent = DIFF_NAME[settings.diff] + '战绩';
+        recEl.innerHTML = '<small>胜</small>' + r.w + ' <small>负</small>' + r.l;
+      } else {
+        recLabel.textContent = '手数';
+        recEl.textContent = moves.length;
+      }
       undoBtn.disabled = !canUndo();
       boardEl.classList.toggle('locked', !canHumanPlay());
-      document.querySelectorAll('#settings .seg').forEach(function (seg) {
-        var key = seg.getAttribute('data-key');
-        var cur = key === 'nums' ? (settings.nums ? '1' : '0') : String(settings[key]);
-        seg.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-v') === cur ? 'true' : 'false'); });
-      });
-      document.getElementById('row-diff').classList.toggle('off', settings.mode !== 'ai');
-      document.getElementById('row-side').classList.toggle('off', settings.mode !== 'ai');
     }
 
     function renderOverlay() {
@@ -830,7 +828,7 @@
       title.className = winner === 3 ? 'draw' : good ? 'good' : 'lose';
       var big = function (c) { return '<svg viewBox="-21 -21 43 45"><use href="#s' + c + '"/></svg>'; };
       document.getElementById('over-stones').innerHTML = winner === 3 ? big('B') + big('W') : big(winner === 1 ? 'B' : 'W');
-      document.getElementById('over-text').textContent = '共 ' + moves.length + ' 手' + (settings.mode === 'ai' ? ' · ' + DIFF_NAME[settings.diff] : '');
+      document.getElementById('over-text').textContent = (settings.mode === 'ai' ? DIFF_NAME[settings.diff] + ' · ' : '') + '共 ' + moves.length + ' 手';
     }
 
     function render(animateLast) {
@@ -1052,25 +1050,55 @@
     });
 
     undoBtn.addEventListener('click', undo);
-    document.getElementById('new-game').addEventListener('click', function () { sound('start'); newGame(); });
     document.getElementById('again').addEventListener('click', function () { sound('start'); newGame(); });
     document.getElementById('peek').addEventListener('click', function () {
       sound('click'); peeked = true; renderOverlay(); save();
     });
 
-    document.querySelectorAll('#settings .seg').forEach(function (seg) {
-      seg.addEventListener('click', function (e) {
-        var b = e.target.closest('button');
-        if (!b) return;
-        var key = seg.getAttribute('data-key'), v = b.getAttribute('data-v');
-        var value = key === 'side' ? Number(v) : key === 'nums' ? v === '1' : v;
-        if (settings[key] === value) return;
-        sound('click');
-        settings[key] = value;
-        saveSettings();
-        if (key === 'nums') render(false);
-        else newGame();
+    // ---------- 新游戏弹窗：选好模式 / 难度 / 执子，点“开始” ----------
+    var draft = null;
+    function syncSheet() {
+      sheetEl.querySelectorAll('.choice[data-k]').forEach(function (b) {
+        var on = String(draft[b.getAttribute('data-k')]) === b.getAttribute('data-v');
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
+      ['easy', 'normal', 'hard'].forEach(function (d) {
+        document.getElementById('rec-' + d).textContent = '胜' + record[d].w + ' 负' + record[d].l;
+      });
+      document.getElementById('ai-opts').hidden = draft.mode !== 'ai';
+      numsSw.checked = settings.nums;
+    }
+    function openNewGame() {
+      draft = { mode: settings.mode, diff: settings.diff, side: settings.side };
+      syncSheet();
+      window.Site.openDialog('newgame');
+    }
+    document.getElementById('new-game').addEventListener('click', openNewGame);
+    sheetEl.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('.choice[data-k]');
+      if (!b) return;
+      var k = b.getAttribute('data-k'), v = b.getAttribute('data-v');
+      var value = k === 'side' ? Number(v) : v;
+      if (draft[k] === value) return;
+      draft[k] = value;
+      sound('select');
+      syncSheet();
+    });
+    // 手数开关立即生效，不重开对局
+    numsSw.addEventListener('change', function () {
+      settings.nums = numsSw.checked;
+      saveSettings();
+      sound('click');
+      render(false);
+    });
+    document.getElementById('start').addEventListener('click', function () {
+      settings.mode = draft.mode;
+      settings.diff = draft.diff;
+      settings.side = draft.side;
+      saveSettings();
+      window.Site.closeDialog('newgame');
+      sound('start');
+      newGame();
     });
 
     // ---------- 启动 ----------
