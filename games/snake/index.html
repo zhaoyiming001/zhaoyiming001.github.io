@@ -14,7 +14,8 @@
   <script src="../../assets/site.js"></script>
   <style>
     :root {
-      --reserve: 372px;
+      /* 顶栏 + 数据条 + 方向键 + 间距 占掉的高度 */
+      --reserve: 328px;
       --stage-max: 480px;
       /* 花园草地 */
       --hedge: #6cc94a;
@@ -65,7 +66,10 @@
       }
     }
     @media (hover: hover) and (pointer: fine) {
-      :root { --reserve: 236px; }
+      :root { --reserve: 168px; --stage-max: 560px; }
+      @supports (height: 100dvh) {
+        :root { --stage-max: clamp(280px, calc(100dvh - var(--reserve)), 560px); }
+      }
       .dpad { display: none !important; }
     }
 
@@ -84,24 +88,7 @@
     #pause .play { display: none; }
     #pause.paused .play { display: block; }
     #pause.paused .pz { display: none; }
-
-    .gcontrols { flex-wrap: nowrap; }
-    .wrap-btn { height: 44px; gap: 6px; padding: 0 14px; color: var(--text-dim); }
-    .wrap-btn svg { width: 20px; height: 20px; }
-    .wrap-btn .dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      border: 2.5px solid currentColor;
-      transition: background-color .15s ease;
-    }
-    .wrap-btn[aria-pressed="true"] {
-      background: var(--theme-2);
-      color: #2d2a4a;
-      box-shadow: var(--pop-sm), inset 0 -4px 0 rgba(0, 0, 0, 0.12), inset 0 3px 0 rgba(255, 255, 255, 0.45);
-    }
-    .wrap-btn[aria-pressed="true"] .dot { background: #2d2a4a; }
-
+    #pause .play { margin-left: 2px; }
     /* 花园棋盘：粗描边的草地画框 */
     .stage {
       padding: 7px;
@@ -136,15 +123,62 @@
       box-shadow: var(--pop), inset 0 -5px 0 rgba(0, 0, 0, 0.12), inset 0 4px 0 rgba(255, 255, 255, 0.45);
     }
     .overlay .btn.big:active { transform: translateY(4px); box-shadow: 0 0 0 var(--ink), inset 0 -5px 0 rgba(0, 0, 0, 0.12); }
-    .overlay-card .hint { font-size: 13px; font-weight: 600; }
-    .overlay-card .mascot { display: block; width: 74px; height: 50px; margin: -4px 0 -2px; }
-    .overlay.ready { align-items: start; padding-top: 4%; background: color-mix(in srgb, var(--bg) 20%, transparent); }
-    .overlay.ready .overlay-card { gap: 9px; padding: 14px 16px 14px; width: min(260px, 100%); }
-    @media (pointer: coarse) {
-      .overlay.ready { padding-top: 8px; }
-      .overlay.ready .hint { display: none; }
-      .overlay.ready .btn.big { height: 50px; }
+    .overlay-card .mascot { display: block; width: 66px; height: 44px; margin: -2px 0 -4px; }
+    .overlay-card .mascot [stroke="#2d2a4a"] { stroke: var(--ink); }
+
+    /* 开始卡片：小巧地停在棋盘上方，露出小蛇和苹果 */
+    .overlay.ready {
+      align-items: start;
+      padding: 7% 12px 12px;
+      background: color-mix(in srgb, var(--bg) 18%, transparent);
     }
+    .overlay.ready .overlay-card { gap: 10px; padding: 12px 16px 14px; width: min(236px, 100%); }
+
+    /* 暂停：整块棋盘蒙上一层，一眼看出停住了 */
+    .overlay.paused {
+      background: color-mix(in srgb, var(--bg) 50%, transparent);
+      -webkit-backdrop-filter: blur(1.5px) saturate(.65);
+      backdrop-filter: blur(1.5px) saturate(.65);
+      animation-delay: 0ms;
+    }
+    .overlay.paused .overlay-card { gap: 12px; padding: 18px 18px 18px; width: min(220px, 100%); animation-delay: 0ms; animation-duration: 240ms; }
+    .overlay.paused .pause-badge {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      margin-bottom: -2px;
+      border: var(--outline);
+      border-radius: 50%;
+      background: var(--theme-soft);
+      color: #2d2a4a;
+    }
+    .overlay.paused .pause-badge svg { width: 24px; height: 24px; }
+    .overlay.paused h2 { font-size: 32px; }
+
+    /* 当前设置小标签：点一下打开新游戏弹窗 */
+    .overlay .chip {
+      height: 40px;
+      gap: 6px;
+      padding: 0 12px 0 14px;
+      font-size: 14px;
+      font-family: inherit;
+      box-shadow: 0 3px 0 var(--ink);
+      transition: transform .08s ease, box-shadow .08s ease;
+    }
+    .overlay .chip:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
+    .overlay .chip:focus-visible { outline: 3px solid var(--theme); outline-offset: 3px; }
+    .overlay .chip .gear { width: 18px; height: 18px; flex: none; opacity: .75; }
+    .overlay .chip .dotsep { opacity: .5; }
+
+    .overlay.over .overlay-card { gap: 12px; padding: 20px 18px 18px; width: min(260px, 100%); }
+    .overlay.over .btns { display: grid; justify-items: center; gap: 12px; }
+    #over-text { font-variant-numeric: tabular-nums; }
+
+    /* 新游戏弹窗 */
+    #newgame .choice small { font-variant-numeric: tabular-nums; }
+    #newgame .switch-row { min-height: 58px; }
+    #newgame .switch-row > span { display: grid; gap: 1px; }
     .overlay .new-best {
       padding: 2px 14px 3px;
       border: 2.5px solid var(--ink);
@@ -157,9 +191,9 @@
 
     /* 方向键盘：四个街机圆按钮排成十字 */
     .dpad {
-      --b: 54px;
-      --dy: 44px;
-      --dx: 64px;
+      --b: 58px;
+      --dy: 48px;
+      --dx: 70px;
       position: relative;
       flex: none;
       width: calc(var(--b) + 2 * var(--dx));
@@ -215,10 +249,13 @@
 
     /* 矮屏手机：收紧间距，把空间让给棋盘 */
     @media (max-height: 700px) and (hover: none), (max-height: 700px) and (pointer: coarse) {
-      :root { --reserve: 348px; }
+      :root { --reserve: 306px; }
       .stage { padding: 5px; border-radius: 22px; }
       .gbar { padding: 10px 0; }
-      .gmain { gap: 11px; }
+      .dpad { --b: 54px; --dy: 45px; --dx: 65px; }
+    }
+    @media (max-height: 600px) and (hover: none), (max-height: 600px) and (pointer: coarse) {
+      :root { --reserve: 292px; }
       .dpad { --b: 50px; --dy: 41px; --dx: 60px; }
     }
   </style>
@@ -250,19 +287,6 @@
       </div>
     </div>
 
-    <div class="gcontrols">
-      <div class="seg" id="speed" role="group" aria-label="速度">
-        <button type="button" data-speed="slow" aria-pressed="false">慢</button>
-        <button type="button" data-speed="mid" aria-pressed="true">中</button>
-        <button type="button" data-speed="fast" aria-pressed="false">快</button>
-      </div>
-      <button class="btn wrap-btn" type="button" id="wrap" aria-pressed="false" title="穿墙模式：从一边出去，从另一边回来">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M17 8l4 4-4 4M3 5v14M21 5v2M21 17v2"/></svg>
-        穿墙
-        <span class="dot" aria-hidden="true"></span>
-      </button>
-    </div>
-
     <div class="stage" id="stage">
       <canvas id="board" aria-label="贪吃蛇棋盘，使用方向键、滑动或下方方向键操作"></canvas>
 
@@ -281,16 +305,16 @@
             <circle cx="17" cy="16" r="7.5" fill="#ff4757" stroke="#2d2a4a" stroke-width="2.5"/>
             <ellipse cx="14.5" cy="13.5" rx="1.8" ry="2.6" fill="#fff" transform="rotate(30 14.5 13.5)"/>
           </svg>
-          <p>吃苹果变长长，别撞墙哦</p>
-          <div class="row"><button class="btn primary big" type="button" data-action="start">开始</button></div>
-          <p class="hint">也可以直接按方向键 / 滑动</p>
+          <button class="btn primary big" type="button" data-action="start">开始</button>
+          <button class="chip mode-chip" type="button" data-open="newgame" aria-label="设置"></button>
         </div>
       </div>
 
-      <div class="overlay" id="ov-pause" hidden>
+      <div class="overlay paused" id="ov-pause" hidden>
         <div class="overlay-card">
+          <span class="pause-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1.6"/><rect x="14" y="4.5" width="4.5" height="15" rx="1.6"/></svg></span>
           <h2>暂停</h2>
-          <div class="row"><button class="btn primary big" type="button" data-action="resume">继续</button></div>
+          <button class="btn primary big" type="button" data-action="resume">继续</button>
         </div>
       </div>
 
@@ -298,7 +322,10 @@
         <div class="overlay-card">
           <h2 id="over-title">游戏结束</h2>
           <p id="over-text"></p>
-          <div class="row"><button class="btn primary big" type="button" data-action="restart">再来一局</button></div>
+          <div class="btns">
+            <button class="btn primary big" type="button" data-action="restart">再来一局</button>
+            <button class="chip mode-chip" type="button" data-open="newgame" aria-label="设置"></button>
+          </div>
         </div>
       </div>
     </div>
@@ -310,6 +337,26 @@
       <button type="button" class="down" data-dir="down" aria-label="下"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
     </div>
   </main>
+
+  <dialog class="sheet" id="newgame">
+    <div class="sheet-head">
+      <h2>新游戏</h2>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+    <div class="sheet-body">
+      <p class="sheet-label">速度</p>
+      <div class="choices" id="speed-choices">
+        <button class="choice" type="button" data-speed="slow" aria-pressed="false"><span class="choice-icon">🐢</span><span><b>慢</b><small>最高 0</small></span></button>
+        <button class="choice" type="button" data-speed="mid" aria-pressed="true"><span class="choice-icon">🐇</span><span><b>中</b><small>最高 0</small></span></button>
+        <button class="choice" type="button" data-speed="fast" aria-pressed="false"><span class="choice-icon">🚀</span><span><b>快</b><small>最高 0</small></span></button>
+      </div>
+      <p class="sheet-label">模式</p>
+      <label class="switch-row">
+        <span>穿墙<small>从一边出去，另一边回来</small></span>
+        <input type="checkbox" class="switch" id="wrap">
+      </label>
+    </div>
+  </dialog>
 
   <dialog class="sheet" id="help">
     <div class="sheet-head">
@@ -353,8 +400,9 @@
     var scoreEl = document.getElementById('score');
     var bestEl = document.getElementById('best');
     var pauseBtn = document.getElementById('pause');
-    var wrapBtn = document.getElementById('wrap');
-    var speedSeg = document.getElementById('speed');
+    var wrapSw = document.getElementById('wrap');
+    var speedChoices = document.getElementById('speed-choices');
+    var modeChips = document.querySelectorAll('.mode-chip');
     var ovReady = document.getElementById('ov-ready');
     var ovPause = document.getElementById('ov-pause');
     var ovOver = document.getElementById('ov-over');
@@ -448,6 +496,7 @@
       if (isNew) {
         bestMap[modeKey()] = score;
         store.set(KEY_BEST, bestMap);
+        syncControls();
       }
       syncHomeStat();
       if (won) sound('win');
@@ -1051,30 +1100,43 @@
 
     pauseBtn.addEventListener('click', function () { togglePause(); pauseBtn.blur(); });
 
+    // ---------- 新游戏弹窗：速度 + 穿墙 ----------
+    var SPEED_NAME = { slow: '慢速', mid: '中速', fast: '快速' };
+    var SPEED_ICON = { slow: '🐢', mid: '🐇', fast: '🚀' };
+    var GEAR = '<svg class="gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+
     function syncControls() {
-      var btns = speedSeg.querySelectorAll('button');
+      var btns = speedChoices.querySelectorAll('[data-speed]');
       for (var i = 0; i < btns.length; i++) {
-        btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-speed') === speed ? 'true' : 'false');
+        var k = btns[i].getAttribute('data-speed');
+        btns[i].setAttribute('aria-pressed', k === speed ? 'true' : 'false');
+        btns[i].querySelector('small').textContent = '最高 ' + (bestMap[k + (wrap ? '_wrap' : '')] || 0);
       }
-      wrapBtn.setAttribute('aria-pressed', wrap ? 'true' : 'false');
+      wrapSw.checked = wrap;
+      var label = SPEED_NAME[speed] + ' · ' + (wrap ? '穿墙' : '撞墙');
+      for (var j = 0; j < modeChips.length; j++) {
+        modeChips[j].innerHTML = '<span aria-hidden="true">' + SPEED_ICON[speed] + '</span>' +
+          SPEED_NAME[speed] + '<span class="dotsep">·</span>' + (wrap ? '穿墙' : '撞墙') + GEAR;
+        modeChips[j].setAttribute('aria-label', '设置：' + label);
+        modeChips[j].title = '设置';
+      }
     }
 
-    speedSeg.addEventListener('click', function (e) {
+    // 选速度：立即生效，回到开始卡片并关闭弹窗
+    speedChoices.addEventListener('click', function (e) {
       var b = e.target.closest('[data-speed]');
       if (!b) return;
-      b.blur();
-      var v = b.getAttribute('data-speed');
-      if (v === speed) return;
-      speed = v;
+      speed = b.getAttribute('data-speed');
       store.set(KEY_SPEED, speed);
       sound('select');
       syncControls();
       reset();
+      window.Site.closeDialog('newgame');
     });
 
-    wrapBtn.addEventListener('click', function () {
-      wrapBtn.blur();
-      wrap = !wrap;
+    // 穿墙开关：立即生效，弹窗保持打开（还能接着选速度）
+    wrapSw.addEventListener('change', function () {
+      wrap = wrapSw.checked;
       store.set(KEY_WRAP, wrap);
       sound('select');
       syncControls();
