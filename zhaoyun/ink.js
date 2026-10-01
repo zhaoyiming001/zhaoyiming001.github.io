@@ -3,6 +3,14 @@
   'use strict';
   var D = window.ZYStrokes;
   var dpr = 1;
+  // 加粗：每笔描边（字框单位），小字号下也清晰
+  var BOLD = 40;
+  function setBold(v) { if (v !== BOLD) { BOLD = v; sprites = {}; } }
+  function boldStroke(ctx, path, w) {
+    if (!w) return;
+    ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.strokeStyle = ctx.fillStyle;
+    ctx.stroke(path);
+  }
   function setDpr(v) { if (v !== dpr) { dpr = v; sprites = {}; } }
   function canvas(w, h) { var c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; }
   function rng(seed) {
@@ -54,14 +62,17 @@
   }
   // 进入字框坐标：字中心落在 (x, y)，字框边长 size 像素
   function enter(ctx, x, y, size) { var k = size / 1024; ctx.translate(x, y); ctx.scale(k, k); ctx.translate(-512, -512); }
-  function fillAll(ctx, g, skip) {
-    for (var i = 0; i < g.n; i++) if (!skip || !skip[i]) ctx.fill(g.p[i]);
+  // 笔画多的字加粗要收着，免得糊成一团
+  function boldFor(g) { return BOLD * (g.n >= 13 ? 0.4 : g.n >= 10 ? 0.6 : g.n >= 8 ? 0.8 : 1); }
+  function fillAll(ctx, g, skip, bold) {
+    var w = bold == null ? boldFor(g) : bold;
+    for (var i = 0; i < g.n; i++) if (!skip || !skip[i]) { ctx.fill(g.p[i]); boldStroke(ctx, g.p[i], w); }
   }
-  function draw(ctx, g, x, y, size, color, skip) {
+  function draw(ctx, g, x, y, size, color, skip, bold) {
     ctx.save();
     enter(ctx, x, y, size);
     ctx.fillStyle = color;
-    fillAll(ctx, g, skip);
+    fillAll(ctx, g, skip, bold);
     ctx.restore();
   }
   // 单笔在世界坐标中绘制：笔画枢轴 (px,py)（字框坐标）落在 (wx,wy)，绕之旋转 rot，沿笔画方向拉伸 along / 垂直方向 across
@@ -82,6 +93,7 @@
     if (o.color) ctx.fillStyle = o.color;
     if (o.halo) { ctx.shadowColor = o.halo; ctx.shadowBlur = (o.hb || 5) * dpr; }
     ctx.fill(g.p[i]);
+    boldStroke(ctx, g.p[i], o.bold == null ? boldFor(g) : o.bold);
     ctx.restore();
   }
   // 笔顺书写：progress 0..1（全字），返回是否写完
@@ -95,7 +107,7 @@
     for (i = 0; i < g.n; i++) {
       if (skip && skip[i]) continue;
       var need = g.ml[i] + 120;
-      if (done >= need) { ctx.fill(g.p[i]); done -= need; continue; }
+      if (done >= need) { ctx.fill(g.p[i]); boldStroke(ctx, g.p[i], boldFor(g)); done -= need; continue; }
       if (done <= 0) break;
       ctx.save();
       ctx.clip(g.p[i]);
@@ -132,7 +144,7 @@
   function glyphSprite(ch, size, color, opt) {
     opt = opt || {};
     var skipKey = opt.skip ? Object.keys(opt.skip).join('.') : '';
-    var key = 'g|' + ch + '|' + size + '|' + color + '|' + skipKey + '|' + (opt.halo || '') + '|' + (opt.bleed || 0);
+    var key = 'g|' + ch + '|' + size + '|' + color + '|' + skipKey + '|' + (opt.halo || '') + '|' + (opt.bleed || 0) + '|' + BOLD + '|' + (opt.outline || '');
     var pad = size * 0.25;
     return sprite(key, size + pad * 2, size + pad * 2, function (x, w, h) {
       var g = glyph(ch);
@@ -142,9 +154,12 @@
         draw(x, g, w / 2, h / 2, size, opt.halo, opt.skip);
         x.restore();
       }
+      if (opt.outline) {
+        // 描一圈浅色外框，压在深底上也看得清
+        draw(x, g, w / 2, h / 2, size, opt.outline, opt.skip, boldFor(g) + 70);
+      }
       if (opt.bleed) {
-        // 墨晕：同色淡影，略微外扩
-        x.save(); x.globalAlpha = 0.18; x.shadowColor = color; x.shadowBlur = size * 0.04 * dpr;
+        x.save(); x.globalAlpha = 0.16; x.shadowColor = color; x.shadowBlur = size * 0.035 * dpr;
         draw(x, g, w / 2, h / 2, size, color, opt.skip);
         x.restore();
       }
@@ -154,13 +169,13 @@
 
   // ---------- 麻将字牌 ----------
   var TIER = [
-    { edge: '#cfc3a8', back: ['#e6dcc6', '#bba98a'], ink: '#1b1712', pip: '#9a8b70' },
-    { edge: '#3f9a63', back: ['#5fae7d', '#2c6b45'], ink: '#173f2a', pip: '#3f9a63' },
-    { edge: '#3a72c4', back: ['#5d8fd6', '#284f8e'], ink: '#152e5c', pip: '#3a72c4' },
-    { edge: '#8c4fc6', back: ['#a575d6', '#5b2f8a'], ink: '#4a1f72', pip: '#8c4fc6' },
-    { edge: '#e5801f', back: ['#f2a24a', '#b4561a'], ink: '#b8460f', pip: '#e5801f' }
+    { edge: '#9d8f74', back: ['#d9cdb3', '#a8977a'], ink: '#14110d', pip: '#7d6f56' },
+    { edge: '#1f8a4c', back: ['#3fa56a', '#1d6a3f'], ink: '#0f4a2a', pip: '#1f8a4c' },
+    { edge: '#1f5fc4', back: ['#4a82dc', '#1d4a96'], ink: '#0e2f6e', pip: '#1f5fc4' },
+    { edge: '#8a35c8', back: ['#a466da', '#5d2394'], ink: '#4f1a80', pip: '#8a35c8' },
+    { edge: '#e06a0a', back: ['#f59a3a', '#b2500c'], ink: '#b8420a', pip: '#e06a0a' }
   ];
-  var GOLD = { edge: '#c9962e', back: ['#ecc464', '#a4741c'], ink: '#1b1712', pip: '#c9962e' };
+  var GOLD = { edge: '#b8861e', back: ['#f0c75a', '#9a6a14'], ink: '#1b1712', pip: '#b8861e' };
   function rr(x, X, Y, W, H, r) {
     x.beginPath();
     x.moveTo(X + r, Y); x.lineTo(X + W - r, Y); x.quadraticCurveTo(X + W, Y, X + W, Y + r);
@@ -170,14 +185,14 @@
     x.closePath();
   }
   // 牌面尺寸：w 宽，h 牌面高，t 牌身厚度
-  function tileDims(cell) { var w = Math.round(cell * 0.84), h = Math.round(cell * 0.88), t = Math.max(3, Math.round(cell * 0.085)); return { w: w, h: h, t: t }; }
+  function tileDims(cell) { var w = Math.round(cell * 0.9), h = Math.round(cell * 0.86), t = Math.max(3, Math.round(cell * 0.09)); return { w: w, h: h, t: t }; }
   // kind: u 兵 / g 武将 / c 名字 / s 铲；tier 1..5
   function tileSprite(kind, tier, cell, lift) {
     var key = 't|' + kind + '|' + tier + '|' + cell + '|' + (lift ? 1 : 0);
     var d = tileDims(cell), pad = Math.ceil(cell * 0.18);
     return sprite(key, d.w + pad * 2, d.h + d.t + pad * 2, function (x, W, H) {
       var X = pad, Y = pad, w = d.w, h = d.h, t = d.t, r = w * 0.13;
-      var T = kind === 'g' ? GOLD : TIER[(tier || 1) - 1];
+      var T = kind === 'g' ? GOLD : kind === 'c' ? { edge: TIER[(tier || 1) - 1].edge, back: GOLD.back, pip: TIER[(tier || 1) - 1].pip } : TIER[(tier || 1) - 1];
       // 投影
       x.save();
       x.shadowColor = 'rgba(70,48,24,' + (lift ? 0.42 : 0.3) + ')';
@@ -193,7 +208,7 @@
       rr(x, X, Y, w, h + t, r); x.fillStyle = gb; x.fill();
       // 象牙牌面
       var gf = x.createLinearGradient(X, Y, X + w * 0.4, Y + h);
-      if (kind === 'g') { gf.addColorStop(0, '#fffaf0'); gf.addColorStop(1, '#f3e2b8'); }
+      if (kind === 'g' || kind === 'c') { gf.addColorStop(0, '#fffbef'); gf.addColorStop(1, '#f6e4b4'); }
       else { gf.addColorStop(0, '#fffcf3'); gf.addColorStop(1, '#efe5cf'); }
       rr(x, X, Y, w, h, r); x.fillStyle = gf; x.fill();
       // 细微象牙纹
@@ -206,21 +221,24 @@
       gh.addColorStop(0, 'rgba(255,255,255,.75)'); gh.addColorStop(0.18, 'rgba(255,255,255,0)'); gh.addColorStop(0.85, 'rgba(120,90,50,0)'); gh.addColorStop(1, 'rgba(120,90,50,.16)');
       x.fillStyle = gh; x.fillRect(X, Y, w, h);
       x.restore();
-      rr(x, X + 0.5, Y + 0.5, w - 1, h - 1, r); x.strokeStyle = 'rgba(110,80,40,.28)'; x.lineWidth = 1; x.stroke();
+      rr(x, X + 0.5, Y + 0.5, w - 1, h - 1, r); x.strokeStyle = 'rgba(70,50,25,.55)'; x.lineWidth = 1; x.stroke();
       // 彩边
       var ins = Math.max(2, w * 0.06);
       if (kind === 'c') {
-        x.setLineDash([3, 2.5]); rr(x, X + ins, Y + ins, w - ins * 2, h - ins * 2, r * 0.6); x.strokeStyle = 'rgba(178,34,24,.75)'; x.lineWidth = 1.2; x.stroke(); x.setLineDash([]);
+        // 金色名字残片：彩边示阶，四角金钉
+        rr(x, X + ins, Y + ins, w - ins * 2, h - ins * 2, r * 0.6); x.strokeStyle = T.edge; x.lineWidth = tier > 1 ? 2 : 1.4; x.stroke();
+        x.fillStyle = '#c9962e';
+        [[X + ins + 2, Y + ins + 2], [X + w - ins - 2, Y + ins + 2], [X + ins + 2, Y + h - ins - 2], [X + w - ins - 2, Y + h - ins - 2]].forEach(function (q) { x.beginPath(); x.arc(q[0], q[1], Math.max(1.2, w * 0.03), 0, 7); x.fill(); });
       } else if (kind === 's') {
         rr(x, X + ins, Y + ins, w - ins * 2, h - ins * 2, r * 0.6); x.strokeStyle = 'rgba(120,84,40,.55)'; x.lineWidth = 1; x.stroke();
       } else {
-        rr(x, X + ins, Y + ins, w - ins * 2, h - ins * 2, r * 0.6); x.strokeStyle = T.edge; x.globalAlpha = tier > 1 || kind === 'g' ? 0.95 : 0.6; x.lineWidth = kind === 'g' ? 1.8 : 1.3; x.stroke();
+        rr(x, X + ins, Y + ins, w - ins * 2, h - ins * 2, r * 0.6); x.strokeStyle = T.edge; x.globalAlpha = tier > 1 || kind === 'g' ? 1 : 0.7; x.lineWidth = tier > 1 || kind === 'g' ? 2.2 : 1.3; x.stroke();
         if (kind === 'g') { rr(x, X + ins + 2.5, Y + ins + 2.5, w - ins * 2 - 5, h - ins * 2 - 5, r * 0.5); x.lineWidth = 0.7; x.stroke(); }
         x.globalAlpha = 1;
       }
       // 等级点
-      if (kind === 'u' && tier > 1) {
-        var pr = Math.max(1.3, w * 0.035), gap = pr * 2.8, x0 = X + w / 2 - (tier - 1) * gap / 2;
+      if ((kind === 'u' || kind === 'c') && tier > 1) {
+        var pr = Math.max(1.6, w * 0.042), gap = pr * 2.7, x0 = X + w / 2 - (tier - 1) * gap / 2;
         x.fillStyle = T.pip;
         for (var p = 0; p < tier; p++) { x.beginPath(); x.arc(x0 + p * gap, Y + h - ins - pr * 1.6, pr, 0, 7); x.fill(); }
       }
@@ -240,7 +258,7 @@
       rr(x, X, Y, w, w, r); x.fillStyle = '#1c1916'; x.fill();
       x.restore();
       var g = x.createLinearGradient(X, Y, X, Y + w);
-      g.addColorStop(0, '#3a342e'); g.addColorStop(1, '#151210');
+      g.addColorStop(0, '#2e2925'); g.addColorStop(1, '#0e0c0a');
       rr(x, X, Y, w, w, r); x.fillStyle = g; x.fill();
       // 干笔刷痕
       var R = rng(size * 7 + (boss ? 3 : 1));
@@ -248,7 +266,7 @@
       x.strokeStyle = 'rgba(255,240,220,.05)'; x.lineWidth = 0.8;
       for (var i = 0; i < 9; i++) { var yy = Y + R() * w; x.beginPath(); x.moveTo(X, yy); x.lineTo(X + w, yy + (R() - 0.5) * w * 0.3); x.stroke(); }
       x.restore();
-      rr(x, X + 1, Y + 1, w - 2, w - 2, r * 0.8); x.strokeStyle = edge; x.lineWidth = boss ? 2 : 1.2; x.globalAlpha = 0.9; x.stroke(); x.globalAlpha = 1;
+      rr(x, X + 1, Y + 1, w - 2, w - 2, r * 0.8); x.strokeStyle = edge; x.lineWidth = boss ? 2.6 : 1.8; x.globalAlpha = 1; x.stroke();
       if (boss) {
         x.fillStyle = '#c9962e';
         [[X, Y], [X + w, Y], [X, Y + w], [X + w, Y + w]].forEach(function (p) { x.beginPath(); x.arc(p[0], p[1], size * 0.07, 0, 7); x.fill(); });
@@ -288,14 +306,14 @@
     var c = canvas(w * dpr, h * dpr), x = c.getContext('2d');
     x.scale(dpr, dpr);
     var R = rng(seed || 7);
-    x.fillStyle = tint || '#f1e8d5';
+    x.fillStyle = tint || '#f6f0e1';
     x.fillRect(0, 0, w, h);
     // 大块晕染
     for (var i = 0; i < 18; i++) {
       var cx = R() * w, cy = R() * h, r = (0.15 + R() * 0.35) * Math.max(w, h);
       var g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
       var warm = R() < 0.5;
-      g.addColorStop(0, warm ? 'rgba(214,190,150,.07)' : 'rgba(255,252,240,.18)');
+      g.addColorStop(0, warm ? 'rgba(214,190,150,.05)' : 'rgba(255,253,245,.2)');
       g.addColorStop(1, 'rgba(0,0,0,0)');
       x.fillStyle = g; x.fillRect(0, 0, w, h);
     }
@@ -311,7 +329,7 @@
     for (var k = 0; k < n / 6; k++) { x.fillStyle = 'rgba(120,95,60,' + (0.05 + R() * 0.08) + ')'; x.fillRect(R() * w, R() * h, 0.8, 0.8); }
     // 四边暗角
     var v = x.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.75);
-    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(140,105,60,.13)');
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(140,105,60,.07)');
     x.fillStyle = v; x.fillRect(0, 0, w, h);
     return c;
   }
@@ -480,7 +498,7 @@
   }
 
   window.ZYInk = {
-    setDpr: setDpr, canvas: canvas, rng: rng, glyph: glyph, groupCenter: groupCenter, enter: enter, fillAll: fillAll, draw: draw, strokeAt: strokeAt,
+    setDpr: setDpr, setBold: setBold, boldStroke: boldStroke, canvas: canvas, rng: rng, glyph: glyph, groupCenter: groupCenter, enter: enter, fillAll: fillAll, draw: draw, strokeAt: strokeAt,
     drawWriting: drawWriting, sprite: sprite, blit: blit, glyphSprite: glyphSprite, tileSprite: tileSprite, tileDims: tileDims, tierInk: tierInk, tierEdge: tierEdge,
     enemyTileSprite: enemyTileSprite, blotSprite: blotSprite, glowSprite: glowSprite, paper: paper, mountains: mountains, dryBrush: dryBrush,
     grass: grass, rock: rock, pine: pine, seal: seal, ribbon: ribbon, crescent: crescent, rr: rr, TIER: TIER, GOLD: GOLD,
