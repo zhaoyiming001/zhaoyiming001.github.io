@@ -3,137 +3,81 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>赵云与阿斗 · 三国汉字塔防</title>
-<meta name="description" content="三国战役汉字塔防：征兵布阵、同字合并升级、两字凑成武将，字字皆兵，从黄巾之乱一路征战到五丈原。">
-<meta name="theme-color" content="#15110d">
-<meta name="color-scheme" content="dark">
+<title>赵云与阿斗 · 水墨汉字塔防</title>
+<meta name="description" content="字即是兵：水墨汉字塔防。「弓」字拉满放箭，「枪」的木旁化作长枪，「刀」的一撇飞出斩敌。与 AI 对手同守阿斗，十场三国战役。">
+<meta name="theme-color" content="#efe6d3">
+<meta name="color-scheme" content="light">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/brush.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/serif.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/wild.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/serif-black.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <radialGradient id="jade" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#c8f2d6"/><stop offset=".45" stop-color="#4fae7c"/><stop offset="1" stop-color="#14523a"/></radialGradient>
-    <symbol id="i-jade" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="url(#jade)" stroke="#d4a64a" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="none" stroke="#0f3a28" stroke-width="1.4" opacity=".7"/><path d="M7.5 8.5a6 6 0 0 1 4-2.4" stroke="#fff" stroke-opacity=".7" stroke-width="1.4" fill="none" stroke-linecap="round"/></symbol>
-    <symbol id="i-bun" viewBox="0 0 24 24"><path d="M3 17.5c0-6 4-10 9-10s9 4 9 10c0 1.2-1 2-2.2 2H5.2C4 19.5 3 18.7 3 17.5z" fill="#efe2c4" stroke="#3a2614" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 11.5c1 1.5 1.2 3.4.8 5.4M14.5 11c-.6 1.8-.6 3.8.1 5.8" stroke="#b9a175" stroke-width="1.3" fill="none" stroke-linecap="round"/><circle cx="12" cy="9.6" r="1.5" fill="#b01c1c"/></symbol>
-    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5" width="3.6" height="14" rx="1" fill="currentColor"/><rect x="13.9" y="5" width="3.6" height="14" rx="1" fill="currentColor"/></symbol>
-    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.6 7.6 0 0 1 0 11" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
-    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-    <symbol id="i-scroll" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="1.5" fill="#e8dcc0" stroke="#3a2614" stroke-width="1.4"/><rect x="3" y="3" width="18" height="3" rx="1.5" fill="#7a5230" stroke="#2a1a0c" stroke-width="1.2"/><rect x="3" y="18" width="18" height="3" rx="1.5" fill="#7a5230" stroke="#2a1a0c" stroke-width="1.2"/><path d="M8.5 9h7M8.5 12h7M8.5 15h4.5" stroke="#3a2614" stroke-width="1.3" stroke-linecap="round"/></symbol>
-    <symbol id="i-basin" viewBox="0 0 24 24"><path d="M3.5 9.5h17l-2 8.2a2 2 0 0 1-1.9 1.5H7.4a2 2 0 0 1-1.9-1.5z" fill="#8a6a3a" stroke="#1c120a" stroke-width="1.4" stroke-linejoin="round"/><path d="M3 9.5h18" stroke="#d4a64a" stroke-width="2" stroke-linecap="round"/><path d="M7 13h10" stroke="#3a2614" stroke-width="1.2" stroke-linecap="round"/><path d="M9 21l-1 1.5M15 21l1 1.5" stroke="#1c120a" stroke-width="1.4" stroke-linecap="round"/></symbol>
-    <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5L8 12l6.5 6.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.8l2.7 5.9 6.4.7-4.8 4.3 1.4 6.3L12 16.8 6.3 20l1.4-6.3L2.9 9.4l6.4-.7z" fill="currentColor" stroke="#2a1a0c" stroke-width="1.1" stroke-linejoin="round"/></symbol>
-  </defs>
-</svg>
-
 <div id="app">
-  <!-- 战斗界面 -->
-  <header id="hud">
-    <div class="stat st-hp" title="阿斗的玉心"><svg class="ico"><use href="#i-jade"/></svg><b id="hpV">10</b></div>
-    <div class="stat st-wave" title="波次"><span class="lbl">波</span><b id="waveV">1</b><span class="lbl" id="wavesV">/10</span></div>
-    <div class="stat st-bun" id="bunBox" title="馒头"><svg class="ico"><use href="#i-bun"/></svg><b id="bunV">0</b></div>
-    <div class="hud-btns">
-      <button class="hbtn speed" id="btnSpeed" aria-label="切换速度">×1</button>
-      <button class="hbtn" id="btnSound" aria-label="声音"><svg class="ico"><use href="#i-sound"/></svg></button>
-      <button class="hbtn" id="btnPause" aria-label="暂停"><svg class="ico"><use href="#i-pause"/></svg></button>
-    </div>
-  </header>
-  <div id="subbar"><span id="lvLabel"></span><div id="synRow"></div></div>
 
-  <main id="field">
-    <div id="boardWrap">
-      <canvas id="cv"></canvas>
-      <div id="flash"></div>
-      <button id="btnNext" class="hidden"><span class="nx-t">下一波</span><span class="nx-c" id="nextCount">6</span><span class="nx-b" id="nextBonus"></span></button>
-      <div id="banner" class="banner"><div class="b-main"></div><div class="b-sub"></div></div>
-      <div id="skillBanner"></div>
+  <!-- 对战 -->
+  <section id="battle" class="screen">
+    <canvas id="cv"></canvas>
+    <div id="flash"></div>
+    <header id="topbar">
+      <div class="foe" title="对手">
+        <span class="seal" id="foeSeal">曹</span>
+        <span class="foe-t"><span id="foeTitle"></span><b id="foeName"></b></span>
+        <span class="hearts" id="foeHearts"></span>
+      </div>
+      <div class="lvname" id="lvName"></div>
+      <span class="vs">对</span>
+      <div class="me" title="你的阿斗">
+        <span class="hearts" id="meHearts"></span>
+        <span class="me-t">阿斗</span>
+      </div>
+      <button id="speedBtn" class="tb-btn" aria-label="速度">×1</button>
+      <button id="btnPause" class="tb-btn" aria-label="暂停"><i class="pz"></i></button>
+    </header>
+    <div id="ridge">
+      <div class="rg-l"><span id="waveLbl"></span><span id="waveOf"></span></div>
+      <button id="btnGo" class="hidden">开战</button>
     </div>
-  </main>
-
-  <section id="dock">
-    <div id="bench">
-      <div class="slot" data-i="0"><canvas></canvas></div>
-      <div class="slot" data-i="1"><canvas></canvas></div>
-      <div class="slot" data-i="2"><canvas></canvas></div>
-      <div class="slot" data-i="3"><canvas></canvas></div>
-      <div class="slot" data-i="4"><canvas></canvas></div>
-    </div>
-    <div id="controls">
-      <div id="recycle" aria-label="回收"><svg class="ico"><use href="#i-basin"/></svg><span class="rc-t">回收</span><span class="rc-v" id="recycleV"></span></div>
-      <button id="btnSummon"><span class="sm-t">征兵</span><span class="sm-c"><svg class="ico"><use href="#i-bun"/></svg><b id="costV">10</b></span><span class="sm-why" id="summonWhy"></span></button>
-      <button id="btnCodex" class="sq-btn" aria-label="图鉴"><svg class="ico"><use href="#i-scroll"/></svg><span>图鉴</span></button>
-    </div>
+    <button id="btnSummon"><span class="sm-t">征兵</span><span class="sm-c">五张 · <b id="costV">15</b> 馒头<i id="smHint"></i></span></button>
+    <div id="bunBox" title="馒头"><i class="bun"></i><b id="bunV">0</b></div>
+    <div id="banner" class="banner"><div class="b-main"></div><div class="b-sub"></div></div>
+    <div id="tip" class="tip"></div>
+    <div id="tut" class="tut"></div>
   </section>
-
-  <div id="tip" class="tip"></div>
-  <div id="tut" class="tut"><span id="tutText"></span><i class="tut-arrow"></i></div>
-  <div id="ghost"><canvas></canvas></div>
-  <div id="flyLayer"></div>
 
   <!-- 标题 -->
-  <section id="title" class="screen show">
+  <section id="title" class="screen">
     <canvas id="titleCv"></canvas>
     <div class="t-inner">
-      <div class="t-kicker">三 国 · 汉 字 塔 防</div>
-      <h1 class="t-title"><span class="tt">赵云</span><span class="tt-and">与</span><span class="tt">阿斗</span></h1>
-      <div class="seal" aria-label="单骑救主"><span>单</span><span>骑</span><span>救</span><span>主</span></div>
-      <div class="t-tag">字字皆兵 · 一字一刀</div>
+      <div class="t-tag">字即是兵 · 水墨三国汉字塔防</div>
       <div class="t-btns">
-        <button class="btn btn-crimson" id="btnStart">出征</button>
-        <div class="t-row">
-          <button class="btn btn-lacquer small" id="btnTitleCodex">图鉴</button>
-          <button class="btn btn-lacquer small" id="btnTitleSound">声音：开</button>
-        </div>
+        <button class="btn btn-red" id="btnStart">出征</button>
+        <button class="btn btn-ghost" id="btnTitleSound">声音：开</button>
       </div>
-      <div class="t-progress" id="titleProgress"></div>
+      <div class="t-foot">笔画数据 Arphic PL · 与 AI 同守阿斗，先失三心者败</div>
     </div>
   </section>
 
-  <!-- 战役地图 -->
+  <!-- 战役 -->
   <section id="map" class="screen">
     <div class="map-head">
-      <button class="back" id="btnMapBack" aria-label="返回"><svg class="ico"><use href="#i-back"/></svg></button>
+      <button class="back" id="btnMapBack" aria-label="返回">‹</button>
       <h2>征战天下</h2>
-      <div class="map-stars"><svg class="ico"><use href="#i-star"/></svg><b id="mapStars">0</b>/30</div>
+      <div class="map-stars"><i class="st"></i><b id="mapStars">0</b></div>
     </div>
     <div class="map-list" id="mapList"></div>
   </section>
 
-  <!-- 关卡简介 -->
+  <!-- 战前 -->
   <section id="intro" class="sheet-wrap">
-    <div class="scroll">
-      <div class="scroll-rod top"></div>
-      <div class="scroll-body">
-        <button class="x" data-close aria-label="关闭">×</button>
-        <div class="in-kicker" id="inKicker"></div>
-        <h2 class="in-title" id="inTitle"></h2>
-        <p class="in-blurb" id="inBlurb"></p>
-        <div class="in-rows" id="inRows"></div>
-        <div class="in-new" id="inNew"></div>
-        <div class="in-btns">
-          <button class="btn btn-lacquer hidden" id="btnContinue">继续</button>
-          <button class="btn btn-crimson" id="btnGo">出战</button>
-        </div>
-      </div>
-      <div class="scroll-rod bottom"></div>
-    </div>
-  </section>
-
-  <!-- 图鉴 -->
-  <section id="sheetCodex" class="sheet-wrap">
-    <div class="sheet tall">
-      <div class="sheet-h"><h2>图鉴</h2><button class="x" data-close aria-label="关闭">×</button></div>
-      <div class="tabs" id="codexTabs">
-        <button class="tab on" data-tab="units">兵种</button>
-        <button class="tab" data-tab="gens">武将</button>
-        <button class="tab" data-tab="syn">羁绊</button>
-        <button class="tab" data-tab="foes">敌军</button>
-      </div>
-      <div class="sheet-body" id="codexBody"></div>
+    <div class="sheet scroll">
+      <button class="x" id="btnIntroClose" aria-label="关闭">×</button>
+      <div class="in-kicker" id="inKicker"></div>
+      <h2 class="in-title" id="inTitle"></h2>
+      <p class="in-blurb" id="inBlurb"></p>
+      <div class="in-rows" id="inRows"></div>
+      <div class="in-new" id="inNew"></div>
+      <button class="btn btn-red" id="btnGoLv">出战</button>
     </div>
   </section>
 
@@ -143,9 +87,9 @@
       <div class="pause-title">暂停</div>
       <div class="pause-info" id="pauseInfo"></div>
       <div class="col-btns">
-        <button class="btn btn-crimson" id="btnResume">继续</button>
-        <button class="btn btn-lacquer" id="btnPauseCodex">图鉴</button>
-        <button class="btn btn-lacquer" id="btnRestart">重新开始</button>
+        <button class="btn btn-red" id="btnResume">继续</button>
+        <button class="btn btn-ghost" id="btnRestart">重新开始</button>
+        <button class="btn btn-ghost" id="btnSound2">声音：开</button>
         <button class="btn btn-ghost" id="btnToMap">返回战役</button>
       </div>
     </div>
@@ -161,16 +105,19 @@
       <div class="r-stats" id="rStats"></div>
       <div class="r-unlock" id="rUnlock"></div>
       <div class="col-btns">
-        <button class="btn btn-crimson" id="btnNextLv">下一关</button>
-        <button class="btn btn-lacquer" id="btnRetry">再战</button>
+        <button class="btn btn-red" id="btnNextLv">下一战</button>
+        <button class="btn btn-ghost" id="btnRetry">再战</button>
         <button class="btn btn-ghost" id="btnResMap">返回战役</button>
       </div>
     </div>
   </section>
 </div>
 
+<script src="strokes.js"></script>
 <script src="core.js"></script>
-<script src="art.js"></script>
+<script src="ink.js"></script>
+<script src="sound.js"></script>
+<script src="anim.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
