@@ -51,6 +51,9 @@
 [data-game="gomoku"]      { --theme: #13b3b0; --theme-2: #ffbf5e; --theme-soft: #def6f4; }
 [data-game="memory"]      { --theme: #ff5fa2; --theme-2: #7cd3ff; --theme-soft: #ffe6f1; }
 
+/* --bg 依赖 body 上的主题色，必须在 body 上重新计算 */
+body { --bg: var(--theme-soft); }
+
 /* ---------- 深色（夜间游戏厅） ---------- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
