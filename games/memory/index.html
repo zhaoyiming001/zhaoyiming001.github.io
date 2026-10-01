@@ -15,7 +15,7 @@
   <style>
     :root {
       --stage-max: 520px;
-      --flip: 380ms;
+      --flip: 300ms;
       /* 牌桌（托盘） */
       --tray: #ffc4dd;
       --tray-dot: rgba(255, 255, 255, 0.55);
@@ -55,13 +55,16 @@
       --p6: #9fe6da;
     }
 
-    .gcontrols { min-height: 44px; }
-    .best-mini {
+    /* 连击：骑在牌桌上沿正中的小徽章 */
+    .combo-pop {
+      position: absolute;
+      left: 50%;
+      top: -12px;
+      z-index: 6;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      height: 32px;
-      padding: 0 10px;
+      height: 26px;
+      padding: 0 11px;
       border: 2.5px solid var(--ink);
       border-radius: 999px;
       background: var(--theme-2);
@@ -69,32 +72,43 @@
       box-shadow: 0 2px 0 var(--ink);
       font-size: 14px;
       font-weight: 700;
-      white-space: nowrap;
+      line-height: 1;
       font-variant-numeric: tabular-nums;
-      transform: rotate(2deg);
-    }
-    .best-mini:empty { display: none; }
-    @media (max-width: 400px) {
-      .best-mini { height: 30px; padding: 0 7px; font-size: 13px; gap: 2px; }
-    }
-
-    .combo-pop {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 10px;
-      font-size: 19px;
-      font-weight: 700;
-      color: var(--theme);
-      -webkit-text-stroke: 1px var(--ink);
-      paint-order: stroke fill;
-      pointer-events: none;
       white-space: nowrap;
-      animation: float-up 800ms ease-out forwards;
+      pointer-events: none;
+      transform: translateX(-50%);
+      animation: combo 900ms cubic-bezier(.2, 1.4, .4, 1) forwards;
     }
-    @keyframes float-up {
-      from { transform: translateY(0) scale(.9); opacity: 1; }
-      to { transform: translateY(-36px) scale(1.15); opacity: 0; }
+    @keyframes combo {
+      0% { transform: translateX(-50%) scale(.4) rotate(-8deg); opacity: 0; }
+      22% { transform: translateX(-50%) scale(1.08) rotate(-4deg); opacity: 1; }
+      34% { transform: translateX(-50%) scale(1) rotate(-4deg); }
+      75% { transform: translateX(-50%) translateY(0) rotate(-4deg); opacity: 1; }
+      100% { transform: translateX(-50%) translateY(-8px) rotate(-4deg); opacity: 0; }
+    }
+    #pairs-box.bump .stat-value { animation: bump 260ms ease-out; }
+    @keyframes bump {
+      40% { transform: scale(1.18); color: var(--good); }
+    }
+    .stat-value { transform-origin: center; }
+
+    /* 新游戏弹窗：进行中的难度显示“继续”小标 */
+    .choice > span:nth-child(2) { flex: 1; min-width: 0; }
+    .choice small { font-variant-numeric: tabular-nums; }
+    .choice small { white-space: nowrap; }
+    .choice .tag {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 7px;
+      vertical-align: 2px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: var(--theme-2);
+      color: #2d2a4a;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.3;
+      transform: rotate(-3deg);
     }
 
     /* ---------- 牌桌：粗描边的粉色托盘 ---------- */
@@ -150,7 +164,7 @@
       inset: 0;
       transform-style: preserve-3d;
       /* 带一点回弹的 3D 翻转 */
-      transition: transform var(--flip) cubic-bezier(.3, 1.45, .55, 1);
+      transition: transform var(--flip) cubic-bezier(.3, 1.35, .5, 1);
     }
     .card.up .card-inner,
     .card.matched .card-inner { transform: rotateY(180deg); }
@@ -224,7 +238,7 @@
       font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", var(--font);
       font-size: var(--ef, 40px);
       line-height: 1;
-      transition: opacity .4s ease, transform .4s ease;
+      transition: opacity .3s ease, transform .3s ease;
     }
     .pc0 { --pc: var(--p0); } .pc1 { --pc: var(--p1); } .pc2 { --pc: var(--p2); }
     .pc3 { --pc: var(--p3); } .pc4 { --pc: var(--p4); } .pc5 { --pc: var(--p5); }
@@ -253,10 +267,10 @@
 
     /* 配对成功：绿色描边 + 星光 + 轻轻跳动，之后变淡并打勾 */
     .card.matched .front { border-color: var(--good); }
-    .card.matched.done .front { background: var(--surface-2); transition-delay: .4s; }
-    .card.matched.done .pic { opacity: 0.6; transform: scale(.92); transition-delay: .4s; }
-    .card.matched.done .ok { transform: scale(1); transition-delay: .4s; }
-    .card.just { z-index: 2; animation: bob 620ms ease-in-out calc(var(--flip) - 60ms); }
+    .card.matched.done .front { background: var(--surface-2); transition-delay: .2s; }
+    .card.matched.done .pic { opacity: 0.6; transform: scale(.92); transition-delay: .2s; }
+    .card.matched.done .ok { transform: scale(1); transition-delay: .2s; }
+    .card.just { z-index: 2; animation: bob 440ms ease-in-out calc(var(--flip) - 60ms); }
     @keyframes bob {
       0%, 100% { transform: translateY(0) scale(1); }
       30% { transform: translateY(-7px) scale(1.08) rotate(-3deg); }
@@ -283,7 +297,7 @@
       border: 3px solid var(--good);
       border-radius: 50%;
       opacity: 0;
-      animation: ring 520ms ease-out calc(var(--flip) - 60ms);
+      animation: ring 420ms ease-out calc(var(--flip) - 60ms);
     }
     .burst i {
       position: absolute;
@@ -295,7 +309,7 @@
       background: #ffd23f;
       clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
       opacity: 0;
-      animation: spark 620ms cubic-bezier(.2, .8, .3, 1) calc(var(--flip) - 60ms);
+      animation: spark 500ms cubic-bezier(.2, .8, .3, 1) calc(var(--flip) - 60ms);
     }
     .burst i:nth-child(3n + 2) { background: var(--theme); }
     .burst i:nth-child(3n) { background: var(--theme-2); }
@@ -319,7 +333,7 @@
 
     /* 配对失败：红色描边 + 摇晃 */
     .card.miss .front { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, var(--surface)); }
-    .card.miss { animation: wobble 380ms ease calc(var(--flip) - 40ms); }
+    .card.miss { animation: wobble 320ms ease calc(var(--flip) - 40ms); }
     @keyframes wobble {
       0%, 100% { transform: none; }
       20% { transform: translateX(-5px) rotate(-5deg); }
@@ -339,9 +353,10 @@
       align-items: center;
       justify-content: center;
       gap: 2px;
-      margin: 2px 0 -2px;
+      margin: 0;
+      min-height: 64px;
     }
-    .star { display: block; width: 50px; height: 50px; animation: star-pop 460ms cubic-bezier(.2, 1.6, .4, 1) calc(520ms + var(--d) * 200ms) backwards; }
+    .star { display: block; width: 50px; height: 50px; animation: star-pop 360ms cubic-bezier(.2, 1.6, .4, 1) calc(380ms + var(--d) * 130ms) backwards; }
     .star:nth-child(2) { width: 64px; height: 64px; margin-top: -14px; }
     .star svg { display: block; width: 100%; height: 100%; overflow: visible; }
     .star path { fill: var(--surface-3); stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
@@ -366,13 +381,14 @@
       transform: rotate(-3deg);
     }
     #win-text { font-size: 18px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    #win .overlay-card { gap: 10px; padding-top: 20px; }
+    #win .row { margin-top: 4px; }
 
     @media (max-width: 340px) {
       .stats { gap: 6px; }
       .stat { padding-left: 4px; padding-right: 4px; }
       .stat-value { font-size: 16px; }
       .stats .btns .btn { padding: 0 8px; }
-      .seg button { padding: 0 7px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -407,25 +423,16 @@
       </div>
     </div>
 
-    <div class="gcontrols">
-      <div class="seg" id="diff" role="group" aria-label="难度">
-        <button type="button" data-diff="easy" aria-pressed="true">简单 4×4</button>
-        <button type="button" data-diff="normal" aria-pressed="false">普通 4×5</button>
-        <button type="button" data-diff="hard" aria-pressed="false">困难 6×6</button>
-      </div>
-      <span class="best-mini" id="best-mini"></span>
-    </div>
-
     <div class="stage" id="stage">
       <div class="board" id="board" role="grid" aria-label="记忆翻牌牌桌">
         <div class="overlay" id="win" hidden>
           <div class="overlay-card">
             <h2>全部配对！</h2>
-            <div class="stars" id="win-stars" aria-hidden="true"></div>
+            <div class="stars" id="win-stars" role="img"></div>
             <p id="win-text"></p>
-            <p id="win-best"></p>
             <div class="row">
               <button class="btn primary" type="button" data-action="new">再来一局</button>
+              <button class="btn" type="button" data-action="diff">换难度</button>
             </div>
           </div>
         </div>
@@ -434,6 +441,21 @@
     <span class="sr-only" id="live" aria-live="polite"></span>
   </main>
 
+  <dialog class="sheet" id="newgame">
+    <div class="sheet-head">
+      <h2>新游戏</h2>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+    <div class="sheet-body">
+      <p class="sheet-label">难度</p>
+      <div class="choices" id="diff-choices">
+        <button class="choice" type="button" data-diff="easy"><span class="choice-icon">🐣</span><span><b>简单 4×4</b><small></small></span></button>
+        <button class="choice" type="button" data-diff="normal"><span class="choice-icon">🐰</span><span><b>普通 4×5</b><small></small></span></button>
+        <button class="choice" type="button" data-diff="hard"><span class="choice-icon">🦁</span><span><b>困难 6×6</b><small></small></span></button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog class="sheet" id="help">
     <div class="sheet-head">
       <h2>怎么玩</h2>
@@ -441,8 +463,8 @@
     </div>
     <div class="sheet-body">
       <ul class="tips">
-        <li><b>👆</b><span>每次翻开两张牌。</span></li>
-        <li><b>🎯</b><span>图案相同就<strong>配对成功</strong>，不同会翻回去。</span></li>
+        <li><b>👆</b><span>每次翻两张，不同会翻回去。</span></li>
+        <li><b>🎯</b><span>图案相同就<strong>配对成功</strong>。</span></li>
         <li><b>⭐</b><span>步数越少，星星越多。</span></li>
         <li><b>⌨️</b><span>方向键选牌，<kbd>Enter</kbd> 翻开。</span></li>
       </ul>
@@ -474,7 +496,7 @@
     ];
     var PASTELS = 7;     // 牌面圆底颜色数（.pc0 ~ .pc6），同一对牌颜色相同
     var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var FLIP_MS = REDUCED ? 0 : 380;
+    var FLIP_MS = REDUCED ? 0 : 300;
     var MISS_MS = 800;   // 不匹配时停留多久再翻回
     var KEY_DIFF = 'gzly.memory.diff';
     var KEY_BEST = 'gzly.memory.best';
@@ -490,9 +512,8 @@
     var timeEl = document.getElementById('time');
     var pairsEl = document.getElementById('pairs');
     var pairsBox = document.getElementById('pairs-box');
-    var bestMiniEl = document.getElementById('best-mini');
     var liveEl = document.getElementById('live');
-    var diffBtns = document.querySelectorAll('#diff button');
+    var choiceBtns = document.querySelectorAll('#diff-choices .choice');
 
     var diff = DIFFS[store.get(KEY_DIFF, 'easy')] ? store.get(KEY_DIFF, 'easy') : 'easy';
     var bests = store.get(KEY_BEST, null);
@@ -590,16 +611,35 @@
       timeEl.textContent = window.Site.formatTime(s);
     }
 
-    function updateDiffButtons() {
-      for (var i = 0; i < diffBtns.length; i++) {
-        diffBtns[i].setAttribute('aria-pressed', diffBtns[i].getAttribute('data-diff') === diff ? 'true' : 'false');
+    // 新游戏弹窗：当前难度高亮，副标题显示各难度最佳成绩，未完成的其他难度标“继续”
+    function updateChoices() {
+      for (var i = 0; i < choiceBtns.length; i++) {
+        var btn = choiceBtns[i];
+        var d = btn.getAttribute('data-diff');
+        var cfg = DIFFS[d];
+        var b = bests[d];
+        var parts = [];
+        if (b && b.moves) parts.push('最少 ' + b.moves + ' 步');
+        if (b && typeof b.time === 'number') parts.push('最快 ' + window.Site.formatTime(b.time));
+        btn.querySelector('small').textContent = parts.length ? parts.join(' · ') : cfg.cols * cfg.rows / 2 + ' 对牌';
+        btn.setAttribute('aria-pressed', d === diff ? 'true' : 'false');
+        var old = btn.querySelector('.tag');
+        if (old) old.remove();
+        if (d !== diff) {
+          var sv = store.get(stateKey(d), null);
+          if (isValid(sv, d) && !sv.won && (sv.moves > 0 || sv.up.length > 0)) {
+            var tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = '继续';
+            btn.querySelector('b').appendChild(tag);
+          }
+        }
       }
     }
 
-    function updateBestMini() {
-      var b = bests[diff];
-      bestMiniEl.textContent = b && b.moves ? '🏆 ' + b.moves + ' 步' : '';
-      bestMiniEl.title = b && b.moves ? '最佳：' + b.moves + ' 步，最快 ' + window.Site.formatTime(b.time) : '';
+    function openNewGame() {
+      updateChoices();
+      window.Site.openDialog('newgame');
     }
 
     function updateHomeStat() {
@@ -633,15 +673,13 @@
       starsEl.innerHTML = stars;
       starsEl.setAttribute('aria-label', s + ' 颗星');
       var sec = Math.floor(elapsed / 1000);
-      document.getElementById('win-text').textContent = moves + ' 步 · ' + window.Site.formatTime(sec);
-      var b = bests[diff] || {};
-      var bestEl = document.getElementById('win-best');
-      bestEl.textContent = '最佳 ' + b.moves + ' 步 · ' + window.Site.formatTime(b.time);
+      var textEl = document.getElementById('win-text');
+      textEl.textContent = moves + ' 步 · ' + window.Site.formatTime(sec);
       if (rec && (rec.moves || rec.time)) {
         var tag = document.createElement('span');
         tag.className = 'rec';
         tag.textContent = '新纪录';
-        bestEl.appendChild(tag);
+        textEl.appendChild(tag);
       }
     }
 
@@ -650,22 +688,24 @@
       var cfg = DIFFS[diff];
       var bodyStyle = getComputedStyle(document.body);
       var bottom = parseFloat(bodyStyle.paddingBottom) || 16;
+      boardEl.style.setProperty('--cols', cfg.cols);
       var top = stageEl.getBoundingClientRect().top + window.scrollY;
       var availW = stageEl.clientWidth;
       var availH = Math.max(200, window.innerHeight - top - bottom);
-      var ratio = 1.22;
+      var ratio = 1.16;    // 最矮的牌（高/宽）
+      var tall = 1.4;      // 有富余高度时最高拉到扑克牌比例
       var gap = cfg.cols >= 6 ? 6 : 8;
-      var cw = 0;
+      var cw = 0, h1 = 0;
       var BORDER = 3, LIFT = 4, SHADOW = 6; // 托盘描边、卡片投影、托盘投影
       for (var pass = 0; pass < 2; pass++) {
         var pad = 2 * (gap + BORDER);
         var w1 = (availW - pad - (cfg.cols - 1) * gap) / cfg.cols;
-        var h1 = (availH - pad - LIFT - SHADOW - (cfg.rows - 1) * gap) / cfg.rows;
+        h1 = (availH - pad - LIFT - SHADOW - (cfg.rows - 1) * gap) / cfg.rows;
         cw = Math.floor(Math.max(28, Math.min(w1, h1 / ratio, 124)));
         if (cw >= 88 && gap < 10) gap = 10;
         else break;
       }
-      var ch = Math.floor(cw * ratio);
+      var ch = Math.max(Math.floor(cw * ratio), Math.floor(Math.min(cw * tall, h1)));
       boardEl.style.setProperty('--cw', cw + 'px');
       boardEl.style.setProperty('--ch', ch + 'px');
       boardEl.style.setProperty('--gap', gap + 'px');
@@ -778,12 +818,13 @@
           matched[a] = matched[b] = true;
           up = [];
           combo++;
+          setTimeout(function () { retrigger(pairsBox, 'bump'); }, Math.min(FLIP_MS, 200));
           [a, b].forEach(function (k) {
             paintCard(k);
             cards[k].classList.remove('done');
             retrigger(cards[k], 'just');
             sparkle(cards[k]);
-            setTimeout(function () { if (matched[k]) cards[k].classList.add('done'); }, FLIP_MS + 300);
+            setTimeout(function () { if (matched[k]) cards[k].classList.add('done'); }, FLIP_MS + 200);
           });
           setTimeout(function () { sound('match'); }, Math.min(FLIP_MS, 200));
           if (combo >= 2) showCombo();
@@ -813,16 +854,19 @@
       el.setAttribute('aria-hidden', 'true');
       el.innerHTML = '<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>';
       card.appendChild(el);
-      setTimeout(function () { el.remove(); }, FLIP_MS + 700);
+      setTimeout(function () { el.remove(); }, FLIP_MS + 520);
     }
 
     function showCombo() {
       if (REDUCED) return;
+      var old = stageEl.querySelector('.combo-pop');
+      if (old) old.remove();
       var el = document.createElement('span');
       el.className = 'combo-pop';
+      el.setAttribute('aria-hidden', 'true');
       el.textContent = '连击 ×' + combo;
-      pairsBox.appendChild(el);
-      setTimeout(function () { el.remove(); }, 800);
+      stageEl.appendChild(el);
+      setTimeout(function () { el.remove(); }, 950);
     }
 
     function finish() {
@@ -836,7 +880,6 @@
       if (rec.time) b.time = sec;
       bests[diff] = b;
       store.set(KEY_BEST, bests);
-      updateBestMini();
       updateHomeStat();
       announce('全部配对！' + moves + ' 步');
       setTimeout(function () {
@@ -845,7 +888,17 @@
         showWin();
         var btn = winEl.querySelector('[data-action="new"]');
         if (btn) btn.focus({ preventScroll: true });
-      }, FLIP_MS + 450);
+      }, FLIP_MS + 380);
+    }
+
+    // 从新游戏弹窗选难度：选当前难度 = 重新开一局；选其他难度 = 继续它的存档（没有则新开）
+    function pickDiff(d) {
+      if (!DIFFS[d]) return;
+      window.Site.closeDialog('newgame');
+      sound('start');
+      if (d === diff) newGame();
+      else setDiff(d);
+      announce(DIFFS[diff].name + '，' + (moves ? '继续上一局' : '新游戏'));
     }
 
     function setDiff(d) {
@@ -855,9 +908,6 @@
       save();
       diff = d;
       store.set(KEY_DIFF, diff);
-      updateDiffButtons();
-      updateBestMini();
-      sound('click');
       var s = store.get(stateKey(diff), null);
       if (isValid(s, diff) && !s.won) {
         load(s);
@@ -872,7 +922,8 @@
     // ---------- 计时 ----------
     function tick() {
       var now = performance.now();
-      if (running && !document.hidden) {
+      // 弹窗打开时暂停计时
+      if (running && !document.hidden && !document.querySelector('dialog[open]')) {
         elapsed += now - lastTick;
         renderTime(false);
       }
@@ -894,7 +945,9 @@
     boardEl.addEventListener('click', function (e) {
       var action = e.target.closest('[data-action]');
       if (action) {
-        if (action.getAttribute('data-action') === 'new') { sound('start'); newGame(); }
+        var act = action.getAttribute('data-action');
+        if (act === 'new') { sound('start'); newGame(); }
+        else if (act === 'diff') openNewGame();
         return;
       }
       var card = e.target.closest('.card');
@@ -928,10 +981,10 @@
       cards.forEach(function (c) { c.tabIndex = c === card ? 0 : -1; });
     });
 
-    document.getElementById('new-game').addEventListener('click', function () { sound('start'); newGame(); });
-    document.getElementById('diff').addEventListener('click', function (e) {
+    document.getElementById('new-game').addEventListener('click', openNewGame);
+    document.getElementById('diff-choices').addEventListener('click', function (e) {
       var b = e.target.closest('button[data-diff]');
-      if (b) setDiff(b.getAttribute('data-diff'));
+      if (b) pickDiff(b.getAttribute('data-diff'));
     });
 
     var resizeRaf = 0;
@@ -942,8 +995,6 @@
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
 
     // ---------- 启动 ----------
-    updateDiffButtons();
-    updateBestMini();
     updateHomeStat();
     var saved = store.get(stateKey(diff), null);
     if (isValid(saved, diff)) {
