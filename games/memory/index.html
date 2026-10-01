@@ -3,58 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>记忆翻牌 · 格子乐园</title>
+  <title>记忆翻牌 · 游戏来了</title>
   <meta name="description" content="在线玩记忆翻牌：翻开卡片，找出所有相同的图案。三种难度，步数越少星越多，自动保存进度。">
-  <meta name="theme-color" content="#f7f2ea">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='15' height='21' rx='3' fill='%23f26b3a' transform='rotate(-10 10 16)'/%3E%3Crect x='14' y='6' width='15' height='21' rx='3' fill='%23fffdf9' stroke='%235b8def' stroke-width='2' transform='rotate(8 21 16)'/%3E%3Ccircle cx='21.5' cy='16.5' r='4' fill='%234fb39a' transform='rotate(8 21 16)'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#ffe6f1">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg stroke='%232d2a4a' stroke-width='2.2' stroke-linejoin='round'%3E%3Crect x='2.5' y='6' width='15' height='20' rx='4' fill='%23ff5fa2' transform='rotate(-12 10 16)'/%3E%3Crect x='14.5' y='5' width='15' height='20' rx='4' fill='%23fff' transform='rotate(9 22 15)'/%3E%3Ccircle cx='21.8' cy='15' r='4.6' fill='%237cd3ff' stroke-width='1.8'/%3E%3C/g%3E%3Ccircle cx='9.6' cy='16' r='2.4' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/site.css">
   <script src="../../assets/site.js"></script>
   <style>
     :root {
       --stage-max: 520px;
-      --card-back: #f26b3a;
       --flip: 380ms;
+      /* 牌桌（托盘） */
+      --tray: #ffc4dd;
+      --tray-dot: rgba(255, 255, 255, 0.55);
+      /* 牌背 */
+      --back: #ff5fa2;
+      /* 牌面上的粉彩圆底，每对牌同色 */
+      --p0: #ffd3e6;
+      --p1: #cdeeff;
+      --p2: #fff0a8;
+      --p3: #d3f5c8;
+      --p4: #e4d9ff;
+      --p5: #ffdcc2;
+      --p6: #c4f1ea;
     }
     @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) { --card-back: #d9603a; }
+      :root:not([data-theme="light"]) {
+        --tray: #4a2c56;
+        --tray-dot: rgba(255, 95, 162, 0.16);
+        --p0: #ffb3d3;
+        --p1: #a9defc;
+        --p2: #ffe27a;
+        --p3: #b4e9a3;
+        --p4: #cbbcff;
+        --p5: #ffc49b;
+        --p6: #9fe6da;
+      }
     }
-    :root[data-theme="dark"] { --card-back: #d9603a; }
+    :root[data-theme="dark"] {
+      --tray: #4a2c56;
+      --tray-dot: rgba(255, 95, 162, 0.16);
+      --p0: #ffb3d3;
+      --p1: #a9defc;
+      --p2: #ffe27a;
+      --p3: #b4e9a3;
+      --p4: #cbbcff;
+      --p5: #ffc49b;
+      --p6: #9fe6da;
+    }
 
-    .gcontrols { min-height: 40px; }
+    .gcontrols { min-height: 44px; }
     .best-mini {
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--text-dim);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 32px;
+      padding: 0 10px;
+      border: 2.5px solid var(--ink);
+      border-radius: 999px;
+      background: var(--theme-2);
+      color: #2d2a4a;
+      box-shadow: 0 2px 0 var(--ink);
+      font-size: 14px;
+      font-weight: 700;
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
+      transform: rotate(2deg);
+    }
+    .best-mini:empty { display: none; }
+    @media (max-width: 400px) {
+      .best-mini { height: 30px; padding: 0 7px; font-size: 13px; gap: 2px; }
     }
 
     .combo-pop {
       position: absolute;
       left: 0;
       right: 0;
-      top: -6px;
-      font-size: 15px;
-      font-weight: 900;
-      color: var(--good);
+      top: 10px;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--theme);
+      -webkit-text-stroke: 1px var(--ink);
+      paint-order: stroke fill;
       pointer-events: none;
       white-space: nowrap;
       animation: float-up 800ms ease-out forwards;
     }
     @keyframes float-up {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-30px); opacity: 0; }
+      from { transform: translateY(0) scale(.9); opacity: 1; }
+      to { transform: translateY(-36px) scale(1.15); opacity: 0; }
     }
 
-    /* 牌桌 */
+    /* ---------- 牌桌：粗描边的粉色托盘 ---------- */
     .board {
       --cols: 4;
       --cw: 72px;
       --ch: 88px;
       --gap: 8px;
+      --cb: 3px;            /* 卡片描边 */
+      --lift: 4px;          /* 卡片实心投影 */
       position: relative;
       display: grid;
       grid-template-columns: repeat(var(--cols), var(--cw));
@@ -62,10 +112,13 @@
       gap: var(--gap);
       width: max-content;
       margin: 0 auto;
-      padding: var(--gap);
-      border-radius: 16px;
-      background: var(--surface-2);
-      border: 1px solid var(--line);
+      padding: var(--gap) var(--gap) calc(var(--gap) + var(--lift));
+      border: var(--outline);
+      border-radius: 22px;
+      background-color: var(--tray);
+      background-image: radial-gradient(var(--tray-dot) 2px, transparent 2.6px);
+      background-size: 18px 18px;
+      box-shadow: var(--shadow-lg);
       user-select: none;
       -webkit-user-select: none;
     }
@@ -77,21 +130,27 @@
       height: 100%;
       padding: 0;
       border: 0;
-      border-radius: calc(var(--cw) * 0.14);
+      border-radius: calc(var(--cw) * 0.18);
       background: none;
       perspective: 700px;
       cursor: pointer;
       touch-action: manipulation;
       outline: none;
+      transition: transform .12s ease;
     }
-    .card:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+    .card:focus-visible { outline: 3px solid var(--theme-2); outline-offset: 3px; z-index: 3; }
     .card.up, .card.matched { cursor: default; }
+    @media (hover: hover) {
+      .card:not(.up):not(.matched):hover { transform: translateY(-3px) rotate(-1.5deg); }
+    }
+    .card:not(.up):not(.matched):active { transform: translateY(2px); }
 
     .card-inner {
       position: absolute;
       inset: 0;
       transform-style: preserve-3d;
-      transition: transform var(--flip) cubic-bezier(.3, .7, .3, 1);
+      /* 带一点回弹的 3D 翻转 */
+      transition: transform var(--flip) cubic-bezier(.3, 1.45, .55, 1);
     }
     .card.up .card-inner,
     .card.matched .card-inner { transform: rotateY(180deg); }
@@ -101,99 +160,212 @@
       inset: 0;
       display: grid;
       place-items: center;
-      border-radius: inherit;
-      border-radius: calc(var(--cw) * 0.14);
+      overflow: hidden;
+      border: var(--cb) solid var(--ink);
+      border-radius: calc(var(--cw) * 0.18);
+      box-shadow: 0 var(--lift) 0 var(--ink);
       -webkit-backface-visibility: hidden;
       backface-visibility: hidden;
     }
 
-    /* 牌背：品牌四色方块 + 圆点纹理 */
+    /* 牌背：粉色波点 + 白色缝线 + “?” 徽章 */
     .back {
-      background-color: var(--card-back);
+      background-color: var(--back);
       background-image:
-        radial-gradient(rgba(255, 255, 255, 0.2) 1.3px, transparent 1.5px),
-        linear-gradient(150deg, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.1));
-      background-size: 9px 9px, 100% 100%;
-      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.3), 0 2px 0 rgba(0, 0, 0, 0.1);
-      transition: filter .15s ease;
+        radial-gradient(rgba(255, 255, 255, 0.38) 22%, transparent 24%),
+        radial-gradient(rgba(255, 255, 255, 0.38) 22%, transparent 24%);
+      background-size: calc(var(--cw) * 0.3) calc(var(--cw) * 0.3);
+      background-position: 0 0, calc(var(--cw) * 0.15) calc(var(--cw) * 0.15);
+      box-shadow:
+        0 var(--lift) 0 var(--ink),
+        inset 0 -5px 0 rgba(0, 0, 0, 0.12),
+        inset 0 4px 0 rgba(255, 255, 255, 0.4);
+    }
+    .back::before {
+      content: "";
+      position: absolute;
+      inset: calc(var(--cw) * 0.07);
+      border: 2px dashed rgba(255, 255, 255, 0.75);
+      border-radius: calc(var(--cw) * 0.11);
     }
     .mark {
-      --m: calc(var(--cw) * 0.13);
+      position: relative;
       display: grid;
-      grid-template-columns: repeat(2, var(--m));
-      grid-template-rows: repeat(2, var(--m));
-      gap: calc(var(--m) * 0.28);
-      padding: calc(var(--m) * 0.42);
-      border-radius: calc(var(--m) * 0.55);
-      background: #fffdf9;
-      box-shadow: 0 2px 6px rgba(80, 30, 10, 0.25);
-      transform: rotate(45deg);
+      place-items: center;
+      width: calc(var(--cw) * 0.46);
+      height: calc(var(--cw) * 0.46);
+      border: max(2px, calc(var(--cb) - 0.5px)) solid var(--ink);
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 0 var(--ink), inset 0 -3px 0 rgba(0, 0, 0, 0.08);
+      color: var(--back);
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: calc(var(--cw) * 0.32);
+      line-height: 1;
+      transform: rotate(-10deg);
     }
-    .mark i { display: block; border-radius: calc(var(--m) * 0.28); }
-    .mark i:nth-child(1) { background: #f26b3a; }
-    .mark i:nth-child(2) { background: #f5b43c; }
-    .mark i:nth-child(3) { background: #4fb39a; }
-    .mark i:nth-child(4) { background: #5b8def; }
-    @media (hover: hover) {
-      .card:not(.up):not(.matched):hover .back { filter: brightness(1.08); }
-    }
+    .mark::after { content: "?"; margin-top: calc(var(--cw) * -0.02); }
 
+    /* 牌面：白卡 + 粉彩圆底 + 大号 emoji */
     .front {
       transform: rotateY(180deg);
       background: var(--surface);
-      border: 1px solid var(--line);
-      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.06);
+      transition: border-color .2s ease, background-color .3s ease;
+    }
+    .pic {
+      display: grid;
+      place-items: center;
+      width: calc(var(--cw) * 0.8);
+      height: calc(var(--cw) * 0.8);
+      border-radius: 50%;
+      background: var(--pc, var(--p0));
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.08);
       font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", var(--font);
       font-size: var(--ef, 40px);
       line-height: 1;
-      transition: opacity .4s ease, box-shadow .2s ease;
+      transition: opacity .4s ease, transform .4s ease;
+    }
+    .pc0 { --pc: var(--p0); } .pc1 { --pc: var(--p1); } .pc2 { --pc: var(--p2); }
+    .pc3 { --pc: var(--p3); } .pc4 { --pc: var(--p4); } .pc5 { --pc: var(--p5); }
+    .pc6 { --pc: var(--p6); }
+
+    /* ✓ 徽章（配对后出现） */
+    .ok {
+      position: absolute;
+      top: calc(var(--cw) * 0.04);
+      right: calc(var(--cw) * 0.04);
+      display: grid;
+      place-items: center;
+      width: max(16px, calc(var(--cw) * 0.27));
+      height: max(16px, calc(var(--cw) * 0.27));
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      background: var(--good);
+      color: #fff;
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: max(10px, calc(var(--cw) * 0.16));
+      line-height: 1;
+      transform: scale(0);
+      transition: transform .32s cubic-bezier(.2, 1.6, .4, 1);
     }
 
-    /* 配对成功 */
-    .card.matched .front { box-shadow: inset 0 0 0 2.5px var(--good); }
-    .card.matched.done .front { opacity: 0.55; transition-delay: .5s; }
-    .card.just { animation: pulse 420ms ease calc(var(--flip) - 80ms); }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      45% { transform: scale(1.1); }
+    /* 配对成功：绿色描边 + 星光 + 轻轻跳动，之后变淡并打勾 */
+    .card.matched .front { border-color: var(--good); }
+    .card.matched.done .front { background: var(--surface-2); transition-delay: .4s; }
+    .card.matched.done .pic { opacity: 0.6; transform: scale(.92); transition-delay: .4s; }
+    .card.matched.done .ok { transform: scale(1); transition-delay: .4s; }
+    .card.just { z-index: 2; animation: bob 620ms ease-in-out calc(var(--flip) - 60ms); }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0) scale(1); }
+      30% { transform: translateY(-7px) scale(1.08) rotate(-3deg); }
+      60% { transform: translateY(0) scale(.98) rotate(2deg); }
+      80% { transform: translateY(-3px) scale(1.02); }
     }
 
-    /* 配对失败 */
-    .card.miss .front { box-shadow: inset 0 0 0 2.5px var(--bad); }
-    .card.miss { animation: shake 340ms ease calc(var(--flip) - 40ms); }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-5px) rotate(-2deg); }
-      40% { transform: translateX(5px) rotate(2deg); }
-      60% { transform: translateX(-4px); }
-      80% { transform: translateX(3px); }
+    .burst {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 0;
+      height: 0;
+      z-index: 4;
+      pointer-events: none;
+    }
+    .burst::before {
+      content: "";
+      position: absolute;
+      left: calc(var(--cw) * -0.5);
+      top: calc(var(--cw) * -0.5);
+      width: var(--cw);
+      height: var(--cw);
+      border: 3px solid var(--good);
+      border-radius: 50%;
+      opacity: 0;
+      animation: ring 520ms ease-out calc(var(--flip) - 60ms);
+    }
+    .burst i {
+      position: absolute;
+      left: -6px;
+      top: -6px;
+      width: 14px;
+      height: 14px;
+      margin: -1px;
+      background: #ffd23f;
+      clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+      opacity: 0;
+      animation: spark 620ms cubic-bezier(.2, .8, .3, 1) calc(var(--flip) - 60ms);
+    }
+    .burst i:nth-child(3n + 2) { background: var(--theme); }
+    .burst i:nth-child(3n) { background: var(--theme-2); }
+    .burst i:nth-child(1) { --a: 0deg; }
+    .burst i:nth-child(2) { --a: 45deg; }
+    .burst i:nth-child(3) { --a: 90deg; }
+    .burst i:nth-child(4) { --a: 135deg; }
+    .burst i:nth-child(5) { --a: 180deg; }
+    .burst i:nth-child(6) { --a: 225deg; }
+    .burst i:nth-child(7) { --a: 270deg; }
+    .burst i:nth-child(8) { --a: 315deg; }
+    @keyframes spark {
+      0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(.3); }
+      70% { opacity: 1; }
+      100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--ch) * -0.66)) scale(1.1) rotate(90deg); }
+    }
+    @keyframes ring {
+      0% { opacity: .9; transform: scale(.3); }
+      100% { opacity: 0; transform: scale(1.5); }
+    }
+
+    /* 配对失败：红色描边 + 摇晃 */
+    .card.miss .front { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, var(--surface)); }
+    .card.miss { animation: wobble 380ms ease calc(var(--flip) - 40ms); }
+    @keyframes wobble {
+      0%, 100% { transform: none; }
+      20% { transform: translateX(-5px) rotate(-5deg); }
+      40% { transform: translateX(5px) rotate(4deg); }
+      60% { transform: translateX(-3px) rotate(-3deg); }
+      80% { transform: translateX(2px) rotate(1deg); }
     }
 
     .board.instant .card-inner,
-    .board.instant .front { transition: none; }
+    .board.instant .front,
+    .board.instant .pic,
+    .board.instant .ok { transition: none; }
 
-    .overlay h2 { font-size: clamp(26px, 8vw, 40px); }
-    .stars { font-size: 34px; line-height: 1; letter-spacing: 4px; color: var(--surface-3); }
-    .stars b { color: #f5b43c; font-weight: inherit; }
+    /* ---------- 胜利卡片 ---------- */
+    .stars {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      margin: 2px 0 -2px;
+    }
+    .star { display: block; width: 50px; height: 50px; animation: star-pop 460ms cubic-bezier(.2, 1.6, .4, 1) calc(520ms + var(--d) * 200ms) backwards; }
+    .star:nth-child(2) { width: 64px; height: 64px; margin-top: -14px; }
+    .star svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .star path { fill: var(--surface-3); stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+    .star.on path { fill: #ffd23f; }
+    .star .shine { fill: none; stroke: rgba(255, 255, 255, 0.85); stroke-width: 1.8; stroke-linecap: round; }
+    .star:not(.on) .shine { display: none; }
+    @keyframes star-pop {
+      0% { transform: scale(0) rotate(-40deg); opacity: 0; }
+      100% { transform: none; opacity: 1; }
+    }
     .overlay .rec {
       display: inline-block;
-      margin-left: 4px;
-      padding: 0 6px;
-      border-radius: 6px;
+      margin-left: 6px;
+      padding: 1px 8px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
       background: var(--good);
       color: #fff;
       font-size: 12px;
+      font-weight: 700;
       vertical-align: 1px;
+      transform: rotate(-3deg);
     }
-
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip: rect(0 0 0 0);
-      white-space: nowrap;
-    }
+    #win-text { font-size: 18px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
 
     @media (max-width: 340px) {
       .stats { gap: 6px; }
@@ -205,11 +377,12 @@
 
     @media (prefers-reduced-motion: reduce) {
       :root { --flip: 0ms; }
-      .card-inner, .front { transition: none; }
+      .card-inner, .front, .pic, .ok { transition: none; }
+      .burst { display: none; }
     }
   </style>
 </head>
-<body class="game-page">
+<body class="game-page" data-game="memory">
   <header class="gbar">
     <a class="icon-btn" href="../../" aria-label="返回游戏大厅" title="返回游戏大厅">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -246,12 +419,14 @@
     <div class="stage" id="stage">
       <div class="board" id="board" role="grid" aria-label="记忆翻牌牌桌">
         <div class="overlay" id="win" hidden>
-          <h2>全部配对！</h2>
-          <div class="stars" id="win-stars" aria-hidden="true"></div>
-          <p id="win-text"></p>
-          <p id="win-best"></p>
-          <div class="row">
-            <button class="btn primary" type="button" data-action="new">再来一局</button>
+          <div class="overlay-card">
+            <h2>全部配对！</h2>
+            <div class="stars" id="win-stars" aria-hidden="true"></div>
+            <p id="win-text"></p>
+            <p id="win-best"></p>
+            <div class="row">
+              <button class="btn primary" type="button" data-action="new">再来一局</button>
+            </div>
           </div>
         </div>
       </div>
@@ -297,6 +472,7 @@
       ['🐷', '小猪'], ['🐵', '猴子'], ['🐙', '章鱼'], ['🦄', '独角兽'], ['🐝', '蜜蜂'], ['🦋', '蝴蝶'],
       ['🐢', '乌龟'], ['🐳', '鲸鱼']
     ];
+    var PASTELS = 7;     // 牌面圆底颜色数（.pc0 ~ .pc6），同一对牌颜色相同
     var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var FLIP_MS = REDUCED ? 0 : 380;
     var MISS_MS = 800;   // 不匹配时停留多久再翻回
@@ -370,8 +546,9 @@
         b.setAttribute('role', 'gridcell');
         b.tabIndex = i === 0 ? 0 : -1;
         b.innerHTML = '<span class="card-inner" aria-hidden="true">' +
-          '<span class="face back"><span class="mark"><i></i><i></i><i></i><i></i></span></span>' +
-          '<span class="face front">' + POOL[deck[i]][0] + '</span></span>';
+          '<span class="face back"><span class="mark"></span></span>' +
+          '<span class="face front"><span class="pic pc' + (deck[i] % PASTELS) + '">' + POOL[deck[i]][0] + '</span>' +
+          '<span class="ok">✓</span></span></span>';
         frag.appendChild(b);
         cards.push(b);
       }
@@ -447,8 +624,14 @@
       var n = pairsTotal();
       var s = starCount(moves, n);
       var stars = '';
-      for (var i = 0; i < 3; i++) stars += i < s ? '<b>★</b>' : '★';
-      document.getElementById('win-stars').innerHTML = stars;
+      for (var i = 0; i < 3; i++) {
+        stars += '<span class="star' + (i < s ? ' on' : '') + '" style="--d:' + i + '"><svg viewBox="0 0 24 24">' +
+          '<path d="M12 2.2l2.95 6.1 6.7.95-4.85 4.7 1.15 6.65L12 17.45l-5.95 3.15 1.15-6.65-4.85-4.7 6.7-.95z"/>' +
+          '<path class="shine" d="M8.3 9.6l1.6-.25"/></svg></span>';
+      }
+      var starsEl = document.getElementById('win-stars');
+      starsEl.innerHTML = stars;
+      starsEl.setAttribute('aria-label', s + ' 颗星');
       var sec = Math.floor(elapsed / 1000);
       document.getElementById('win-text').textContent = moves + ' 步 · ' + window.Site.formatTime(sec);
       var b = bests[diff] || {};
@@ -473,10 +656,11 @@
       var ratio = 1.22;
       var gap = cfg.cols >= 6 ? 6 : 8;
       var cw = 0;
+      var BORDER = 3, LIFT = 4, SHADOW = 6; // 托盘描边、卡片投影、托盘投影
       for (var pass = 0; pass < 2; pass++) {
-        var pad = 2 * (gap + 1);
+        var pad = 2 * (gap + BORDER);
         var w1 = (availW - pad - (cfg.cols - 1) * gap) / cfg.cols;
-        var h1 = (availH - pad - (cfg.rows - 1) * gap) / cfg.rows;
+        var h1 = (availH - pad - LIFT - SHADOW - (cfg.rows - 1) * gap) / cfg.rows;
         cw = Math.floor(Math.max(28, Math.min(w1, h1 / ratio, 124)));
         if (cw >= 88 && gap < 10) gap = 10;
         else break;
@@ -485,7 +669,9 @@
       boardEl.style.setProperty('--cw', cw + 'px');
       boardEl.style.setProperty('--ch', ch + 'px');
       boardEl.style.setProperty('--gap', gap + 'px');
-      boardEl.style.setProperty('--ef', Math.round(Math.min(cw * 0.62, ch * 0.5)) + 'px');
+      boardEl.style.setProperty('--ef', Math.round(cw * 0.5) + 'px');
+      boardEl.style.setProperty('--cb', cw < 56 ? '2.5px' : '3px');
+      boardEl.style.setProperty('--lift', cw < 56 ? '3px' : '4px');
     }
 
     function announce(text) { liveEl.textContent = text; }
@@ -596,6 +782,7 @@
             paintCard(k);
             cards[k].classList.remove('done');
             retrigger(cards[k], 'just');
+            sparkle(cards[k]);
             setTimeout(function () { if (matched[k]) cards[k].classList.add('done'); }, FLIP_MS + 300);
           });
           setTimeout(function () { sound('match'); }, Math.min(FLIP_MS, 200));
@@ -614,6 +801,19 @@
       }
       updateStats();
       save();
+    }
+
+    // 配对成功的星光
+    function sparkle(card) {
+      if (REDUCED) return;
+      var old = card.querySelector('.burst');
+      if (old) old.remove();
+      var el = document.createElement('span');
+      el.className = 'burst';
+      el.setAttribute('aria-hidden', 'true');
+      el.innerHTML = '<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>';
+      card.appendChild(el);
+      setTimeout(function () { el.remove(); }, FLIP_MS + 700);
     }
 
     function showCombo() {

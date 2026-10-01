@@ -3,49 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>贪吃蛇 · 格子乐园</title>
+  <title>贪吃蛇 · 游戏来了</title>
   <meta name="description" content="在线玩贪吃蛇：吃苹果变长，别撞墙也别咬到自己。支持键盘、手机滑动和方向键盘，三档速度，可开启穿墙模式。">
-  <meta name="theme-color" content="#f7f2ea">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1' y='1' width='30' height='30' rx='7' fill='%233f9c7f'/%3E%3Cpath d='M7 23h9v-9h8' fill='none' stroke='white' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='23.5' cy='23' r='3.5' fill='%23e0493a'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#fff7d6">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1.5' y='1.5' width='29' height='29' rx='8' fill='%23f5b400' stroke='%232d2a4a' stroke-width='3'/%3E%3Cpath d='M8 23h8v-8h6' fill='none' stroke='%232d2a4a' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M8 23h8v-8h6' fill='none' stroke='%2346c85a' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='22.5' cy='14' r='2' fill='white' stroke='%232d2a4a' stroke-width='1.2'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/site.css">
   <script src="../../assets/site.js"></script>
   <style>
     :root {
-      --reserve: 360px;
+      --reserve: 372px;
       --stage-max: 480px;
-      --board-a: #ede4d5;
-      --board-b: #e5dac8;
-      --snake: #3f9c7f;
-      --snake-dark: #2c7660;
-      --apple: #e0493a;
-      --leaf: #57a85a;
-      --stem: #7a5233;
-      --pupil: #2a211b;
+      /* 花园草地 */
+      --hedge: #6cc94a;
+      --grass-a: #c4ee86;
+      --grass-b: #b2e370;
+      --tuft: #8fcf55;
+      --flower: #ffffff;
+      /* 小蛇 */
+      --snake: #34c35a;
+      --snake-belly: #c9f59a;
+      --blush: rgba(255, 110, 140, 0.7);
+      --tongue: #ff4d6d;
+      /* 苹果 */
+      --apple: #ff4757;
+      --leaf: #5ad13e;
+      --stem: #8a5a32;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
-        --board-a: #2d2621;
-        --board-b: #352c26;
-        --snake: #5cc2a2;
-        --snake-dark: #367f69;
-        --apple: #ff6b5c;
-        --leaf: #6cbf6f;
-        --stem: #b08562;
-        --pupil: #1b1714;
+        --hedge: #24502e;
+        --grass-a: #2f6a3a;
+        --grass-b: #285e33;
+        --tuft: #3d7f47;
+        --flower: #b9b4e6;
+        --snake: #4fdc72;
+        --snake-belly: #c4f7a2;
+        --apple: #ff5a67;
+        --leaf: #6be04e;
+        --stem: #b07a4c;
       }
     }
     :root[data-theme="dark"] {
-      --board-a: #2d2621;
-      --board-b: #352c26;
-      --snake: #5cc2a2;
-      --snake-dark: #367f69;
-      --apple: #ff6b5c;
-      --leaf: #6cbf6f;
-      --stem: #b08562;
-      --pupil: #1b1714;
+      --hedge: #24502e;
+      --grass-a: #2f6a3a;
+      --grass-b: #285e33;
+      --tuft: #3d7f47;
+      --flower: #b9b4e6;
+      --snake: #4fdc72;
+      --snake-belly: #c4f7a2;
+      --apple: #ff5a67;
+      --leaf: #6be04e;
+      --stem: #b07a4c;
     }
     /* 棋盘边长随屏幕高度收缩，保证手机一屏放下 */
     @supports (height: 100dvh) {
@@ -54,25 +65,50 @@
       }
     }
     @media (hover: hover) and (pointer: fine) {
-      :root { --reserve: 230px; }
+      :root { --reserve: 236px; }
       .dpad { display: none !important; }
     }
 
     body.game-page { touch-action: manipulation; }
 
-    .stats .btns .btn { width: 56px; padding: 0; }
-    .stats .btns .btn svg { display: block; width: 22px; height: 22px; }
+    /* 暂停 / 开始：黄色大按钮 */
+    .stats .btns .btn { width: 58px; padding: 0; }
+    .stats .btns .btn svg { display: block; width: 24px; height: 24px; }
+    #pause {
+      background: var(--theme);
+      color: var(--theme-ink);
+      box-shadow: var(--pop-sm), inset 0 -4px 0 rgba(0, 0, 0, 0.12), inset 0 3px 0 rgba(255, 255, 255, 0.45);
+    }
+    #pause:active { box-shadow: 0 0 0 var(--ink), inset 0 -4px 0 rgba(0, 0, 0, 0.12); }
+    #pause:disabled { box-shadow: var(--pop-sm); }
     #pause .play { display: none; }
     #pause.paused .play { display: block; }
     #pause.paused .pz { display: none; }
 
     .gcontrols { flex-wrap: nowrap; }
-    .wrap-btn { height: 40px; border-radius: 12px; gap: 6px; padding: 0 12px; color: var(--text-dim); }
-    .wrap-btn svg { width: 18px; height: 18px; }
-    .wrap-btn[aria-pressed="true"] { background: var(--text); border-color: var(--text); color: var(--bg); }
+    .wrap-btn { height: 44px; gap: 6px; padding: 0 14px; color: var(--text-dim); }
+    .wrap-btn svg { width: 20px; height: 20px; }
+    .wrap-btn .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2.5px solid currentColor;
+      transition: background-color .15s ease;
+    }
+    .wrap-btn[aria-pressed="true"] {
+      background: var(--theme-2);
+      color: #2d2a4a;
+      box-shadow: var(--pop-sm), inset 0 -4px 0 rgba(0, 0, 0, 0.12), inset 0 3px 0 rgba(255, 255, 255, 0.45);
+    }
+    .wrap-btn[aria-pressed="true"] .dot { background: #2d2a4a; }
 
+    /* 花园棋盘：粗描边的草地画框 */
     .stage {
-      border-radius: 14px;
+      padding: 7px;
+      border: var(--outline);
+      border-radius: 24px;
+      background: var(--hedge);
+      box-shadow: var(--shadow-lg), inset 0 3px 0 rgba(255, 255, 255, 0.3), inset 0 -4px 0 rgba(0, 0, 0, 0.14);
       touch-action: none;
       user-select: none;
       -webkit-user-select: none;
@@ -82,49 +118,112 @@
       display: block;
       width: 100%;
       aspect-ratio: 1;
-      border-radius: 14px;
-      background: var(--board-a);
-      box-shadow: var(--shadow);
+      border: 2.5px solid var(--ink);
+      border-radius: 12px;
+      background: var(--grass-a);
     }
-    .overlay.ready { background: color-mix(in srgb, var(--bg) 35%, transparent); -webkit-backdrop-filter: none; backdrop-filter: none; animation: none; }
+    .overlay { border-radius: 20px; }
     .overlay.over { animation-delay: 450ms; }
-    .overlay .btn.big { height: 52px; padding: 0 30px; font-size: 18px; border-radius: 14px; box-shadow: var(--shadow); }
-    .overlay .new-best { color: var(--accent); }
+    .overlay.over .overlay-card { animation-delay: 550ms; }
+    .overlay .btn.big {
+      height: 54px;
+      min-width: 150px;
+      padding: 0 30px;
+      border-radius: 18px;
+      font-family: var(--font-display);
+      font-size: 24px;
+      letter-spacing: 0.1em;
+      box-shadow: var(--pop), inset 0 -5px 0 rgba(0, 0, 0, 0.12), inset 0 4px 0 rgba(255, 255, 255, 0.45);
+    }
+    .overlay .btn.big:active { transform: translateY(4px); box-shadow: 0 0 0 var(--ink), inset 0 -5px 0 rgba(0, 0, 0, 0.12); }
+    .overlay-card .hint { font-size: 13px; font-weight: 600; }
+    .overlay-card .mascot { display: block; width: 74px; height: 50px; margin: -4px 0 -2px; }
+    .overlay.ready { align-items: start; padding-top: 4%; background: color-mix(in srgb, var(--bg) 20%, transparent); }
+    .overlay.ready .overlay-card { gap: 9px; padding: 14px 16px 14px; width: min(260px, 100%); }
+    @media (pointer: coarse) {
+      .overlay.ready { padding-top: 8px; }
+      .overlay.ready .hint { display: none; }
+      .overlay.ready .btn.big { height: 50px; }
+    }
+    .overlay .new-best {
+      padding: 2px 14px 3px;
+      border: 2.5px solid var(--ink);
+      border-radius: 999px;
+      background: var(--theme);
+      color: var(--theme-ink);
+      box-shadow: 0 3px 0 var(--ink);
+      transform: rotate(-2deg);
+    }
 
-    /* 方向键盘 */
+    /* 方向键盘：四个街机圆按钮排成十字 */
     .dpad {
-      display: grid;
-      grid-template-columns: repeat(3, 76px);
-      grid-template-rows: repeat(3, 44px);
-      gap: 6px;
-      justify-content: center;
+      --b: 54px;
+      --dy: 44px;
+      --dx: 64px;
+      position: relative;
+      flex: none;
+      width: calc(var(--b) + 2 * var(--dx));
+      height: calc(var(--b) + 2 * var(--dy) + 4px);
+      margin: 0 auto;
       touch-action: none;
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
     }
+    .dpad::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: calc(var(--dy) + var(--b) / 2);
+      width: 26px;
+      height: 26px;
+      margin: -13px 0 0 -13px;
+      border-radius: 50%;
+      border: var(--outline);
+      background: var(--theme-2);
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.15), inset 0 3px 0 rgba(255, 255, 255, 0.4);
+    }
     .dpad button {
+      position: absolute;
+      left: var(--dx);
+      top: var(--dy);
+      width: var(--b);
+      height: var(--b);
       display: grid;
       place-items: center;
       padding: 0;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: var(--surface);
-      color: var(--text);
-      box-shadow: 0 3px 0 var(--line);
+      border: var(--outline);
+      border-radius: 50%;
+      background: var(--theme);
+      color: var(--ink);
+      box-shadow: 0 4px 0 var(--ink), inset 0 -5px 0 rgba(0, 0, 0, 0.13), inset 0 4px 0 rgba(255, 255, 255, 0.5);
       cursor: pointer;
       touch-action: none;
-      transition: transform 80ms ease, box-shadow 80ms ease, background-color 80ms ease;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 70ms ease, box-shadow 70ms ease, filter 70ms ease;
     }
-    .dpad button svg { width: 24px; height: 24px; pointer-events: none; }
-    .dpad button.on { transform: translateY(3px); box-shadow: 0 0 0 var(--line); background: var(--surface-2); color: var(--accent); }
-    .dpad .up { grid-area: 1 / 2; }
-    .dpad .left { grid-area: 2 / 1; }
-    .dpad .right { grid-area: 2 / 3; }
-    .dpad .down { grid-area: 3 / 2; }
+    .dpad button svg { width: 26px; height: 26px; pointer-events: none; }
+    .dpad button.on {
+      transform: translateY(4px) scale(0.96);
+      box-shadow: 0 0 0 var(--ink), inset 0 -2px 0 rgba(0, 0, 0, 0.13), inset 0 3px 0 rgba(0, 0, 0, 0.12);
+      filter: brightness(0.94);
+    }
+    .dpad .up { top: 0; }
+    .dpad .down { top: calc(2 * var(--dy)); }
+    .dpad .left { left: 0; }
+    .dpad .right { left: calc(2 * var(--dx)); }
+
+    /* 矮屏手机：收紧间距，把空间让给棋盘 */
+    @media (max-height: 700px) and (hover: none), (max-height: 700px) and (pointer: coarse) {
+      :root { --reserve: 348px; }
+      .stage { padding: 5px; border-radius: 22px; }
+      .gbar { padding: 10px 0; }
+      .gmain { gap: 11px; }
+      .dpad { --b: 50px; --dy: 41px; --dx: 60px; }
+    }
   </style>
 </head>
-<body class="game-page">
+<body class="game-page" data-game="snake">
   <header class="gbar">
     <a class="icon-btn" href="../../" aria-label="返回游戏大厅" title="返回游戏大厅">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -145,8 +244,8 @@
       <div class="stat"><span class="stat-label">最高</span><span class="stat-value" id="best">0</span></div>
       <div class="btns">
         <button class="btn paused" type="button" id="pause" aria-label="开始" title="暂停 (空格)">
-          <svg class="pz" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>
-          <svg class="play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l11-6.5a1 1 0 0 0 0-1.72l-11-6.5A1 1 0 0 0 8 5.5z"/></svg>
+          <svg class="pz" viewBox="0 0 24 24" fill="currentColor"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1.6"/><rect x="14" y="4.5" width="4.5" height="15" rx="1.6"/></svg>
+          <svg class="play" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l11-6.5a1 1 0 0 0 0-1.72l-11-6.5A1 1 0 0 0 8 5.5z"/></svg>
         </button>
       </div>
     </div>
@@ -158,8 +257,9 @@
         <button type="button" data-speed="fast" aria-pressed="false">快</button>
       </div>
       <button class="btn wrap-btn" type="button" id="wrap" aria-pressed="false" title="穿墙模式：从一边出去，从另一边回来">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M17 8l4 4-4 4M3 5v14M21 5v2M21 17v2"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M17 8l4 4-4 4M3 5v14M21 5v2M21 17v2"/></svg>
         穿墙
+        <span class="dot" aria-hidden="true"></span>
       </button>
     </div>
 
@@ -167,26 +267,47 @@
       <canvas id="board" aria-label="贪吃蛇棋盘，使用方向键、滑动或下方方向键操作"></canvas>
 
       <div class="overlay ready" id="ov-ready">
-        <div class="row"><button class="btn primary big" type="button" data-action="start">开始</button></div>
+        <div class="overlay-card">
+          <svg class="mascot" viewBox="0 0 74 50" aria-hidden="true">
+            <path d="M8 38c10 0 10-14 22-14s12 14 24 14" fill="none" stroke="#2d2a4a" stroke-width="13" stroke-linecap="round"/>
+            <path d="M8 38c10 0 10-14 22-14s12 14 24 14" fill="none" stroke="#34c35a" stroke-width="8" stroke-linecap="round"/>
+            <circle cx="57" cy="34" r="12" fill="#34c35a" stroke="#2d2a4a" stroke-width="3"/>
+            <circle cx="54" cy="31" r="4.2" fill="#fff" stroke="#2d2a4a" stroke-width="2"/>
+            <circle cx="63" cy="31" r="4.2" fill="#fff" stroke="#2d2a4a" stroke-width="2"/>
+            <circle cx="55.5" cy="31.5" r="2" fill="#2d2a4a"/>
+            <circle cx="64.5" cy="31.5" r="2" fill="#2d2a4a"/>
+            <path d="M54 39q3 2.5 6 0" fill="none" stroke="#2d2a4a" stroke-width="2" stroke-linecap="round"/>
+            <path d="M21 8c3-3 8-3 9 2-3 1-7 1-9-2z" fill="#5ad13e" stroke="#2d2a4a" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="17" cy="16" r="7.5" fill="#ff4757" stroke="#2d2a4a" stroke-width="2.5"/>
+            <ellipse cx="14.5" cy="13.5" rx="1.8" ry="2.6" fill="#fff" transform="rotate(30 14.5 13.5)"/>
+          </svg>
+          <p>吃苹果变长长，别撞墙哦</p>
+          <div class="row"><button class="btn primary big" type="button" data-action="start">开始</button></div>
+          <p class="hint">也可以直接按方向键 / 滑动</p>
+        </div>
       </div>
 
       <div class="overlay" id="ov-pause" hidden>
-        <h2>暂停</h2>
-        <div class="row"><button class="btn primary big" type="button" data-action="resume">继续</button></div>
+        <div class="overlay-card">
+          <h2>暂停</h2>
+          <div class="row"><button class="btn primary big" type="button" data-action="resume">继续</button></div>
+        </div>
       </div>
 
       <div class="overlay over" id="ov-over" hidden>
-        <h2 id="over-title">游戏结束</h2>
-        <p id="over-text"></p>
-        <div class="row"><button class="btn primary big" type="button" data-action="restart">再来一局</button></div>
+        <div class="overlay-card">
+          <h2 id="over-title">游戏结束</h2>
+          <p id="over-text"></p>
+          <div class="row"><button class="btn primary big" type="button" data-action="restart">再来一局</button></div>
+        </div>
       </div>
     </div>
 
     <div class="dpad" id="dpad" aria-label="方向键">
-      <button type="button" class="up" data-dir="up" aria-label="上"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>
-      <button type="button" class="left" data-dir="left" aria-label="左"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
-      <button type="button" class="right" data-dir="right" aria-label="右"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
-      <button type="button" class="down" data-dir="down" aria-label="下"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button type="button" class="up" data-dir="up" aria-label="上"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>
+      <button type="button" class="left" data-dir="left" aria-label="左"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button type="button" class="right" data-dir="right" aria-label="右"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button type="button" class="down" data-dir="down" aria-label="下"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
     </div>
   </main>
 
@@ -398,11 +519,20 @@
 
     // ---------- 绘制 ----------
     var C = {};
+    var TAU = Math.PI * 2;
+    var bgCanvas = document.createElement('canvas');
+    var bgCtx = bgCanvas.getContext('2d');
+    var bgDirty = true;
+
     function readColors() {
       var cs = getComputedStyle(document.documentElement);
-      ['board-a', 'board-b', 'snake', 'snake-dark', 'apple', 'leaf', 'stem', 'pupil', 'bad'].forEach(function (k) {
+      ['grass-a', 'grass-b', 'tuft', 'flower', 'snake', 'snake-belly', 'blush', 'tongue',
+        'apple', 'leaf', 'stem', 'ink', 'theme', 'bad'].forEach(function (k) {
         C[k] = cs.getPropertyValue('--' + k).trim();
       });
+      var bs = getComputedStyle(document.body);
+      C.theme = bs.getPropertyValue('--theme').trim() || C.theme;
+      bgDirty = true;
     }
 
     function resize() {
@@ -413,10 +543,66 @@
       if (canvas.width !== px) {
         canvas.width = px;
         canvas.height = px;
+        bgDirty = true;
+      }
+    }
+
+    // 草地：两色棋盘格 + 固定位置的小草丛和小花（缓存成一张图，每帧直接贴）
+    var DECOR = (function () {
+      var seed = 7, out = [];
+      function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+      for (var i = 0; i < 22; i++) {
+        out.push({ x: Math.floor(rnd() * N), y: Math.floor(rnd() * N), ox: 0.25 + rnd() * 0.5, oy: 0.35 + rnd() * 0.4, f: i % 4 === 0 });
+      }
+      return out;
+    })();
+
+    function buildBg() {
+      bgDirty = false;
+      var px = canvas.width;
+      if (!px) return;
+      if (bgCanvas.width !== px) { bgCanvas.width = px; bgCanvas.height = px; }
+      var g = bgCtx, s = px / N;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, px, px);
+      g.setTransform(s, 0, 0, s, 0, 0);
+      g.fillStyle = C['grass-a'];
+      g.fillRect(0, 0, N, N);
+      g.fillStyle = C['grass-b'];
+      for (var y = 0; y < N; y++)
+        for (var x = (y & 1); x < N; x += 2) g.fillRect(x, y, 1, 1);
+      g.lineCap = 'round';
+      g.lineJoin = 'round';
+      for (var i = 0; i < DECOR.length; i++) {
+        var d = DECOR[i], cx = d.x + d.ox, cy = d.y + d.oy;
+        if (d.f) {
+          // 小花
+          g.fillStyle = C.flower;
+          for (var k = 0; k < 5; k++) {
+            var a = k / 5 * TAU;
+            g.beginPath();
+            g.arc(cx + Math.cos(a) * 0.09, cy + Math.sin(a) * 0.09, 0.07, 0, TAU);
+            g.fill();
+          }
+          g.fillStyle = C.theme;
+          g.beginPath();
+          g.arc(cx, cy, 0.055, 0, TAU);
+          g.fill();
+        } else {
+          // 小草丛
+          g.strokeStyle = C.tuft;
+          g.lineWidth = 0.07;
+          g.beginPath();
+          g.moveTo(cx - 0.13, cy - 0.12); g.quadraticCurveTo(cx - 0.1, cy, cx - 0.04, cy + 0.06);
+          g.moveTo(cx, cy - 0.18); g.lineTo(cx, cy + 0.06);
+          g.moveTo(cx + 0.13, cy - 0.12); g.quadraticCurveTo(cx + 0.1, cy, cx + 0.04, cy + 0.06);
+          g.stroke();
+        }
       }
     }
 
     function lerp(a, b, k) { return a + (b - a) * k; }
+    function easeOutBack(k) { var c = 1.9; k -= 1; return 1 + (c + 1) * k * k * k + c * k * k; }
 
     // 穿墙时把坐标展开到离参考点最近的位置，保证折线连续
     function near(p, ref) {
@@ -441,38 +627,80 @@
       return pts;
     }
 
+    // 卡通苹果：描边、高光、果柄和叶子，轻轻弹跳
+    function applePath(g) {
+      g.beginPath();
+      g.moveTo(0, -0.22);
+      g.bezierCurveTo(0.16, -0.38, 0.44, -0.3, 0.42, 0.0);
+      g.bezierCurveTo(0.4, 0.27, 0.22, 0.4, 0.09, 0.36);
+      g.quadraticCurveTo(0, 0.33, -0.09, 0.36);
+      g.bezierCurveTo(-0.22, 0.4, -0.4, 0.27, -0.42, 0.0);
+      g.bezierCurveTo(-0.44, -0.3, -0.16, -0.38, 0, -0.22);
+      g.closePath();
+    }
+
     function drawApple(t) {
       if (!food) return;
       var age = t - foodBorn;
-      var k = REDUCED ? 1 : Math.max(0, Math.min(1, age / 180));
-      k = k * (2 - k); // ease-out
-      var pulse = REDUCED ? 1 : 1 + 0.05 * Math.sin(t / 240);
+      var k = REDUCED ? 1 : Math.max(0, Math.min(1, age / 320));
+      k = REDUCED ? 1 : easeOutBack(k);
+      var ph = REDUCED ? 0 : Math.abs(Math.sin(t / 300));
+      var lift = ph * 0.09;
+      var sq = REDUCED ? 0 : Math.max(0, 0.35 - ph) * 0.12; // 落地时轻微压扁
       ctx.save();
-      ctx.translate(food.x + 0.5, food.y + 0.52);
-      ctx.scale(k * pulse, k * pulse);
-      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.translate(food.x + 0.5, food.y + 0.56);
+      ctx.scale(k, k);
+      // 影子
+      ctx.fillStyle = 'rgba(20,40,10,0.22)';
       ctx.beginPath();
-      ctx.ellipse(0, 0.36, 0.28, 0.07, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0.36, 0.3 - lift * 0.8, 0.075, 0, 0, TAU);
       ctx.fill();
-      ctx.fillStyle = C.apple;
+      ctx.translate(0, -lift);
+      ctx.scale(0.92 * (1 + sq), 0.92 * (1 - sq));
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      // 果柄
+      ctx.strokeStyle = C.ink;
+      ctx.lineWidth = 0.15;
       ctx.beginPath();
-      ctx.arc(-0.1, 0.04, 0.29, 0, Math.PI * 2);
-      ctx.arc(0.1, 0.04, 0.29, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      ctx.beginPath();
-      ctx.ellipse(-0.16, -0.06, 0.06, 0.1, 0.5, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(0, -0.2);
+      ctx.quadraticCurveTo(0.0, -0.38, 0.08, -0.47);
+      ctx.stroke();
       ctx.strokeStyle = C.stem;
       ctx.lineWidth = 0.07;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(0, -0.18);
-      ctx.quadraticCurveTo(0.01, -0.33, 0.07, -0.4);
       ctx.stroke();
-      ctx.fillStyle = C.leaf;
+      // 叶子
       ctx.beginPath();
-      ctx.ellipse(0.2, -0.32, 0.14, 0.065, -0.45, 0, Math.PI * 2);
+      ctx.moveTo(0.05, -0.35);
+      ctx.quadraticCurveTo(0.2, -0.56, 0.4, -0.42);
+      ctx.quadraticCurveTo(0.24, -0.26, 0.05, -0.35);
+      ctx.fillStyle = C.leaf;
+      ctx.fill();
+      ctx.strokeStyle = C.ink;
+      ctx.lineWidth = 0.065;
+      ctx.stroke();
+      // 果身
+      applePath(ctx);
+      ctx.fillStyle = C.apple;
+      ctx.fill();
+      ctx.save();
+      ctx.clip();
+      ctx.fillStyle = 'rgba(0,0,0,0.13)';
+      ctx.beginPath();
+      ctx.ellipse(0.12, 0.3, 0.5, 0.2, -0.2, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+      applePath(ctx);
+      ctx.strokeStyle = C.ink;
+      ctx.lineWidth = 0.085;
+      ctx.stroke();
+      // 高光
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.ellipse(-0.2, -0.07, 0.06, 0.12, 0.5, 0, TAU);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(-0.12, -0.21, 0.035, 0, TAU);
       ctx.fill();
       ctx.restore();
     }
@@ -482,6 +710,7 @@
       ox += 0.5; // 格子中心
       oy += 0.5;
       var W = 0.74;
+      var OUT = 0.2; // 描边总宽
       // 从尾巴往前累计长度，用于尾部收细
       var segs = [];
       var dist = 0;
@@ -496,65 +725,118 @@
           segs.push({
             x0: lerp(p.x, q.x, s0) + ox, y0: lerp(p.y, q.y, s0) + oy,
             x1: lerp(p.x, q.x, s1) + ox, y1: lerp(p.y, q.y, s1) + oy,
-            w: W * (0.5 + 0.5 * Math.min(1, mid / 3))
+            w: W * (0.45 + 0.55 * Math.min(1, mid / 3))
           });
         }
         dist += len;
       }
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      var pass, s;
-      for (pass = 0; pass < 2; pass++) {
-        ctx.strokeStyle = pass === 0 ? C['snake-dark'] : C.snake;
-        for (i = 0; i < segs.length; i++) {
-          s = segs[i];
-          ctx.lineWidth = pass === 0 ? s.w + 0.1 : s.w;
-          ctx.beginPath();
-          ctx.moveTo(s.x0, s.y0);
-          ctx.lineTo(s.x1, s.y1);
-          ctx.stroke();
-        }
+      var s;
+      // 先整条描一遍粗墨线，再盖上绿色身体
+      ctx.strokeStyle = C.ink;
+      for (i = 0; i < segs.length; i++) {
+        s = segs[i];
+        ctx.lineWidth = s.w + OUT;
+        ctx.beginPath();
+        ctx.moveTo(s.x0, s.y0);
+        ctx.lineTo(s.x1, s.y1);
+        ctx.stroke();
       }
-      // 高光：一条连续折线，避免半透明重叠出斑点
-      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-      ctx.lineWidth = 0.16;
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x + ox, pts[0].y + oy - 0.1);
-      for (i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x + ox, pts[i].y + oy - 0.1);
-      ctx.stroke();
-
-      // 头
       var H = { x: pts[0].x + ox, y: pts[0].y + oy };
+      var HR = 0.48;
+      ctx.fillStyle = C.ink;
+      ctx.beginPath();
+      ctx.arc(H.x, H.y, HR + OUT / 2, 0, TAU);
+      ctx.fill();
+
+      // 舌头（在头的下面伸出来）
       var v = DIRS[state === 'ready' ? dir : headDir()];
       var dead = state === 'over' && !won;
-      ctx.fillStyle = C['snake-dark'];
+      var tk = 0;
+      if (dead) tk = 0.7;
+      else if (!REDUCED && state !== 'paused') {
+        var ph = (t % 2600) / 320;
+        if (ph < 1) tk = Math.sin(ph * Math.PI);
+      }
+      if (tk > 0.05) {
+        var px0 = -v[1], py0 = v[0];
+        var b0 = 0.4, tip = 0.55 + 0.3 * tk, fk = 0.11 * tk;
+        var tx = H.x + v[0] * tip, ty = H.y + v[1] * tip;
+        ctx.beginPath();
+        ctx.moveTo(H.x + v[0] * b0, H.y + v[1] * b0);
+        ctx.lineTo(tx, ty);
+        ctx.lineTo(tx + v[0] * fk + px0 * fk * 0.8, ty + v[1] * fk + py0 * fk * 0.8);
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(tx + v[0] * fk - px0 * fk * 0.8, ty + v[1] * fk - py0 * fk * 0.8);
+        ctx.strokeStyle = C.ink;
+        ctx.lineWidth = 0.15;
+        ctx.stroke();
+        ctx.strokeStyle = C.tongue;
+        ctx.lineWidth = 0.065;
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = C.snake;
+      for (i = 0; i < segs.length; i++) {
+        s = segs[i];
+        ctx.lineWidth = s.w;
+        ctx.beginPath();
+        ctx.moveTo(s.x0, s.y0);
+        ctx.lineTo(s.x1, s.y1);
+        ctx.stroke();
+      }
+      // 身上的浅色圆斑（随身体粗细缩放）
+      ctx.fillStyle = C['snake-belly'];
+      var acc2 = 0;
+      for (i = pts.length - 2; i >= 1; i--) {
+        var c = pts[i];
+        var nx0 = pts[i + 1];
+        acc2 += Math.abs(c.x - nx0.x) + Math.abs(c.y - nx0.y);
+        var r = W * (0.45 + 0.55 * Math.min(1, acc2 / 3)) * (i % 2 ? 0.2 : 0.14);
+        ctx.beginPath();
+        ctx.arc(c.x + ox, c.y + oy, r, 0, TAU);
+        ctx.fill();
+      }
+
+      // 头
+      ctx.fillStyle = C.snake;
       ctx.beginPath();
-      ctx.arc(H.x, H.y, 0.47, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = dead ? C.bad : C.snake;
-      ctx.beginPath();
-      ctx.arc(H.x, H.y, 0.42, 0, Math.PI * 2);
+      ctx.arc(H.x, H.y, HR, 0, TAU);
       ctx.fill();
 
       var px = -v[1], py = v[0];
+      // 腮红
+      ctx.fillStyle = C.blush;
       for (var e = -1; e <= 1; e += 2) {
-        var ex = H.x + v[0] * 0.12 + px * 0.2 * e;
-        var ey = H.y + v[1] * 0.12 + py * 0.2 * e;
+        ctx.beginPath();
+        ctx.arc(H.x - v[0] * 0.14 + px * 0.3 * e, H.y - v[1] * 0.14 + py * 0.3 * e, 0.085, 0, TAU);
+        ctx.fill();
+      }
+      for (e = -1; e <= 1; e += 2) {
+        var ex = H.x + v[0] * 0.1 + px * 0.21 * e;
+        var ey = H.y + v[1] * 0.1 + py * 0.21 * e;
+        ctx.lineWidth = 0.055;
+        ctx.strokeStyle = C.ink;
         if (dead) {
-          ctx.strokeStyle = C.pupil;
-          ctx.lineWidth = 0.06;
+          ctx.lineWidth = 0.075;
           ctx.beginPath();
-          ctx.moveTo(ex - 0.07, ey - 0.07); ctx.lineTo(ex + 0.07, ey + 0.07);
-          ctx.moveTo(ex + 0.07, ey - 0.07); ctx.lineTo(ex - 0.07, ey + 0.07);
+          ctx.moveTo(ex - 0.1, ey - 0.1); ctx.lineTo(ex + 0.1, ey + 0.1);
+          ctx.moveTo(ex + 0.1, ey - 0.1); ctx.lineTo(ex - 0.1, ey + 0.1);
           ctx.stroke();
         } else {
           ctx.fillStyle = '#fff';
           ctx.beginPath();
-          ctx.arc(ex, ey, 0.13, 0, Math.PI * 2);
+          ctx.arc(ex, ey, 0.185, 0, TAU);
           ctx.fill();
-          ctx.fillStyle = C.pupil;
+          ctx.stroke();
+          ctx.fillStyle = C.ink;
           ctx.beginPath();
-          ctx.arc(ex + v[0] * 0.05, ey + v[1] * 0.05, 0.07, 0, Math.PI * 2);
+          ctx.arc(ex + v[0] * 0.075, ey + v[1] * 0.075, 0.095, 0, TAU);
+          ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.arc(ex + v[0] * 0.075 - 0.035, ey + v[1] * 0.075 - 0.04, 0.032, 0, TAU);
           ctx.fill();
         }
       }
@@ -572,39 +854,91 @@
       return 'up';
     }
 
+    // 吃到苹果：星星迸开 + “+1” 飘起
+    var FX_MS = 560;
+    function star(g, x, y, r) {
+      g.beginPath();
+      for (var i = 0; i < 10; i++) {
+        var a = -Math.PI / 2 + i * Math.PI / 5;
+        var rr = i % 2 ? r * 0.45 : r;
+        if (i) g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+        else g.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+      }
+      g.closePath();
+    }
+
+    function drawEffects(t, s) {
+      for (var i = effects.length - 1; i >= 0; i--) {
+        var fx = effects[i];
+        var p = (t - fx.t) / FX_MS;
+        if (p >= 1 || REDUCED) { effects.splice(i, 1); continue; }
+        var cx = fx.x + 0.5, cy = fx.y + 0.5;
+        var out = 1 - Math.pow(1 - p, 3);
+        ctx.lineJoin = 'round';
+        // 白色冲击圈
+        if (p < 0.45) {
+          ctx.globalAlpha = 1 - p / 0.45;
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 0.12 * (1 - p / 0.45) + 0.02;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 0.3 + out * 0.7, 0, TAU);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+        // 星星
+        var sz = 0.3 * (1 - p * 0.75);
+        for (var k = 0; k < 6; k++) {
+          var ang = k / 6 * TAU + 0.3 + p * 1.2;
+          var d = 0.4 + out * 0.75;
+          star(ctx, cx + Math.cos(ang) * d, cy + Math.sin(ang) * d, k % 2 ? sz * 0.75 : sz);
+          ctx.fillStyle = k % 2 ? '#fff' : C.theme;
+          ctx.fill();
+          ctx.strokeStyle = C.ink;
+          ctx.lineWidth = 0.06;
+          ctx.stroke();
+        }
+      }
+      // “+1” 用像素坐标画，避免小数字号
+      if (!effects.length) return;
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round';
+      for (i = 0; i < effects.length; i++) {
+        var q = (t - effects[i].t) / FX_MS;
+        var pop = q < 0.25 ? easeOutBack(q / 0.25) : 1;
+        var x = (effects[i].x + 0.5) * s;
+        var y = (effects[i].y + 0.5 - 0.45 - q * 0.9) * s;
+        if (y < s * 0.45) y = s * 0.45;
+        x = Math.max(s * 0.7, Math.min(canvas.width - s * 0.7, x));
+        ctx.globalAlpha = q < 0.6 ? 1 : 1 - (q - 0.6) / 0.4;
+        ctx.font = '700 ' + Math.round(s * 0.8 * pop) + 'px Fredoka, "PingFang SC", system-ui, sans-serif';
+        ctx.lineWidth = Math.max(2, s * 0.16);
+        ctx.strokeStyle = C.ink;
+        ctx.strokeText('+1', x, y);
+        ctx.fillStyle = C.theme;
+        ctx.fillText('+1', x, y);
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
     function draw(t) {
       if (!canvas.width) return;
+      if (bgDirty) buildBg();
       var s = canvas.width / N;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bgCanvas, 0, 0);
 
       var shake = 0;
       if (state === 'over' && !won && !REDUCED) {
         var age = t - deadAt;
-        if (age < 320) shake = Math.sin(age / 18) * 0.12 * (1 - age / 320);
+        if (age < 360) shake = Math.sin(age / 18) * 0.14 * (1 - age / 360);
       }
       ctx.setTransform(s, 0, 0, s, shake * s, 0);
 
-      ctx.fillStyle = C['board-a'];
-      ctx.fillRect(-1, 0, N + 2, N);
-      ctx.fillStyle = C['board-b'];
-      for (var y = 0; y < N; y++)
-        for (var x = (y & 1); x < N; x += 2) ctx.fillRect(x, y, 1, 1);
-
       drawApple(t);
-
-      // 吃到食物的光圈
-      for (var i = effects.length - 1; i >= 0; i--) {
-        var p = (t - effects[i].t) / 360;
-        if (p >= 1 || REDUCED) { effects.splice(i, 1); continue; }
-        ctx.strokeStyle = C.snake;
-        ctx.globalAlpha = 1 - p;
-        ctx.lineWidth = 0.08;
-        ctx.beginPath();
-        ctx.arc(effects[i].x + 0.5, effects[i].y + 0.5, 0.35 + p * 0.6, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      }
 
       var a = 1;
       if (state === 'playing' || state === 'paused') a = Math.min(1, acc / interval());
@@ -615,6 +949,9 @@
       } else {
         drawSnake(a, t, 0, 0);
       }
+
+      ctx.setTransform(s, 0, 0, s, 0, 0);
+      drawEffects(t, s);
     }
 
     // ---------- 主循环（固定步长） ----------

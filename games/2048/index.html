@@ -3,60 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>2048 · 格子乐园</title>
+  <title>2048 · 游戏来了</title>
   <meta name="description" content="在线玩 2048：滑动合并相同数字，凑出 2048 方块。支持键盘和手机滑动，可撤销，自动保存进度。">
   <meta name="theme-color" content="#f7f2ea">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1' y='1' width='30' height='30' rx='6' fill='%23edc22e'/%3E%3Ctext x='16' y='21' font-family='Arial' font-weight='900' font-size='10' fill='white' text-anchor='middle'%3E2048%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/site.css">
   <script src="../../assets/site.js"></script>
   <style>
     :root {
-      --board: #bbada0;
-      --cell: rgba(238, 228, 218, 0.38);
-      --tile-ink: #776e65;
+      --board: #ffb877;
+      --cell: #ffe1c2;
       --slide: 110ms;
       --stage-max: 500px;
     }
     @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) { --board: #3d342d; --cell: #4b4139; }
+      :root:not([data-theme="light"]) { --board: #5a3a2a; --cell: #6e4a37; }
     }
-    :root[data-theme="dark"] { --board: #3d342d; --cell: #4b4139; }
+    :root[data-theme="dark"] { --board: #5a3a2a; --cell: #6e4a37; }
 
     .score-add {
       position: absolute;
       left: 0;
       right: 0;
-      top: 16px;
-      font-size: 18px;
-      font-weight: 900;
-      color: var(--accent);
+      top: 14px;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--theme);
+      -webkit-text-stroke: 1px var(--ink);
+      paint-order: stroke fill;
       pointer-events: none;
       animation: float-up 700ms ease-out forwards;
     }
     @keyframes float-up {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-36px); opacity: 0; }
+      from { transform: translateY(0) scale(1); opacity: 1; }
+      to { transform: translateY(-38px) scale(1.15); opacity: 0; }
     }
 
-    /* 棋盘 */
+    /* 棋盘：粗描边的卡通托盘 */
     .board {
-      --gap: clamp(8px, 2.6vw, 14px);
+      --gap: clamp(8px, 2.6vw, 12px);
       position: relative;
       width: 100%;
       aspect-ratio: 1;
       padding: var(--gap);
-      border-radius: 14px;
+      border: var(--outline);
+      border-radius: 22px;
       background: var(--board);
+      box-shadow: var(--shadow-lg);
       container-type: inline-size;
       touch-action: none;
       user-select: none;
       -webkit-user-select: none;
       outline: none;
     }
-    .board:focus-visible { box-shadow: 0 0 0 3px var(--accent); }
+    .board:focus-visible { outline: 3px solid var(--theme); outline-offset: 4px; }
     .cells {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -65,7 +68,11 @@
       width: 100%;
       height: 100%;
     }
-    .cells span { border-radius: 8px; background: var(--cell); }
+    .cells span {
+      border-radius: 12px;
+      background: var(--cell);
+      box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.08);
+    }
     .tiles { position: absolute; inset: var(--gap); }
 
     .tile {
@@ -80,59 +87,64 @@
     }
     .tile.merged { z-index: 2; }
     .tile-inner {
+      --tc: #fff3d6;
       width: 100%;
-      height: 100%;
+      height: calc(100% - 4px);
       display: grid;
       place-items: center;
-      border-radius: 8px;
-      font-weight: 900;
+      border: var(--outline);
+      border-radius: 12px;
+      font-weight: 700;
       font-size: 44px;
-      font-size: 11cqw;
+      font-size: 12cqw;
       line-height: 1;
       font-variant-numeric: tabular-nums;
-      background: #eee4da;
-      color: var(--tile-ink);
+      background: var(--tc);
+      color: #2d2a4a;
+      box-shadow: 0 4px 0 var(--ink), inset 0 -5px 0 rgba(0, 0, 0, 0.12), inset 0 4px 0 rgba(255, 255, 255, 0.45);
     }
-    .tile.new .tile-inner { animation: appear 180ms ease 60ms backwards; }
-    .tile.pop .tile-inner { animation: pop 180ms ease; }
+    .tile.new .tile-inner { animation: appear 220ms cubic-bezier(.2, 1.5, .4, 1) 60ms backwards; }
+    .tile.pop .tile-inner { animation: pop 200ms ease; }
     @keyframes appear {
-      from { transform: scale(0); opacity: 0; }
+      from { transform: scale(0) rotate(-12deg); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
     @keyframes pop {
       0% { transform: scale(1); }
-      50% { transform: scale(1.18); }
+      50% { transform: scale(1.2) rotate(3deg); }
       100% { transform: scale(1); }
     }
 
-    .d3 .tile-inner { font-size: 36px; font-size: 9cqw; }
-    .d4 .tile-inner { font-size: 28px; font-size: 7cqw; }
-    .d5 .tile-inner { font-size: 22px; font-size: 5.6cqw; }
-    .d6 .tile-inner { font-size: 18px; font-size: 4.6cqw; }
+    .d3 .tile-inner { font-size: 36px; font-size: 9.6cqw; }
+    .d4 .tile-inner { font-size: 28px; font-size: 7.4cqw; }
+    .d5 .tile-inner { font-size: 22px; font-size: 5.8cqw; }
+    .d6 .tile-inner { font-size: 18px; font-size: 4.8cqw; }
 
-    .v2 .tile-inner { background: #eee4da; }
-    .v4 .tile-inner { background: #ede0c8; }
-    .v8 .tile-inner { background: #f2b179; color: #fff; }
-    .v16 .tile-inner { background: #f59563; color: #fff; }
-    .v32 .tile-inner { background: #f67c5f; color: #fff; }
-    .v64 .tile-inner { background: #f65e3b; color: #fff; }
-    .v128 .tile-inner { background: #edcf72; color: #fff; box-shadow: 0 0 18px 2px rgba(243, 215, 116, 0.35); }
-    .v256 .tile-inner { background: #edcc61; color: #fff; box-shadow: 0 0 20px 3px rgba(243, 215, 116, 0.42); }
-    .v512 .tile-inner { background: #edc850; color: #fff; box-shadow: 0 0 22px 4px rgba(243, 215, 116, 0.5); }
-    .v1024 .tile-inner { background: #edc53f; color: #fff; box-shadow: 0 0 24px 5px rgba(243, 215, 116, 0.56); }
-    .v2048 .tile-inner { background: #edc22e; color: #fff; box-shadow: 0 0 28px 6px rgba(243, 215, 116, 0.62); }
-    .vsuper .tile-inner { background: #3c3a32; color: #fff; }
-
-    .overlay.win { background: rgba(237, 194, 46, 0.85); color: #fff; text-shadow: 0 1px 3px rgba(120, 90, 0, 0.35); }
-    .overlay.win p { color: #fff; }
-    .overlay .btn { text-shadow: none; }
+    /* 每个数字一种糖果色 */
+    .v2 .tile-inner { --tc: #fff3d6; }
+    .v4 .tile-inner { --tc: #ffe08a; }
+    .v8 .tile-inner { --tc: #ffb35c; color: #fff; }
+    .v16 .tile-inner { --tc: #ff8a3d; color: #fff; }
+    .v32 .tile-inner { --tc: #ff6b6b; color: #fff; }
+    .v64 .tile-inner { --tc: #ff4757; color: #fff; }
+    .v128 .tile-inner { --tc: #ffd23f; }
+    .v256 .tile-inner { --tc: #a3e048; }
+    .v512 .tile-inner { --tc: #3fd0a8; color: #fff; }
+    .v1024 .tile-inner { --tc: #4dabff; color: #fff; }
+    .v2048 .tile-inner { --tc: #a66bff; color: #fff; }
+    .vsuper .tile-inner { --tc: #2d2a4a; color: #ffd23f; }
+    .v8 .tile-inner, .v16 .tile-inner, .v32 .tile-inner, .v64 .tile-inner,
+    .v512 .tile-inner, .v1024 .tile-inner, .v2048 .tile-inner {
+      -webkit-text-stroke: 2px #2d2a4a;
+      paint-order: stroke fill;
+    }
 
     @media (prefers-reduced-motion: reduce) {
       :root { --slide: 0ms; }
     }
   </style>
 </head>
-<body class="game-page">
+<body class="game-page" data-game="2048">
   <header class="gbar">
     <a class="icon-btn" href="../../" aria-label="返回游戏大厅" title="返回游戏大厅">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -179,8 +191,8 @@
           </div>
         </div>
 
-        <div class="overlay win" id="win" hidden>
-          <h2>你赢了！</h2>
+        <div class="overlay" id="win" hidden>
+          <h2>🎉 你赢了！</h2>
           <p>成功拼出 2048</p>
           <div class="row">
             <button class="btn primary" type="button" data-action="continue">继续挑战</button>
