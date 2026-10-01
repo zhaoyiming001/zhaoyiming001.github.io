@@ -60,6 +60,17 @@
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 [hidden] { display: none !important; }
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 body {
   min-height: 100vh;
@@ -289,9 +300,9 @@ button { font: inherit; color: inherit; }
   padding: 16px;
   text-align: center;
   border-radius: 14px;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  -webkit-backdrop-filter: blur(1px);
+  backdrop-filter: blur(1px);
   animation: fade-in 300ms ease 150ms backwards;
 }
 .overlay h2 { margin: 0; font-size: clamp(28px, 9vw, 44px); font-weight: 900; line-height: 1.1; }
