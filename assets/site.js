@@ -41,7 +41,12 @@
     var d = document.getElementById(id);
     if (!d) return;
     if (typeof d.showModal === 'function') {
-      if (!d.open) d.showModal();
+      if (!d.open) {
+        d.showModal();
+        // 让焦点落在弹窗本身，避免关闭按钮在触屏上出现焦点框
+        d.setAttribute('tabindex', '-1');
+        d.focus();
+      }
     } else {
       d.setAttribute('open', '');
     }

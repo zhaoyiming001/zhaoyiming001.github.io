@@ -323,6 +323,7 @@ dialog.sheet {
   box-shadow: var(--shadow-lg);
   overflow: auto;
 }
+dialog.sheet:focus { outline: none; }
 dialog.sheet::backdrop { background: rgba(20, 14, 10, 0.45); }
 dialog.sheet[open] { animation: sheet-in 220ms cubic-bezier(.2, .8, .3, 1); }
 @keyframes sheet-in { from { transform: translateY(16px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
