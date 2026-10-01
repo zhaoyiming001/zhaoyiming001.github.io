@@ -52,7 +52,7 @@
 [data-game="memory"]      { --theme: #ff5fa2; --theme-2: #7cd3ff; --theme-soft: #ffe6f1; }
 
 /* --bg 依赖 body 上的主题色，必须在 body 上重新计算 */
-body { --bg: var(--theme-soft); }
+body { --bg: var(--theme-soft); --accent: var(--theme); --accent-ink: var(--theme-ink); }
 
 /* ---------- 深色（夜间游戏厅） ---------- */
 @media (prefers-color-scheme: dark) {
