@@ -15,7 +15,7 @@
   <style>
     :root {
       /* 棋盘之外各部分的总高度：矮屏时整体收窄，保证一屏放下 */
-      --chrome: 319px;
+      --chrome: 300px;
       --stage-max: min(500px, max(280px, calc(100vh - var(--chrome))));
       /* 笔记本纸面配色 */
       --sd-paper: var(--paper);
@@ -26,6 +26,8 @@
       --sd-user: #3567ee;
       --sd-note: #7486b4;
       --sd-key: #ffffff;
+      --sd-note-key: color-mix(in srgb, var(--theme-2) 38%, #ffffff);
+      --sd-note-ink: #5b70ad;
     }
     @supports (height: 100dvh) {
       :root { --stage-max: min(500px, max(280px, calc(100dvh - var(--chrome)))); }
@@ -35,23 +37,22 @@
         --sd-bold: #7f78bf; --sd-thin: #48426f;
         --sd-zone: #363468; --sd-same: #46529e;
         --sd-user: #a3bcff; --sd-note: #a5aed8; --sd-key: #38335a;
+        --sd-note-key: #2f3f72; --sd-note-ink: #8fd3ff;
       }
     }
     :root[data-theme="dark"] {
       --sd-bold: #7f78bf; --sd-thin: #48426f;
       --sd-zone: #363468; --sd-same: #46529e;
       --sd-user: #a3bcff; --sd-note: #a5aed8; --sd-key: #38335a;
+      --sd-note-key: #2f3f72; --sd-note-ink: #8fd3ff;
     }
 
-    .gmain { gap: 6px; }
-    .stats .btns .btn { height: 100%; min-height: 52px; }
+    .stats { align-items: stretch; }
+    .stats .btns .btn { height: 100%; min-height: 52px; padding: 0 18px; }
     .stat-value.small { font-size: 17px; line-height: 1.45; }
 
-    .seg.diff { display: flex; width: 100%; }
-    .seg.diff button { flex: 1; }
-
     /* ---------- 棋盘：白纸卡片 + 墨线粗宫线 + 淡蓝细格线 ---------- */
-    .stage { display: flex; justify-content: center; margin: 0 0 2px; }
+    .stage { display: flex; justify-content: center; margin-bottom: 3px; }
     /* 一小段“胶带”，笔记本手账感 */
     .stage::before {
       content: "";
@@ -168,109 +169,95 @@
       60% { background: var(--theme); color: #fff; transform: scale(.94); }
     }
 
-    /* ---------- 工具行：圆滚滚的图标按钮 + 小标签 ---------- */
+    /* ---------- 工具行：4 个等宽的卡通按钮（图标 + 文字） ---------- */
     .tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
     .tool {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 0;
-      border: 0;
-      background: none;
+      justify-content: center;
+      gap: 6px;
+      height: 44px;
+      padding: 0 4px;
+      border: var(--outline);
+      border-radius: 14px;
+      background: var(--paper);
       color: var(--text);
+      box-shadow: var(--pop-sm);
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
       cursor: pointer;
       touch-action: manipulation;
       user-select: none;
       -webkit-user-select: none;
-      -webkit-tap-highlight-color: transparent;
+      transition: transform .08s ease, box-shadow .08s ease, background-color .15s ease, color .15s ease;
     }
-    .tool-ic {
-      position: relative;
-      display: grid;
-      place-items: center;
-      width: 42px;
-      height: 42px;
-      border: var(--outline);
-      border-radius: 50%;
-      background: var(--paper);
-      box-shadow: var(--pop-sm), inset 0 -4px 0 rgba(0, 0, 0, .08);
-      transition: transform .08s ease, box-shadow .08s ease, background-color .15s ease;
-    }
-    .tool-ic svg { width: 21px; height: 21px; }
-    .tool-lb { font-size: 12px; font-weight: 700; line-height: 13px; color: var(--text-dim); }
-    .tool:hover .tool-ic { background: var(--surface-2); }
-    .tool:active .tool-ic { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
-    .tool:focus-visible { outline: none; }
-    .tool:focus-visible .tool-ic { outline: 3px solid var(--theme); outline-offset: 3px; }
-    .tool:disabled { cursor: default; }
-    .tool:disabled .tool-ic { opacity: .45; transform: none; box-shadow: var(--pop-sm); background: var(--paper); }
-    .tool:disabled .tool-lb { opacity: .55; }
-    .tool.active .tool-ic { background: var(--theme-2); color: #2d2a4a; }
-    .tool.active .tool-lb { color: var(--theme); }
-    .tool .badge,
-    .tool .flag {
+    .tool-ic { position: relative; display: grid; place-items: center; flex: none; }
+    .tool svg { width: 20px; height: 20px; }
+    .tool:hover { background: var(--surface-2); }
+    .tool:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
+    .tool:focus-visible { outline: 3px solid var(--theme); outline-offset: 3px; }
+    .tool[aria-pressed="true"] { background: var(--theme-2); color: #2d2a4a; }
+    .tool:disabled { cursor: default; color: var(--text-dim); background: var(--paper); transform: none; box-shadow: var(--pop-sm); }
+    .tool:disabled > * { opacity: .5; }
+    /* 已用提示数：贴在灯泡右上角的小圆点，不占布局 */
+    .tool.has-badge .tool-ic { margin-right: 5px; }
+    .tool .badge {
       position: absolute;
       top: -7px;
-      right: -12px;
-      min-width: 22px;
-      height: 19px;
-      padding: 0 5px;
-      border: 2px solid var(--ink);
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 700;
-      line-height: 15px;
-      text-align: center;
-    }
-    .tool .badge { background: var(--theme); color: #fff; }
-    .tool .flag { background: var(--surface-3); color: var(--text-dim); }
-    .tool.active .flag { background: var(--theme); color: #fff; }
-
-    /* ---------- 数字键盘：9 颗卡通按键 ---------- */
-    .pad { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; padding-top: 3px; }
-    .pad button {
-      position: relative;
-      display: grid;
-      place-items: center;
-      height: 48px;
-      padding: 0;
-      border: var(--outline);
-      border-radius: 12px;
-      background: var(--sd-key);
-      color: var(--sd-user);
-      box-shadow: 0 4px 0 var(--ink), inset 0 -4px 0 rgba(0, 0, 0, .07);
-      cursor: pointer;
-      touch-action: manipulation;
-      user-select: none;
-      -webkit-user-select: none;
-      transition: transform .08s ease, box-shadow .08s ease, opacity .2s ease, background-color .15s ease;
-    }
-    .pad button:hover { background: var(--surface-2); }
-    .pad button:active { transform: translateY(4px); box-shadow: 0 0 0 var(--ink), inset 0 -2px 0 rgba(0, 0, 0, .07); }
-    .pad button:focus-visible { outline: 3px solid var(--theme); outline-offset: 3px; }
-    .pad b { font-family: var(--font); font-size: 26px; font-weight: 700; line-height: 1; }
-    /* 剩余个数：主题色小圆点 */
-    .pad small {
-      position: absolute;
-      top: -8px;
-      right: -7px;
-      min-width: 17px;
-      height: 17px;
+      right: -9px;
+      min-width: 16px;
+      height: 16px;
       padding: 0 3px;
       border: 2px solid var(--ink);
-      border-radius: 9px;
+      border-radius: 8px;
       background: var(--theme);
       color: #fff;
       font-size: 10px;
       font-weight: 700;
-      line-height: 13px;
+      line-height: 12px;
       text-align: center;
+      font-variant-numeric: tabular-nums;
     }
-    .pad small:empty { display: none; }
-    .pad.noting button { background: color-mix(in srgb, var(--theme-2) 30%, var(--sd-key)); color: var(--sd-note); }
-    .pad.noting b { font-size: 19px; }
-    .pad button.done { opacity: .3; box-shadow: 0 1px 0 var(--ink); transform: translateY(3px); }
+
+    /* ---------- 数字键盘：9 颗卡通按键，剩余个数写在数字下方 ---------- */
+    .pad { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; }
+    .pad button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      height: 54px;
+      padding: 2px 0 0;
+      border: var(--outline);
+      border-radius: 12px;
+      background: var(--sd-key);
+      color: var(--sd-user);
+      box-shadow: var(--pop-sm);
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform .08s ease, box-shadow .08s ease, background-color .15s ease, color .15s ease;
+    }
+    .pad button:hover { background: var(--surface-2); }
+    .pad button:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
+    .pad button:focus-visible { outline: 3px solid var(--theme); outline-offset: 3px; }
+    .pad b { font-family: var(--font); font-size: 25px; font-weight: 700; line-height: 25px; height: 25px; transition: font-size .12s ease; }
+    .pad small {
+      height: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 10px;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+    }
+    /* 笔记模式：键盘变成浅天蓝底 + 小号铅笔色数字 */
+    .pad.noting button { background: var(--sd-note-key); color: var(--sd-note-ink); }
+    .pad.noting b { font-size: 18px; }
+    .pad button.done { background: var(--surface-2); color: var(--text-dim); box-shadow: 0 0 0 var(--ink); transform: translateY(3px); cursor: default; }
+    .pad button.done b { opacity: .45; }
 
     /* ---------- 胜利卡片：星星 + 彩纸 ---------- */
     .overlay.win { animation-delay: 800ms; }
@@ -293,6 +280,7 @@
     }
     .overlay .best.record { background: var(--theme-2); color: #2d2a4a; transform: rotate(-3deg); }
     .overlay .row { margin-top: 4px; }
+    .nw { white-space: nowrap; }
     .confetti { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
     .confetti i {
       position: absolute;
@@ -315,31 +303,33 @@
       100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) + 70px)) scale(.9) rotate(calc(var(--r) * 1.6)); }
     }
 
-    .confirm-row { display: flex; gap: 10px; }
-    .confirm-row .btn { flex: 1; }
-
     @media (max-width: 380px) {
       .pad { gap: 5px; }
       .pad b { font-size: 23px; }
       .pad button { border-radius: 10px; }
+      .tools { gap: 6px; }
     }
     @media (max-width: 360px) {
       .stats { gap: 6px; }
       .stat { padding: 5px 2px 6px; }
       .stat-value { font-size: 16px; line-height: 1.5; }
       .stat-value.small { font-size: 15px; line-height: 1.6; }
-      .stats .btns .btn { padding: 0 9px; }
+      .stats .btns .btn { padding: 0 12px; }
       .pad { gap: 4px; }
       .pad button { border-width: 2.5px; }
-      .pad small { right: -5px; }
+      .tool { gap: 4px; font-size: 14px; }
+      .tool svg { width: 18px; height: 18px; }
     }
     @media (min-width: 560px) {
-      :root { --chrome: 344px; }
-      .tool-ic { width: 50px; height: 50px; }
-      .tool-ic svg { width: 24px; height: 24px; }
-      .tool-lb { font-size: 13px; line-height: 15px; }
-      .pad button { height: 58px; }
-      .pad b { font-size: 30px; }
+      :root { --chrome: 320px; }
+      .tools { gap: 10px; }
+      .tool { height: 48px; font-size: 16px; gap: 8px; }
+      .tool svg { width: 22px; height: 22px; }
+      .pad { gap: 8px; }
+      .pad button { height: 60px; gap: 4px; }
+      .pad b { font-size: 29px; line-height: 29px; height: 29px; }
+      .pad.noting b { font-size: 21px; }
+      .pad small { font-size: 11px; height: 11px; line-height: 11px; }
     }
   </style>
 </head>
@@ -364,15 +354,8 @@
       <div class="stat"><span class="stat-label">时间</span><span class="stat-value" id="time">00:00</span></div>
       <div class="stat"><span class="stat-label">错误</span><span class="stat-value" id="mistakes">0</span></div>
       <div class="btns">
-        <button class="btn primary" type="button" id="new-game">新游戏</button>
+        <button class="btn primary" type="button" id="new-game" aria-haspopup="dialog">新局</button>
       </div>
-    </div>
-
-    <div class="seg diff" role="group" aria-label="难度" id="diff">
-      <button type="button" data-diff="easy" aria-pressed="true">简单</button>
-      <button type="button" data-diff="medium" aria-pressed="false">中等</button>
-      <button type="button" data-diff="hard" aria-pressed="false">困难</button>
-      <button type="button" data-diff="expert" aria-pressed="false">专家</button>
     </div>
 
     <div class="stage">
@@ -389,6 +372,7 @@
             <p class="best" id="win-best" hidden>新纪录！</p>
             <div class="row">
               <button class="btn primary" type="button" data-action="new">再来一局</button>
+              <button class="btn" type="button" data-action="choose">换难度</button>
             </div>
           </div>
           <div class="confetti" aria-hidden="true">
@@ -414,19 +398,19 @@
     <div class="tools">
       <button class="tool" type="button" id="undo" title="撤销 (Ctrl+Z)">
         <span class="tool-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></span>
-        <span class="tool-lb">撤销</span>
+        <span>撤销</span>
       </button>
       <button class="tool" type="button" id="erase" title="擦除 (Backspace)">
         <span class="tool-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H8.5L3.6 15.1a2 2 0 0 1 0-2.8l9.2-9.2a2 2 0 0 1 2.8 0l4.8 4.8a2 2 0 0 1 0 2.8L12 19"/><path d="M8 10.5l6 6"/></svg></span>
-        <span class="tool-lb">擦除</span>
+        <span>擦除</span>
       </button>
       <button class="tool" type="button" id="notes-btn" aria-pressed="false" title="笔记 (N)">
-        <span class="tool-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span class="flag" id="notes-flag">关</span></span>
-        <span class="tool-lb">笔记</span>
+        <span class="tool-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
+        <span>笔记</span>
       </button>
       <button class="tool" type="button" id="hint" title="提示">
-        <span class="tool-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span class="badge" id="hint-count" hidden>0</span></span>
-        <span class="tool-lb">提示</span>
+        <span class="tool-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span class="badge" id="hint-count" aria-label="已用提示" hidden>0</span></span>
+        <span>提示</span>
       </button>
     </div>
 
@@ -442,9 +426,8 @@
       <ul class="tips">
         <li><b>🧩</b><span>每行、每列、每个 <strong>3×3 宫</strong>里 1–9 各出现一次。</span></li>
         <li><b>👆</b><span>点格子，再点下方数字填入。</span></li>
-        <li><b>✏️</b><span><strong>笔记</strong>模式下记录候选数，<kbd>N</kbd> 切换。</span></li>
-        <li><b>💡</b><span>卡住了点<strong>提示</strong>，直接填入正确数字。</span></li>
-        <li><b>⌨️</b><span>键盘：数字填入，方向键移动，<kbd>Ctrl</kbd>+<kbd>Z</kbd> 撤销。</span></li>
+        <li><b>✏️</b><span><strong>笔记</strong>记候选数，卡住点<strong>提示</strong>。</span></li>
+        <li><b>⌨️</b><span>键盘：数字填入，方向键移动，<span class="nw"><kbd>N</kbd> 笔记，</span><span class="nw"><kbd>Ctrl</kbd>+<kbd>Z</kbd> 撤销。</span></span></li>
       </ul>
       <p style="margin:18px 0 0"><button class="btn block theme-toggle" type="button">
         <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
@@ -454,16 +437,14 @@
     </div>
   </dialog>
 
-  <dialog class="sheet" id="confirm">
+  <dialog class="sheet" id="newgame" aria-labelledby="newgame-title">
     <div class="sheet-head">
-      <h2>开始新的一局？</h2>
+      <h2 id="newgame-title">新游戏</h2>
       <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
     </div>
     <div class="sheet-body">
-      <div class="confirm-row">
-        <button class="btn" type="button" data-close>继续本局</button>
-        <button class="btn primary" type="button" id="confirm-ok">开始</button>
-      </div>
+      <p class="sheet-label">难度</p>
+      <div class="choices" id="diff-choices"></div>
     </div>
   </dialog>
 
@@ -472,10 +453,10 @@
     'use strict';
 
     var DIFFS = {
-      easy: { label: '简单', givens: 38 },
-      medium: { label: '中等', givens: 32 },
-      hard: { label: '困难', givens: 27 },
-      expert: { label: '专家', givens: 24 }
+      easy: { label: '简单', givens: 38, icon: '🙂' },
+      medium: { label: '中等', givens: 32, icon: '🤔' },
+      hard: { label: '困难', givens: 27, icon: '😤' },
+      expert: { label: '专家', givens: 24, icon: '🧠' }
     };
     var DIFF_ORDER = ['easy', 'medium', 'hard', 'expert'];
     var MAX_HISTORY = 200;
@@ -494,7 +475,9 @@
     var diffLabelEl = document.getElementById('diff-label');
     var undoBtn = document.getElementById('undo');
     var notesBtn = document.getElementById('notes-btn');
-    var notesFlag = document.getElementById('notes-flag');
+    var choicesEl = document.getElementById('diff-choices');
+    var eraseBtn = document.getElementById('erase');
+    var hintBtn = document.getElementById('hint');
     var hintCountEl = document.getElementById('hint-count');
     var winEl = document.getElementById('win');
 
@@ -732,15 +715,11 @@
       mistakesEl.textContent = S.mistakes;
       diffLabelEl.textContent = DIFFS[S.diff].label;
       hintCountEl.hidden = !S.hints;
+      hintBtn.classList.toggle('has-badge', !!S.hints);
+      eraseBtn.disabled = hintBtn.disabled = notesBtn.disabled = S.won;
       hintCountEl.textContent = S.hints;
       undoBtn.disabled = !S.history.length || S.won;
-      notesBtn.classList.toggle('active', noteMode);
       notesBtn.setAttribute('aria-pressed', String(noteMode));
-      notesFlag.textContent = noteMode ? '开' : '关';
-      var segBtns = document.querySelectorAll('#diff button');
-      for (i = 0; i < segBtns.length; i++) {
-        segBtns[i].setAttribute('aria-pressed', String(segBtns[i].dataset.diff === S.diff));
-      }
       renderTime();
     }
 
@@ -910,6 +889,7 @@
     }
 
     function toggleNotes() {
+      if (S.won) return;
       noteMode = !noteMode;
       sound('click');
       render();
@@ -925,6 +905,7 @@
 
     function win() {
       S.won = true;
+      noteMode = false;
       sel = -1;
       focusDigit = 0;
       var t = Math.floor(S.elapsed);
@@ -968,20 +949,19 @@
       }
     }
 
-    function hasProgress() {
-      if (S.won) return false;
-      for (var i = 0; i < 81; i++) if (!isGiven(i) && (S.grid[i] || S.notes[i])) return true;
-      return false;
-    }
-
-    var pendingDiff = null;
-    function requestNew(diff) {
-      if (hasProgress()) {
-        pendingDiff = diff;
-        Site.openDialog('confirm');
-      } else {
-        startNew(diff);
-      }
+    // 新游戏弹窗：四个难度选项，副标题带提示数和该难度最快用时
+    function openNewGame() {
+      var html = '';
+      DIFF_ORDER.forEach(function (d) {
+        var info = DIFFS[d];
+        var sub = info.givens + ' 个提示数' + (best[d] ? ' · 最快 ' + Site.formatTime(best[d]) : '');
+        html += '<button class="choice" type="button" data-diff="' + d + '" aria-pressed="' + (d === S.diff) + '">' +
+          '<span class="choice-icon" aria-hidden="true">' + info.icon + '</span>' +
+          '<span><b>' + info.label + '</b><small>' + sub + '</small></span></button>';
+      });
+      choicesEl.innerHTML = html;
+      sound('click');
+      Site.openDialog('newgame');
     }
 
     function startNew(diff, quiet) {
@@ -1002,6 +982,7 @@
       var act = e.target.closest('[data-action]');
       if (act) {
         if (act.getAttribute('data-action') === 'new') startNew(S.diff);
+        else openNewGame();
         return;
       }
       var cell = e.target.closest('.cell');
@@ -1012,20 +993,18 @@
       if (b) input(+b.dataset.d);
     });
     undoBtn.addEventListener('click', undo);
-    document.getElementById('erase').addEventListener('click', erase);
+    eraseBtn.addEventListener('click', erase);
     notesBtn.addEventListener('click', toggleNotes);
-    document.getElementById('hint').addEventListener('click', hint);
-    document.getElementById('new-game').addEventListener('click', function () { requestNew(S.diff); });
-    document.getElementById('diff').addEventListener('click', function (e) {
-      var b = e.target.closest('button');
+    hintBtn.addEventListener('click', hint);
+    document.getElementById('new-game').addEventListener('click', openNewGame);
+    // 选中即开局（弹窗本身就是确认）；先关弹窗让它画出来，再生成题目
+    choicesEl.addEventListener('click', function (e) {
+      var b = e.target.closest('.choice');
       if (!b) return;
-      if (b.dataset.diff === S.diff && hasProgress()) return;
-      requestNew(b.dataset.diff);
-    });
-    document.getElementById('confirm-ok').addEventListener('click', function () {
-      Site.closeDialog('confirm');
-      if (pendingDiff) startNew(pendingDiff);
-      pendingDiff = null;
+      var diff = b.dataset.diff;
+      if (!DIFFS[diff]) return;
+      Site.closeDialog('newgame');
+      requestAnimationFrame(function () { setTimeout(function () { startNew(diff); }, 0); });
     });
 
     document.addEventListener('keydown', function (e) {

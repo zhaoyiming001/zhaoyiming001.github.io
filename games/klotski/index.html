@@ -14,7 +14,9 @@
   <script src="../../assets/site.js"></script>
   <style>
     :root {
-      --stage-max: 460px;
+      /* 顶栏、数据条、按钮行都与棋盘同宽：矮屏时一起收窄 */
+      --stage-max: min(460px, max(260px, calc((100vh - 198px) * 0.76)));
+      --stage-max: min(460px, max(260px, calc((100dvh - 198px) * 0.76)));
       /* 木托盘 */
       --frame-wood: #e8893b;
       --frame-grain: rgba(120, 50, 0, 0.13);
@@ -50,15 +52,50 @@
     }
 
     .game-page { overflow-x: hidden; }
-    .stats .stat.lv { flex: 1.6; }
-    .stats .stat.lv .stat-value { font-family: var(--font-display); font-weight: 700; font-size: 19px; }
+    .stats { align-items: stretch; }
+    /* 关卡名：可点的数据块，打开选关 */
+    .stat.lv {
+      flex: 1.75;
+      display: block;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      background: var(--theme-soft);
+      transition: transform .08s ease, box-shadow .08s ease, background-color .15s ease;
+    }
+    :root[data-theme="dark"] .stat.lv { background: var(--surface-2); }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .stat.lv { background: var(--surface-2); }
+    }
+    .stat.lv:hover { filter: brightness(0.98); }
+    .stat.lv:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
+    .stat.lv:focus-visible { outline: 3px solid var(--theme); outline-offset: 3px; }
+    .stat.lv .stat-value {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      font-family: var(--font-display);
+      font-size: 19px;
+    }
+    .stat.lv .stat-value > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .caret {
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      background: var(--theme);
+      color: #fff;
+    }
+    .caret svg { width: 12px; height: 12px; }
 
     /* ---------- 棋盘：粗描边木托盘 ---------- */
     .stage {
       width: 100%;
-      max-width: calc((100vh - 198px) * 0.76);
-      max-width: calc((100dvh - 198px) * 0.76);
-      margin: 0 auto 6px;
+      margin: 0 auto 3px;
     }
     .board {
       --frame: clamp(10px, 3.2vw, 14px);
@@ -125,9 +162,9 @@
       display: inline-flex;
       align-items: center;
       gap: 3px;
-      margin-top: 3px;
-      padding: 0 8px 0 9px;
-      height: 18px;
+      margin-top: 2px;
+      padding: 0 8px 0 10px;
+      height: 20px;
       border: 2px solid var(--ink);
       border-radius: 999px;
       background: var(--theme);
@@ -135,12 +172,39 @@
       box-shadow: 0 2px 0 var(--ink);
       font-family: var(--font-display);
       font-weight: 700;
-      font-size: 12px;
+      font-size: 13px;
       line-height: 1;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.12em;
       white-space: nowrap;
     }
-    .exit-tag svg { width: 11px; height: 11px; animation: nudge-down 1.1s ease-in-out infinite; }
+    .exit-tag svg { width: 12px; height: 12px; animation: nudge-down 1.1s ease-in-out infinite; }
+    /* 终点：曹操要到达的 2×2 位置，虚线框 */
+    .goal {
+      position: absolute;
+      left: calc(2 * var(--gap) + var(--cell));
+      top: calc(4 * var(--gap) + 3 * var(--cell));
+      width: calc(2 * var(--cell) + var(--gap));
+      height: calc(2 * var(--cell) + var(--gap) - 4px);
+      border: 3px dashed color-mix(in srgb, var(--c-cao) 55%, transparent);
+      border-radius: calc(var(--cell) * 0.2);
+      background: color-mix(in srgb, var(--c-cao) 9%, transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+    /* 提示：目的地虚影 */
+    .ghost {
+      position: absolute;
+      left: 0;
+      top: 0;
+      border: 3px dashed var(--ink);
+      border-radius: calc(var(--cell) * 0.2);
+      background: color-mix(in srgb, var(--gold) 70%, transparent);
+      opacity: .85;
+      pointer-events: none;
+      z-index: 0;
+      animation: ghost-in 200ms ease-out;
+    }
+    @keyframes ghost-in { from { opacity: 0; scale: .9; } }
     @keyframes nudge-down { 0%, 100% { transform: translateY(-1px); } 50% { transform: translateY(2px); } }
     /* 门柱 */
     .exit::before, .exit::after {
@@ -293,7 +357,9 @@
       to { transform: rotate(-6deg); opacity: 1; }
     }
     .overlay.win h2 { font-size: clamp(30px, 8.6vw, 38px); }
-    .overlay #win-text { color: var(--text); font-size: 16px; }
+    .overlay #win-text { color: var(--text); font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .overlay #win-text small { font-size: 14px; font-weight: 600; color: var(--text-dim); }
+    .overlay .row .btn { min-width: 112px; }
     .overlay .sub {
       padding: 2px 12px 3px;
       border: 2.5px solid var(--ink);
@@ -340,54 +406,104 @@
     .confetti i:nth-child(13) { --x: 35px;   --y: -100px; --r: -150deg; --cf: var(--gold); --d: 360ms; }
     .confetti i:nth-child(14) { --x: 130px;  --y: -170px; --r: 210deg;  --cf: var(--c-zhang); --d: 300ms; border-radius: 50%; width: 12px; height: 12px; }
 
+    .gcontrols { flex-wrap: nowrap; }
     .gcontrols .btn { flex: 1; padding: 0 8px; min-width: 0; }
 
     /* ---------- 选关 ---------- */
+    #levels[open] { display: flex; flex-direction: column; overflow: hidden; }
+    #levels .sheet-head { flex: none; }
+    #levels .sheet-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      padding-top: 14px;
+    }
+    .lv-progress {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-dim);
+    }
+    .lv-progress b { color: var(--text); font-variant-numeric: tabular-nums; }
+    .lv-bar {
+      flex: 1;
+      height: 12px;
+      border: 2.5px solid var(--ink);
+      border-radius: 999px;
+      background: var(--surface-2);
+      overflow: hidden;
+    }
+    .lv-bar i { display: block; height: 100%; background: var(--good); box-shadow: 2.5px 0 0 var(--ink); transition: width .3s ease; }
     .lv-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px 12px;
-      padding: 4px 2px 6px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px 10px;
+      padding: 6px 2px 4px;
     }
     .lv-card {
       position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 5px;
-      padding: 12px 6px 9px;
+      gap: 4px;
+      min-width: 0;
+      padding: 12px 4px 10px;
       border: var(--outline);
       border-radius: 18px;
       background: var(--paper);
       color: var(--text);
       box-shadow: var(--pop-sm);
       cursor: pointer;
+      font-variant-numeric: tabular-nums;
       transition: transform .08s ease, box-shadow .08s ease, background-color .15s ease;
     }
     .lv-card:hover { background: var(--surface-2); }
     .lv-card:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
     .lv-card:focus-visible { outline: 3px solid var(--theme); outline-offset: 3px; }
-    .lv-card.current { background: color-mix(in srgb, var(--theme) 16%, var(--paper)); }
+    .lv-card[aria-pressed="true"] { background: var(--theme); color: #fff; }
+    .lv-card[aria-pressed="true"] small { color: inherit; opacity: .9; }
+    .lv-card .no {
+      position: absolute;
+      top: 7px;
+      left: 9px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--text-dim);
+    }
+    .lv-card[aria-pressed="true"] .no { color: #fff; opacity: .9; }
     .lv-card b {
+      margin-top: 3px;
       font-family: var(--font-display);
       font-weight: 700;
       font-size: 15px;
       line-height: 1.2;
       white-space: nowrap;
     }
-    .lv-card small { font-size: 12px; font-weight: 600; color: var(--text-dim); line-height: 1.2; }
+    .lv-card small { font-size: 12px; font-weight: 600; color: var(--text-dim); line-height: 1.25; white-space: nowrap; }
     .lv-card .best {
-      padding: 1px 7px;
+      margin-top: 2px;
+      padding: 1px 8px;
       border: 2px solid var(--ink);
       border-radius: 999px;
       background: var(--theme-2);
       color: #2d2a4a;
       font-weight: 700;
     }
+    .lv-card[aria-pressed="true"] .best { color: #2d2a4a; opacity: 1; }
+    .lv-card .best.none { border-color: transparent; background: none; color: var(--text-dim); font-weight: 600; }
+    .lv-card[aria-pressed="true"] .best.none { color: #fff; opacity: .8; }
     .lv-card .done {
       position: absolute;
-      top: -10px;
-      right: -8px;
+      top: -9px;
+      right: -7px;
+      display: grid;
+      place-items: center;
       width: 26px;
       height: 26px;
       border: 2.5px solid var(--ink);
@@ -396,13 +512,14 @@
       color: #fff;
       box-shadow: 0 2px 0 var(--ink);
       font-size: 13px;
-      line-height: 21px;
       font-weight: 700;
+      line-height: 1;
       transform: rotate(10deg);
     }
+    .lv-card .done.perfect { background: var(--gold); color: #2d2a4a; font-size: 15px; }
     .mini {
       position: relative;
-      width: 54px;
+      width: 52px;
       padding: 4px 4px 7px;
       border: 2.5px solid var(--ink);
       border-radius: 9px;
@@ -435,9 +552,14 @@
     }
 
     @media (max-width: 380px) {
-      .stats .stat.lv .stat-value { font-size: 17px; }
-      .gcontrols .btn svg { display: none; }
-      .lv-grid { gap: 14px 9px; }
+      .stat.lv .stat-value { font-size: 17px; }
+      .caret { width: 18px; height: 18px; }
+      .lv-grid { gap: 14px 8px; }
+      .lv-card b { font-size: 14px; }
+    }
+    @media (max-width: 340px) {
+      .caret { width: 16px; height: 16px; }
+      .caret svg { width: 10px; height: 10px; }
     }
     @media (prefers-reduced-motion: reduce) {
       :root { --step: 0ms; }
@@ -461,7 +583,10 @@
 
   <main class="gmain">
     <div class="stats">
-      <div class="stat lv"><span class="stat-label">关卡</span><span class="stat-value" id="lv-name">横刀立马</span></div>
+      <button class="stat lv" type="button" id="lv-chip" data-open="levels" aria-haspopup="dialog" title="选择关卡">
+        <span class="stat-label" id="lv-no">第 1 关</span>
+        <span class="stat-value"><span id="lv-name">比翼横空</span><span class="caret" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></span>
+      </button>
       <div class="stat"><span class="stat-label">步数</span><span class="stat-value" id="moves">0</span></div>
       <div class="stat"><span class="stat-label">最少</span><span class="stat-value" id="optimal">0</span></div>
     </div>
@@ -476,7 +601,7 @@
         <div class="overlay-card">
           <div class="win-badge" aria-hidden="true"><svg class="crown" viewBox="0 0 44 28"><path d="M5 25 3 8l10 8 9-13 9 13 10-8-2 17z"/><circle class="gem" cx="22" cy="18" r="3"/></svg>曹</div>
           <h2>成功突围！</h2>
-          <p id="win-text">用了 0 步</p>
+          <p id="win-text">0 步</p>
           <p class="sub" id="win-sub"></p>
           <div class="row">
             <button class="btn" type="button" id="again">再玩一次</button>
@@ -500,10 +625,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/></svg>
         提示
       </button>
-      <button class="btn primary" type="button" id="pick" data-open="levels">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-        关卡
-      </button>
     </div>
   </main>
 
@@ -513,6 +634,7 @@
       <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
     </div>
     <div class="sheet-body">
+      <p class="lv-progress">已通关 <b id="lv-count">0 / 15</b><span class="lv-bar" aria-hidden="true"><i id="lv-fill" style="width:0%"></i></span></p>
       <div class="lv-grid" id="lv-grid"></div>
     </div>
   </dialog>
@@ -527,7 +649,7 @@
         <li><b>👆</b><span>拖动棋子滑进空位，轻点也能走。</span></li>
         <li><b>🚪</b><span>把<strong>曹操</strong>移到底部出口就赢了。</span></li>
         <li><b>🔢</b><span>同一棋子连续移动只算一步。</span></li>
-        <li><b>💡</b><span>卡住了点「提示」。</span></li>
+        <li><b>💡</b><span>卡住点「提示」，点关卡名换一关。</span></li>
       </ul>
       <p style="margin:18px 0 0"><button class="btn block theme-toggle" type="button">
         <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
@@ -779,6 +901,7 @@
     var boardEl = document.getElementById('board');
     var trayEl = document.getElementById('tray');
     var nameEl = document.getElementById('lv-name');
+    var lvNoEl = document.getElementById('lv-no');
     var movesEl = document.getElementById('moves');
     var optEl = document.getElementById('optimal');
     var undoBtn = document.getElementById('undo');
@@ -794,6 +917,7 @@
     if (typeof records !== 'object' || Array.isArray(records)) records = {};
     var cell = 80, gap = 6, pitch = 86;
     var hintLine = null;
+    var ghost = null;    // 提示目的地虚影 { el, r, c, w, h }
 
     window.Site.played('klotski');
 
@@ -828,6 +952,19 @@
         p.el.style.height = (p.h * cell + (p.h - 1) * gap) + 'px';
         place(p, 0, 0);
       });
+      placeGhost();
+    }
+
+    function placeGhost() {
+      if (!ghost) return;
+      var st = ghost.el.style;
+      st.width = (ghost.w * cell + (ghost.w - 1) * gap) + 'px';
+      st.height = (ghost.h * cell + (ghost.h - 1) * gap - 4) + 'px';
+      st.transform = 'translate(' + (gap + ghost.c * pitch) + 'px,' + (gap + ghost.r * pitch) + 'px)';
+    }
+    function clearGhost() {
+      if (ghost && ghost.el.parentNode) ghost.el.parentNode.removeChild(ghost.el);
+      ghost = null;
     }
 
     function place(p, ox, oy) {
@@ -842,6 +979,11 @@
 
     function build() {
       trayEl.textContent = '';
+      ghost = null;
+      var goal = document.createElement('div');
+      goal.className = 'goal';
+      goal.setAttribute('aria-hidden', 'true');
+      trayEl.appendChild(goal);
       pieces.forEach(function (p, i) {
         var el = document.createElement('div');
         el.className = 'piece ' + kindClass(p) + (p.h > p.w ? ' v' : '');
@@ -870,6 +1012,7 @@
     function updateUI() {
       var L = LEVELS[lv];
       nameEl.textContent = L.name;
+      lvNoEl.textContent = '第 ' + (lv + 1) + ' 关';
       movesEl.textContent = hist.length;
       optEl.textContent = L.min;
       undoBtn.disabled = won || busy || hist.length === 0;
@@ -968,8 +1111,7 @@
       records[L.name] = rec;
       store.set(KEY_REC, records);
       updateHomeStat();
-      document.getElementById('win-text').textContent = '用了 ' + moves + ' 步 · 最少 ' + L.min + ' 步';
-      document.getElementById('win-sub').textContent = moves <= L.min ? '完美！最少步数通关' : (newBest && prevBest ? '刷新个人最佳' : '个人最佳 ' + rec.best + ' 步');
+      setWinText(moves, L.min, moves <= L.min ? '★ 完美通关' : (newBest ? '新纪录' : ''));
       document.getElementById('next').hidden = false;
       sound('win');
       save();
@@ -984,6 +1126,15 @@
       undoBtn.disabled = true;
       hintBtn.disabled = true;
       return true;
+    }
+
+    function setWinText(moves, min, badge) {
+      var t = document.getElementById('win-text');
+      t.textContent = moves + ' 步 ';
+      var sm = document.createElement('small');
+      sm.textContent = '· 最少 ' + min + ' 步';
+      t.appendChild(sm);
+      document.getElementById('win-sub').textContent = badge;
     }
 
     // ---------- 关卡 ----------
@@ -1001,9 +1152,7 @@
       }
       build();
       if (won) {
-        var L = LEVELS[lv], rec = records[L.name] || {};
-        document.getElementById('win-text').textContent = '用了 ' + hist.length + ' 步 · 最少 ' + L.min + ' 步';
-        document.getElementById('win-sub').textContent = rec.best ? '个人最佳 ' + rec.best + ' 步' : '';
+        setWinText(hist.length, LEVELS[lv].min, hist.length <= LEVELS[lv].min ? '★ 完美通关' : '');
         pieces.forEach(function (p) { if (p.kind === 'cao') { p.out = true; p.el.classList.add('out'); place(p, 0, 0); } });
       }
       updateUI();
@@ -1069,6 +1218,14 @@
       var p = pieces[mv.piece];
       p.el.setAttribute('data-dir', mv.path[0]);
       p.el.classList.add('hint');
+      var gr = p.r, gc = p.c;
+      mv.path.forEach(function (d) { gr += DR[d]; gc += DC[d]; });
+      clearGhost();
+      ghost = { el: document.createElement('div'), r: gr, c: gc, w: p.w, h: p.h };
+      ghost.el.className = 'ghost';
+      ghost.el.setAttribute('aria-hidden', 'true');
+      trayEl.insertBefore(ghost.el, trayEl.firstChild.nextSibling);
+      placeGhost();
       var k = 0;
       function next() {
         if (lvToken !== token) return;
@@ -1083,6 +1240,7 @@
         }
         p.el.classList.remove('hint');
         p.el.removeAttribute('data-dir');
+        clearGhost();
         busy = false;
         updateUI();
         checkWin();
@@ -1197,11 +1355,19 @@
     function renderLevels() {
       var grid = document.getElementById('lv-grid');
       grid.textContent = '';
+      var solved = solvedCount();
+      document.getElementById('lv-count').textContent = solved + ' / ' + LEVELS.length;
+      document.getElementById('lv-fill').style.width = Math.round(solved / LEVELS.length * 100) + '%';
       LEVELS.forEach(function (L, i) {
         var btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'lv-card' + (i === lv ? ' current' : '');
+        btn.className = 'lv-card';
+        btn.setAttribute('aria-pressed', i === lv ? 'true' : 'false');
         btn.setAttribute('data-lv', i);
+        var no = document.createElement('span');
+        no.className = 'no';
+        no.textContent = i + 1;
+        btn.appendChild(no);
         var mini = document.createElement('div');
         mini.className = 'mini';
         var mt = document.createElement('div');
@@ -1220,37 +1386,50 @@
         var nm = document.createElement('b');
         nm.textContent = L.name;
         btn.appendChild(nm);
-        var rec = records[L.name];
         var info = document.createElement('small');
         info.textContent = '最少 ' + L.min + ' 步';
         btn.appendChild(info);
+        var rec = records[L.name];
+        var best = document.createElement('small');
         if (rec && rec.best) {
-          var best = document.createElement('small');
           best.className = 'best';
           best.textContent = '最佳 ' + rec.best;
-          btn.appendChild(best);
           var ok = document.createElement('span');
-          ok.className = 'done';
-          ok.textContent = '✓';
+          var perfect = rec.best <= L.min;
+          ok.className = 'done' + (perfect ? ' perfect' : '');
+          ok.textContent = perfect ? '★' : '✓';
+          ok.title = perfect ? '完美通关' : '已通关';
           btn.appendChild(ok);
+        } else {
+          best.className = 'best none';
+          best.textContent = '未通关';
         }
+        btn.appendChild(best);
+        btn.setAttribute('aria-label', '第 ' + (i + 1) + ' 关 ' + L.name + '，' + info.textContent + '，' + best.textContent);
         grid.appendChild(btn);
       });
     }
 
-    document.getElementById('pick').addEventListener('click', function () {
+    document.getElementById('lv-chip').addEventListener('click', function () {
       sound('click');
       renderLevels();
-      var cur = document.querySelector('.lv-card.current');
-      setTimeout(function () { if (cur) cur.scrollIntoView({ block: 'nearest' }); }, 0);
+      // 打开后把当前关卡滚到可见区域中间
+      setTimeout(function () {
+        var cur = document.querySelector('.lv-card[aria-pressed="true"]');
+        var body = document.querySelector('#levels .sheet-body');
+        if (cur && body) body.scrollTop = Math.max(0, cur.offsetTop - body.offsetTop - (body.clientHeight - cur.offsetHeight) / 2);
+      }, 0);
     });
     document.getElementById('lv-grid').addEventListener('click', function (e) {
       var btn = e.target.closest('.lv-card');
       if (!btn) return;
-      sound('select');
-      lvToken++;
-      loadLevel(+btn.getAttribute('data-lv'));
+      var i = +btn.getAttribute('data-lv');
       window.Site.closeDialog('levels');
+      // 点当前关卡（未通关）只是关掉弹窗，不丢进度；要从头来用「重来」
+      if (i === lv && !won) return;
+      sound('start');
+      lvToken++;
+      loadLevel(i);
     });
 
     undoBtn.addEventListener('click', undo);

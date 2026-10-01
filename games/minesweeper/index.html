@@ -63,12 +63,12 @@
 
     /* 重开：圆滚滚的太阳脸按钮 */
     .stats .btns .face {
-      width: 58px;
-      height: 58px;
+      width: 54px;
+      height: 54px;
       padding: 0;
       border-radius: 50%;
       background: #ffd84d;
-      font-size: 29px;
+      font-size: 28px;
       line-height: 1;
       box-shadow: var(--pop), inset 0 -5px 0 rgba(0, 0, 0, 0.12), inset 0 4px 0 rgba(255, 255, 255, 0.5);
       transition: transform .12s cubic-bezier(.2, 1.4, .4, 1), box-shadow .08s ease, background-color .2s ease;
@@ -78,61 +78,108 @@
     .stats .btns .face[data-state="lost"] { background: #ff8f8f; }
     .stats .btns .face[data-state="won"] { background: var(--theme-2); }
 
-    .ctrl { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    /* 唯一的操作行：难度标签 + 挖开/插旗开关；高级棋盘很长时吸附在屏幕底部 */
+    .ctrl {
+      position: sticky;
+      bottom: calc(10px + env(safe-area-inset-bottom));
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ctrl .chip {
+      height: 44px;
+      padding: 0 12px 0 10px;
+      gap: 6px;
+      border: var(--outline);
+      border-radius: 14px;
+      box-shadow: var(--pop-sm);
+      font-size: 16px;
+      touch-action: manipulation;
+      transition: transform .08s ease, box-shadow .08s ease, filter .15s ease;
+    }
+    .ctrl .chip:hover { filter: brightness(0.97); }
+    .ctrl .chip:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
+    .ctrl .chip:focus-visible { outline: 3px solid var(--theme); outline-offset: 3px; }
+    .chip-icon { font-size: 18px; line-height: 1; }
+    .chip svg { width: 16px; height: 16px; margin-right: -2px; opacity: .7; }
+    :root[data-theme="dark"] .ctrl .chip { background: var(--surface-2); color: var(--text); }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .ctrl .chip { background: var(--surface-2); color: var(--text); }
+    }
 
-    /* 挖开 / 插旗：双格拨动开关 */
+    /* 挖开 / 插旗：一个两档拨动开关，滑块指示当前模式 */
     .btn.mode {
-      height: auto;
+      flex: 1;
+      max-width: 300px;
+      margin-left: auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
       padding: 3px;
-      gap: 3px;
       border-radius: 14px;
       touch-action: manipulation;
     }
-    .mode .opt {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      height: 32px;
-      padding: 0 11px 0 8px;
+    .btn.mode:hover { filter: none; }
+    .mode .knob {
+      position: absolute;
+      top: 3px;
+      bottom: 3px;
+      left: 3px;
+      width: calc(50% - 3px);
       border-radius: 10px;
+      background: var(--theme);
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.16), inset 0 2px 0 rgba(255, 255, 255, 0.25);
+      transition: transform .2s cubic-bezier(.3, 1.3, .5, 1), background-color .2s ease;
+    }
+    .mode.is-flag .knob { transform: translateX(100%); background: var(--bad); }
+    .mode .opt {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 100%;
       color: var(--text-dim);
-      font-size: 14px;
-      transition: background-color .15s ease, color .15s ease;
+      font-size: 15px;
+      transition: color .2s ease;
     }
     .mode .opt i {
-      display: block;
-      width: 20px;
-      height: 20px;
+      flex: none;
+      width: 22px;
+      height: 22px;
       background: center / contain no-repeat;
-      transition: transform .25s cubic-bezier(.2, 1.5, .4, 1);
+      opacity: .45;
+      filter: grayscale(1);
+      transition: opacity .2s ease, filter .2s ease, transform .25s cubic-bezier(.2, 1.5, .4, 1);
     }
     .mode .opt.dig i { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg transform='rotate(-35 16 16)'%3E%3Cpath d='M16 17V4.5M12 4.5h8' stroke='%232d2a4a' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M10.5 16h11v5.2c0 3.6-2.6 6.4-5.5 7.8-2.9-1.4-5.5-4.2-5.5-7.8z' fill='%23d9e2ee' stroke='%232d2a4a' stroke-width='2.4' stroke-linejoin='round'/%3E%3Cpath d='M13.4 19v2.4' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E"); }
     .mode .opt.flag i { background-image: var(--flag-svg); }
-    .mode:not(.is-flag) .opt.dig,
-    .mode.is-flag .opt.flag {
-      color: #fff;
-      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.15);
-    }
-    .mode:not(.is-flag) .opt.dig { background: var(--theme); }
-    .mode.is-flag .opt.flag { background: var(--bad); }
-    /* 未选中：灰色剪影；选中：白色圆章 */
-    .mode .opt i { opacity: .5; filter: grayscale(1); }
-    :root[data-theme="dark"] .mode .opt i { filter: grayscale(1) invert(.85); opacity: .7; }
+    :root[data-theme="dark"] .mode .opt i { filter: grayscale(1) invert(.85); opacity: .6; }
     @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) .mode .opt i { filter: grayscale(1) invert(.85); opacity: .7; }
+      :root:not([data-theme="light"]) .mode .opt i { filter: grayscale(1) invert(.85); opacity: .6; }
     }
+    .mode:not(.is-flag) .opt.dig,
+    .mode.is-flag .opt.flag { color: #fff; }
     .mode:not(.is-flag) .opt.dig i,
     .mode.is-flag .opt.flag i {
       opacity: 1;
-      filter: none;
-      width: 24px;
-      height: 24px;
-      margin: 0 -1px 0 -3px;
+      filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1px #fff);
+      transform: rotate(-8deg) scale(1.08);
+    }
+
+    /* 新游戏弹窗：其他难度有未完成的局时显示“继续” */
+    .choice > span:nth-child(2) { flex: 1; min-width: 0; }
+    .choice small { font-variant-numeric: tabular-nums; }
+    .choice .resume {
+      flex: none;
+      padding: 2px 9px;
       border: 2px solid var(--ink);
-      border-radius: 50%;
-      background-color: #fff;
-      background-size: 72%;
-      transform: rotate(-10deg);
+      border-radius: 999px;
+      background: var(--theme-2);
+      color: #2d2a4a;
+      font-size: 12px;
+      font-weight: 700;
     }
 
     .stage { display: flex; justify-content: center; }
@@ -219,6 +266,12 @@
     }
     .c.f::before { animation: flag-in 300ms cubic-bezier(.2, 1.6, .4, 1); transform-origin: 35% 90%; }
     .c.m::before { background-image: var(--bomb-svg); inset: 8%; animation: bomb-in 280ms cubic-bezier(.2, 1.5, .4, 1); }
+    /* 翻出的雷：格子微微泛红；深色泥地上给炸弹一圈浅色描边，免得糊进背景 */
+    .c.m { background: color-mix(in srgb, var(--dn) 82%, #ff4d5e); }
+    :root[data-theme="dark"] .c.m::before { filter: drop-shadow(0 0 1px rgba(255, 255, 255, .7)); }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .c.m::before { filter: drop-shadow(0 0 1px rgba(255, 255, 255, .7)); }
+    }
     .c.boom {
       z-index: 2;
       background: var(--burst-svg) center / 118% no-repeat, #ff4d5e;
@@ -261,6 +314,18 @@
     }
     .overlay.lose .ov-icon { background: var(--bomb-svg) center / 70% no-repeat, #ff8f8f; }
     .overlay.lose h2 { color: var(--bad); }
+    #ov-text { font-variant-numeric: tabular-nums; }
+    .rec {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 9px 2px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: var(--theme-2);
+      color: #2d2a4a;
+      font-size: 13px;
+      vertical-align: 1px;
+    }
     @keyframes ov-bob { 0%, 100% { transform: none; } 50% { transform: translateY(-4px) rotate(-6deg); } }
     /* 高级棋盘很高时，让结果卡片停在屏幕中间 */
     .board-wrap.tall .overlay { place-content: start center; }
@@ -270,9 +335,15 @@
       margin: 20vh 0;
     }
 
-    @media (max-width: 380px) {
-      .mode .opt { padding: 0 8px 0 6px; font-size: 13px; }
-      .mode .opt i { width: 18px; height: 18px; }
+    @media (max-width: 340px) {
+      #newgame .sheet-body { padding: 14px 14px 16px; }
+      #newgame .choice { gap: 10px; padding: 10px 12px; }
+      #newgame .choice small { font-size: 12px; }
+    }
+    @media (max-width: 360px) {
+      .ctrl .chip { padding: 0 10px 0 8px; font-size: 15px; gap: 4px; }
+      .mode .opt { gap: 4px; font-size: 14px; }
+      .mode .opt i { width: 20px; height: 20px; }
     }
     @media (prefers-reduced-motion: reduce) {
       .c.o.pop, .c.f::before, .c.m::before, .board.thump, .board.shake, .ov-icon { animation: none; }
@@ -299,20 +370,8 @@
       <div class="stat"><span class="stat-label">剩余雷数</span><span class="stat-value" id="left">10</span></div>
       <div class="stat"><span class="stat-label">时间</span><span class="stat-value" id="time">00:00</span></div>
       <div class="btns">
-        <button class="btn face" type="button" id="face" title="新游戏 (N)" aria-label="新游戏">😊</button>
+        <button class="btn face" type="button" id="face" title="重新开始 (N)" aria-label="重新开始">😊</button>
       </div>
-    </div>
-
-    <div class="ctrl">
-      <div class="seg" id="diff" role="group" aria-label="难度">
-        <button type="button" data-diff="easy" aria-pressed="true">初级</button>
-        <button type="button" data-diff="medium" aria-pressed="false">中级</button>
-        <button type="button" data-diff="hard" aria-pressed="false">高级</button>
-      </div>
-      <button class="btn mode" type="button" id="mode" aria-pressed="false" aria-label="插旗模式" title="切换挖开 / 插旗 (F)">
-        <span class="opt dig"><i aria-hidden="true"></i>挖开</span>
-        <span class="opt flag"><i aria-hidden="true"></i>插旗</span>
-      </button>
     </div>
 
     <div class="stage" id="stage">
@@ -332,7 +391,34 @@
         </div>
       </div>
     </div>
+
+    <div class="ctrl" id="ctrl">
+      <button class="chip" type="button" id="diff" data-open="newgame" aria-haspopup="dialog" title="换难度 / 新游戏">
+        <span class="chip-icon" id="diff-icon" aria-hidden="true">🌱</span><span id="diff-name">初级</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <button class="btn mode" type="button" id="mode" aria-pressed="false" aria-label="插旗模式" title="切换挖开 / 插旗 (F)">
+        <span class="knob" aria-hidden="true"></span>
+        <span class="opt dig"><i aria-hidden="true"></i>挖开</span>
+        <span class="opt flag"><i aria-hidden="true"></i>插旗</span>
+      </button>
+    </div>
   </main>
+
+  <dialog class="sheet" id="newgame">
+    <div class="sheet-head">
+      <h2>新游戏</h2>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+    <div class="sheet-body">
+      <p class="sheet-label">难度</p>
+      <div class="choices" id="choices">
+        <button class="choice" type="button" data-diff="easy"><span class="choice-icon">🌱</span><span><b>初级</b><small></small></span></button>
+        <button class="choice" type="button" data-diff="medium"><span class="choice-icon">🍀</span><span><b>中级</b><small></small></span></button>
+        <button class="choice" type="button" data-diff="hard"><span class="choice-icon">💣</span><span><b>高级</b><small></small></span></button>
+      </div>
+    </div>
+  </dialog>
 
   <dialog class="sheet" id="help">
     <div class="sheet-head">
@@ -360,9 +446,9 @@
 
     // 高级为竖版 30 行 × 16 列，宽屏时转置显示
     var DIFFS = {
-      easy:   { name: '初级', rows: 9,  cols: 9,  mines: 10 },
-      medium: { name: '中级', rows: 16, cols: 16, mines: 40 },
-      hard:   { name: '高级', rows: 30, cols: 16, mines: 99 }
+      easy:   { name: '初级', icon: '🌱', size: '9×9',   rows: 9,  cols: 9,  mines: 10 },
+      medium: { name: '中级', icon: '🍀', size: '16×16', rows: 16, cols: 16, mines: 40 },
+      hard:   { name: '高级', icon: '💣', size: '30×16', rows: 30, cols: 16, mines: 99 }
     };
     var P = 'gzly.minesweeper.';
     var LONG_MS = 350;
@@ -378,7 +464,8 @@
     var timeEl = document.getElementById('time');
     var faceEl = document.getElementById('face');
     var modeEl = document.getElementById('mode');
-    var diffEl = document.getElementById('diff');
+    var ctrlEl = document.getElementById('ctrl');
+    var choicesEl = document.getElementById('choices');
     var overEl = document.getElementById('over');
 
     // 游戏状态
@@ -587,18 +674,39 @@
     }
 
     function renderControls() {
-      var btns = diffEl.querySelectorAll('button');
-      for (var i = 0; i < btns.length; i++) {
-        btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-diff') === diff ? 'true' : 'false');
-      }
+      document.getElementById('diff-icon').textContent = DIFFS[diff].icon;
+      document.getElementById('diff-name').textContent = DIFFS[diff].name;
       modeEl.classList.toggle('is-flag', mode === 'flag');
       modeEl.setAttribute('aria-pressed', mode === 'flag' ? 'true' : 'false');
     }
 
-    // 按屏幕计算格子大小；宽屏的高级局横过来
+    // 新游戏弹窗：当前难度高亮，显示最快纪录；其他难度有未完成的局时标“继续”
+    function renderChoices() {
+      var btns = choicesEl.querySelectorAll('.choice');
+      for (var i = 0; i < btns.length; i++) {
+        var d = btns[i].getAttribute('data-diff');
+        var info = DIFFS[d];
+        btns[i].setAttribute('aria-pressed', d === diff ? 'true' : 'false');
+        btns[i].querySelector('small').textContent = info.size + ' · ' + info.mines + ' 雷' + (best[d] ? ' · 最快 ' + fmt(best[d]) : '');
+        var s = d === diff ? null : store.get(P + 'game.' + d, null);
+        var tag = btns[i].querySelector('.resume');
+        var resumable = !!(s && s.status === 'playing' && typeof s.st === 'string' && s.st.length === info.rows * info.cols);
+        if (resumable && !tag) {
+          tag = document.createElement('span');
+          tag.className = 'resume';
+          tag.textContent = '继续';
+          btns[i].appendChild(tag);
+        } else if (!resumable && tag) {
+          tag.remove();
+        }
+      }
+    }
+
+    // 按屏幕计算格子大小；宽屏的高级局横过来；主区宽度跟随棋盘，让各行边缘对齐
     function layout() {
       var wantRot = diff === 'hard' && window.innerWidth >= 720 && window.innerWidth > window.innerHeight;
-      document.documentElement.style.setProperty('--stage-max', wantRot ? '980px' : diff === 'easy' ? '460px' : '560px');
+      var cap = wantRot ? 980 : diff === 'easy' ? 460 : 560;
+      document.documentElement.style.setProperty('--stage-max', cap + 'px');
       var key = diff + (wantRot ? 'r' : '');
       if (key !== builtKey) {
         rotated = wantRot;
@@ -615,7 +723,8 @@
       var edge = (pad + BW) * 2;
       var byW = (W - edge) / dc;
       var top = stageEl.getBoundingClientRect().top + window.scrollY;
-      var H = window.innerHeight - top - 24;
+      // 棋盘下方：12px 间距 + 操作行 + 页面底边距
+      var H = window.innerHeight - top - 12 - ctrlEl.offsetHeight - 22;
       var byH = (H - edge) / dr;
       var cell = (diff === 'hard' && !rotated) ? byW : Math.min(byW, Math.max(byH, 22));
       cell = Math.max(14, Math.min(cell, 48));
@@ -623,6 +732,8 @@
       boardEl.style.setProperty('--cell', cell + 'px');
       boardEl.style.setProperty('--pad', pad + 'px');
       var boardH = dr * cell + edge;
+      var boardW = dc * cell + edge;
+      document.documentElement.style.setProperty('--stage-max', Math.min(cap, Math.max(340, Math.ceil(boardW))) + 'px');
       wrapEl.classList.toggle('tall', boardH > window.innerHeight * 0.8);
     }
 
@@ -639,15 +750,23 @@
       overEl.classList.toggle('lose', !won);
       document.getElementById('ov-title').textContent = won ? '胜利！' : '踩雷了';
       var text;
+      var rec = false;
       if (won) {
         var b = best[diff];
-        var rec = b && elapsed <= b + 0.001;
-        text = '用时 ' + fmt(elapsed) + (rec ? ' · 新纪录！' : ' · 最快 ' + fmt(b));
+        rec = !!b && elapsed <= b + 0.001;
+        text = '用时 ' + fmt(elapsed) + (rec ? '' : ' · 最快 ' + fmt(b));
       } else {
         var safeTotal = N - M;
         text = '完成 ' + Math.floor(opened / safeTotal * 100) + '%';
       }
-      document.getElementById('ov-text').textContent = text;
+      var textEl = document.getElementById('ov-text');
+      textEl.textContent = text;
+      if (won && rec) {
+        var badge = document.createElement('span');
+        badge.className = 'rec';
+        badge.textContent = '新纪录';
+        textEl.appendChild(badge);
+      }
       if (delay) {
         overEl.hidden = true;
         overTimer = setTimeout(function () { overEl.hidden = false; }, delay);
@@ -879,11 +998,19 @@
 
     modeEl.addEventListener('click', toggleMode);
     faceEl.addEventListener('click', restart);
-    diffEl.addEventListener('click', function (e) {
-      var b = e.target.closest('button[data-diff]');
+    // 打开新游戏弹窗前刷新选项（[data-open] 由 site.js 处理）
+    document.getElementById('diff').addEventListener('click', function () {
+      if (clockTimer) save();
+      renderChoices();
+    });
+    // 选当前难度 = 重开；选其他难度 = 切换（有未完成的局就接着玩）
+    choicesEl.addEventListener('click', function (e) {
+      var b = e.target.closest('.choice');
       if (!b) return;
-      sound('click');
-      switchDiff(b.getAttribute('data-diff'));
+      var d = b.getAttribute('data-diff');
+      window.Site.closeDialog('newgame');
+      if (d === diff) restart();
+      else { sound('start'); switchDiff(d); }
     });
     overEl.addEventListener('click', function (e) {
       var b = e.target.closest('[data-action]');

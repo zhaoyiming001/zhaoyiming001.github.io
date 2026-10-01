@@ -293,8 +293,8 @@ button { font: inherit; color: inherit; }
 
 /* 数据条：分数 / 时间 / 步数 */
 .stats { display: flex; align-items: center; gap: 8px; }
-.stats .btns { display: flex; gap: 8px; flex: none; }
-.stats .btns .btn { height: 54px; }
+.stats .btns { display: flex; gap: 8px; flex: none; align-self: stretch; }
+.stats .btns .btn { height: auto; min-height: 50px; }
 .stat {
   position: relative;
   flex: 1;
@@ -457,6 +457,125 @@ kbd {
   font-weight: 700;
   text-align: center;
 }
+
+/* ---------- 新游戏 / 设置弹窗里的选项 ----------
+ * <div class="choices">
+ *   <button class="choice" aria-pressed="true"><span class="choice-icon">🙂</span><span><b>简单</b><small>9×9 · 10 个雷</small></span></button>
+ * </div>
+ */
+.sheet-label {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+}
+.sheet-label:first-child { margin-top: 0; }
+.choices { display: grid; gap: 10px; }
+.choices.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.choices.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  padding: 10px 14px;
+  border: var(--outline);
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--text);
+  box-shadow: var(--pop-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.choice:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
+.choice:focus-visible { outline: 3px solid var(--theme); outline-offset: 3px; }
+.choice-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 2.5px solid var(--ink);
+  border-radius: 12px;
+  background: var(--theme-soft);
+  color: #2d2a4a;
+  font-size: 19px;
+}
+.choice b { display: block; font-size: 17px; line-height: 1.25; }
+.choice small { display: block; font-size: 13px; font-weight: 600; color: var(--text-dim); line-height: 1.3; }
+.choice[aria-pressed="true"] { background: var(--theme); color: var(--theme-ink); }
+.choice[aria-pressed="true"] small { color: inherit; opacity: .85; }
+.choice[aria-pressed="true"] .choice-icon { background: #fff; }
+
+/* 开关行：<label class="switch-row"><span>穿墙</span><input type="checkbox" class="switch"></label> */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: var(--outline);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: var(--pop-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+.switch-row small { display: block; font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.switch {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  position: relative;
+  width: 54px;
+  height: 32px;
+  margin: 0;
+  border: var(--outline);
+  border-radius: 999px;
+  background: var(--surface-3);
+  cursor: pointer;
+  transition: background-color .15s ease;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid var(--ink);
+  border-radius: 50%;
+  background: #fff;
+  transition: transform .18s cubic-bezier(.2, 1.4, .4, 1);
+}
+.switch:checked { background: var(--theme); }
+.switch:checked::after { transform: translateX(22px); }
+.switch:focus-visible { outline: 3px solid var(--theme); outline-offset: 3px; }
+
+.sheet-foot { margin-top: 18px; display: grid; gap: 10px; }
+
+/* 难度小标签（主界面上显示当前难度，点击打开新游戏弹窗） */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  padding: 0 14px;
+  border: 2.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--theme-soft);
+  color: #2d2a4a;
+  box-shadow: var(--pop-sm);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.chip:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
 
 @media (max-width: 400px) {
   .stats .btns .btn { padding: 0 10px; }
