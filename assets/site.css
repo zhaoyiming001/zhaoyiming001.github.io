@@ -1,0 +1,169 @@
+/* 格子乐园 · 全站公共样式 */
+:root {
+  --bg: #f7f2ea;
+  --bg-dot: rgba(120, 96, 70, 0.10);
+  --surface: #fffdf9;
+  --surface-2: #f0e8dc;
+  --text: #3a3029;
+  --text-dim: #8a7b6d;
+  --line: #e6dccd;
+  --accent: #f26b3a;
+  --accent-ink: #ffffff;
+  --shadow: 0 1px 2px rgba(60, 40, 20, 0.06), 0 8px 24px rgba(60, 40, 20, 0.08);
+  --radius: 16px;
+  --font: "Nunito", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1714;
+    --bg-dot: rgba(255, 236, 214, 0.06);
+    --surface: #26201c;
+    --surface-2: #322a24;
+    --text: #f3e9de;
+    --text-dim: #a8998b;
+    --line: #3b322b;
+    --accent: #ff8355;
+    --accent-ink: #1b1714;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #1b1714;
+  --bg-dot: rgba(255, 236, 214, 0.06);
+  --surface: #26201c;
+  --surface-2: #322a24;
+  --text: #f3e9de;
+  --text-dim: #a8998b;
+  --line: #3b322b;
+  --accent: #ff8355;
+  --accent-ink: #1b1714;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--bg-dot) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+  color: var(--text);
+  font-family: var(--font);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a { color: inherit; }
+
+.wrap {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* 顶部导航 */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 0;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+}
+
+.brand-mark {
+  display: grid;
+  grid-template-columns: repeat(2, 12px);
+  grid-template-rows: repeat(2, 12px);
+  gap: 3px;
+}
+.brand-mark i { border-radius: 3px; display: block; }
+.brand-mark i:nth-child(1) { background: #f26b3a; }
+.brand-mark i:nth-child(2) { background: #f5b43c; }
+.brand-mark i:nth-child(3) { background: #4fb39a; }
+.brand-mark i:nth-child(4) { background: #5b8def; }
+
+.nav-actions { display: flex; align-items: center; gap: 8px; }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 18px;
+  transition: transform .15s ease, background .15s ease;
+}
+.icon-btn:hover { background: var(--surface-2); }
+.icon-btn:active { transform: scale(0.94); }
+.icon-btn svg { width: 20px; height: 20px; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform .15s ease, background .15s ease, opacity .15s ease;
+  user-select: none;
+}
+.btn:hover { background: var(--surface-2); }
+.btn:active { transform: scale(0.96); }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.btn.primary:hover { filter: brightness(1.06); background: var(--accent); }
+
+.footer {
+  padding: 40px 0 32px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+/* 主题切换图标 */
+.theme-toggle .sun { display: none; }
+.theme-toggle .moon { display: block; }
+:root[data-theme="dark"] .theme-toggle .sun { display: block; }
+:root[data-theme="dark"] .theme-toggle .moon { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .sun { display: block; }
+  :root:not([data-theme="light"]) .theme-toggle .moon { display: none; }
+}
