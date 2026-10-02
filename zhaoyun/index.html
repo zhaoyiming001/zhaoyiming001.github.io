@@ -38,7 +38,7 @@
       <div class="rg-l"><span id="waveLbl"></span><span id="waveOf"></span></div>
       <button id="btnGo" class="hidden">开战</button>
     </div>
-    <button id="btnSummon"><span class="sm-t">征兵</span><span class="sm-c">五张 · <b id="costV">15</b> 馒头<i id="smHint"></i></span></button>
+    <button id="btnSummon"><span class="sm-t">征兵</span><span class="sm-c"><i id="smHint">补充 5 名</i> · <b id="costV">10</b> 馒头</span></button>
     <div id="bunBox" title="馒头"><i class="bun"></i><b id="bunV">0</b></div>
     <div id="banner" class="banner"><div class="b-main"></div><div class="b-sub"></div></div>
     <div id="tip" class="tip"></div>
@@ -53,7 +53,7 @@
       <div class="t-tag">字即是兵 · 水墨三国汉字塔防</div>
       <div class="t-btns">
         <button class="btn btn-red" id="btnStart">出征</button>
-        <button class="btn btn-ghost" id="btnTitleSound">声音：开</button>
+        <div class="row-btns"><button class="btn btn-ghost half" id="btnTitleMusic">音乐：开</button><button class="btn btn-ghost half" id="btnTitleSound">音效：开</button></div>
       </div>
       <div class="t-foot">笔画数据 Arphic PL · 与对手同守阿斗，先失三心者败 · 胜升星、败降星</div>
     </div>
@@ -81,7 +81,9 @@
       <div class="col-btns">
         <button class="btn btn-red" id="btnResume">继续</button>
         <button class="btn btn-ghost" id="btnRestart">重新开始</button>
-        <button class="btn btn-ghost" id="btnSound2">声音：开</button>
+        <div class="row-btns"><button class="btn btn-ghost half" id="btnMusic2">音乐：开</button><button class="btn btn-ghost half" id="btnSound2">音效：开</button></div>
+        <label class="vol">音乐音量<input type="range" id="volM" min="0" max="100" value="50"></label>
+        <label class="vol">音效音量<input type="range" id="volS" min="0" max="100" value="100"></label>
         <button class="btn btn-ghost" id="btnToMap">退出 · 选战场</button>
       </div>
     </div>

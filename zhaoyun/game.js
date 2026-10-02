@@ -1,4 +1,4 @@
-/* 赵云与阿斗 v4 · 界面、布局、渲染循环、操作、经典战场与段位 */
+/* 赵云与阿斗 v5 · 界面、布局、渲染循环、操作、经典战场与段位（数值对齐原作；AI 像真人一样一张张拖牌） */
 (function () {
   'use strict';
   var Z = window.ZYCore, I = window.ZYInk, A = window.ZYAnim, SND = window.ZYSound;
@@ -17,10 +17,14 @@
   function rankState() {
     var st = store.get('rank', null);
     if (!st || typeof st !== 'object') {
-      // 旧版战役进度：按已解锁的关数给个起步段位（最多「什长」）
+      // 旧版战役进度：按已解锁的关数给个起步段位（最多「军士·三」）
       var old = store.get('campaign', null), r0 = 0;
       if (old && typeof old === 'object') r0 = Math.max(0, Math.min(2, Math.floor(((old.unlocked | 0) - 1) / 3)));
-      st = { r: r0, s: 0, w: 0, l: 0, best: r0 };
+      st = { r: r0, s: 0, w: 0, l: 0, best: r0, v: 5 };
+    } else if (st.v !== 5) {
+      // v4 段位（士卒…大都督 十段、每段 3 星）→ v5（军士·一…皇帝 42 小级、每级 5 星）
+      st.r = Math.min(Z.RANKS.length - 1, (st.r | 0) * 2); st.s = Math.min(Z.RANK_STARS, st.s | 0); st.best = Math.max(st.r, (st.best | 0) * 2); st.v = 5;
+      store.set('rank', st);
     }
     st.r = Math.max(0, Math.min(Z.RANKS.length - 1, st.r | 0));
     st.s = Math.max(0, Math.min(Z.RANK_STARS, st.s | 0));
@@ -29,7 +33,10 @@
   }
   store.del('save'); // v2 的局内存档：对战不保存局内进度
   SND.set(store.get('sound', true) !== false);
-  function sfx(n, a, quiet) { if (!quickMode) SND.play(n, a, quiet); }
+  SND.setMusic(store.get('music', true) !== false);
+  (function () { var v = store.get('vol', null); if (v && typeof v === 'object') SND.setVol(v.m, v.s); })();
+  function quietMode() { return quickMode || manual; }
+  function sfx(n, a, quiet) { if (!quietMode()) SND.play(n, a, quiet); }
 
   // ---------- 画布与布局 ----------
   var cv = $('cv'), ctx = cv.getContext('2d');
@@ -297,7 +304,7 @@
 
   // ---------- 状态 ----------
   var G = null, bot = null, autoBot = null, running = false, paused = false, gameOver = false, speed = store.get('speed', 1) === 2 ? 2 : 1;
-  var acc = 0, last = 0, tanim = [{}, {}], benchAnim = [null, null, null, null, null], drag = null, pend = null, tipLoc = null, tipUntil = 0;
+  var acc = 0, last = 0, tanim = [{}, {}], benchAnim = [null, null, null, null, null], drag = null, pend = null, tipLoc = null, tipUntil = 0, aiFlights = [];
   var manual = false, endT = 0, flood = 0, heartFx = [[0, 0, 0], [0, 0, 0]], aduShake = [0, 0], sideFlash = [0, 0];
   var tutStep = store.get('tut', 0) | 0;
 
@@ -386,13 +393,27 @@
         }
         case 'summon':
           if (s === 0) {
-            e.lost.forEach(function (it, j) { if (it) A.addFx({ k: 'lostcard', it: it, x: slots[j].x + BS / 2, y: slots[j].y + BS / 2, life: 0.5 }); });
-            for (var j = 0; j < 5; j++) benchAnim[j] = { t: -j * 0.07, dur: 0.5 };
+            // 只补空着的候补格
+            (e.slots || [0, 1, 2, 3, 4]).forEach(function (j, n) { benchAnim[j] = { t: -n * 0.07, dur: 0.5 }; });
             sfx('summon');
-            if (e.lost.length) sfx('discard');
             tutNote('summon');
           }
           break;
+        case 'farm': {
+          var fq = cellCenter(s, e.c, e.r, {});
+          if (s === 0) { A.word(fq.x + cell * 0.2, fq.y - cell * 0.45, '+' + e.v, Math.round(cell * 0.3), '#8a5a0c', 0.7); sfx('farm'); }
+          break;
+        }
+        case 'aidrag': {
+          // AI 像真人一样拖牌：从它的候补（顶部）或原格飞到目标格
+          if (s !== 1 || quickMode) break;
+          var it0 = G.getItem(1, e.from);
+          if (!it0) break;
+          var p0 = e.from.z === 'b' ? { x: W / 2 + (e.from.i - 2) * cell * 0.7, y: Y0 - cell * 0.15 } : cellCenter(1, e.from.c, e.from.r, {});
+          var p1 = e.to.z === 't' ? cellCenter(1, e.to.c, e.to.r, {}) : e.to.z === 'x' ? { x: W / 2, y: Y0 - cell * 0.4 } : { x: W / 2 + (e.to.i - 2) * cell * 0.7, y: Y0 - cell * 0.15 };
+          aiFlights.push({ it: it0, x0: p0.x, y0: p0.y, x1: p1.x, y1: p1.y, t: 0, dur: e.dur, fromTile: e.from.z === 't' ? e.from : null });
+          break;
+        }
         case 'place': case 'move': case 'swap':
           if (e.to && e.to.z === 't') {
             var it2 = G.sides[s].cells[tileKey(e.to.c, e.to.r)].item;
@@ -468,16 +489,18 @@
         case 'wave':
           banner('第' + NUMCN[e.n - 1] + '波', e.tag || (e.last ? '最后一波' : '敌军来袭'), e.boss ? 'red' : '');
           sfx(e.boss ? 'boss' : 'wave');
+          SND.boss(e.boss === 'boss' || (e.boss === 'lieut' && G.rank >= 9));
           break;
         case 'boss':
           sfx('boss');
           break;
         case 'bossAct': {
           var bp = sp(s, e.x, e.y, {});
-          var BW = { summon: '召', swarm: '骑', charge: '冲', rage: '怒', shield: '守', burn: '火' }[e.act] || '！';
+          var BW = { summon: '召', swarm: '骑', charge: '冲', rage: '怒', shield: '守', burn: '火', flatten: '压' }[e.act] || '！';
           A.word(bp.x, bp.y - cell * 0.8, BW, Math.round(cell * 0.5), VERM, 0.8);
           if (e.act === 'burn') (e.pts || []).forEach(function (pp) { var w = sp(s, pp[0], pp[1], {}); A.embers(w.x, w.y, 6, cell * 0.6); });
           if (e.act === 'shield') A.ring(bp.x, bp.y, cell * 0.3, cell * 0.9, '70,110,170', 0.5, 3);
+          if (e.act === 'flatten') { A.ring(bp.x, bp.y, cell * 0.3, (e.rad || 1.7) * cell, '27,23,18', 0.5, 6); A.dust(bp.x, bp.y, 8, cell * 0.6); ENV.shake(4); (e.pts || []).forEach(function (pp) { var w = sp(s, pp[0], pp[1], {}); A.drops(w.x, w.y, 4, cell * 1.2, cell * 0.08); }); if (s === 0 && e.pts && e.pts.length) banner('典韦踏地', '低阶兵被压扁 3 秒：升到三阶才扛得住', 'red'); }
           sfx('bossAct', null, quiet);
           break;
         }
@@ -573,7 +596,14 @@
       var a = anims[i];
       if (a && a.type === 'atk') continue;
       cellCenter(s, ce.c, ce.r, q);
-      A.drawTile(c, it, q.x, q.y, { anim: a, t: now });
+      if (it.flatT > 0) {
+        // 被典韦压扁：字牌扁成一片，头上冒星
+        c.save(); c.translate(q.x, q.y + d.h * 0.35); c.scale(1.12, 0.42); A.drawTile(c, it, 0, -d.h * 0.35, { t: now }); c.restore();
+        c.fillStyle = '#c9962e'; for (var fs2 = 0; fs2 < 3; fs2++) { var fa = now * 7 + fs2 * 2.1; c.beginPath(); c.arc(q.x + Math.cos(fa) * C * 0.3, q.y - C * 0.1 + Math.sin(fa) * C * 0.08, Math.max(1.5, C * 0.035), 0, TAU); c.fill(); }
+        continue;
+      }
+      var flying = s === 1 && aiFlights.some(function (fl) { return fl.fromTile && fl.fromTile.c === ce.c && fl.fromTile.r === ce.r; });
+      A.drawTile(c, it, q.x, q.y, { anim: a, t: now, alpha: flying ? 0.3 : null });
       if (it.burnT > 0) { if (Math.random() < 0.2) A.embers(q.x, q.y, 1, C * 0.5); }
       if (it.rushT > 0) { c.strokeStyle = 'rgba(201,150,46,' + (0.4 + 0.3 * Math.sin(now * 12)) + ')'; c.lineWidth = 1.5; I.rr(c, q.x - d.w / 2 - 2, q.y - d.h / 2 - d.t / 2 - 2, d.w + 4, d.h + d.t + 4, d.w * 0.15); c.stroke(); }
     }
@@ -606,7 +636,16 @@
       if (s === 1) ang = -ang;
       A.drawProj(c, pr, q.x, q.y, ang, s);
     }
+    if (s === 1) drawAiFlights(c);
     curSide = 0;
+  }
+  // AI 拖牌：一张字牌沿弧线从候补 / 原格飞到落点
+  function drawAiFlights(c) {
+    for (var i = 0; i < aiFlights.length; i++) {
+      var f = aiFlights[i], p = Math.min(1, f.t / f.dur), e = A.eio(p);
+      var x = A.lerp(f.x0, f.x1, e), y = A.lerp(f.y0, f.y1, e) - Math.sin(p * Math.PI) * cell * 0.45;
+      A.drawTile(c, f.it, x, y, { lift: 1, scale: 0.92 + 0.12 * Math.sin(p * Math.PI), t: animNow, alpha: p < 0.12 ? p / 0.12 : 1 });
+    }
   }
   function drawHeart(c, x, y, r, full) {
     c.save(); c.translate(x, y);
@@ -847,8 +886,9 @@
   function fmt1(v) { return v >= 100 ? String(Math.round(v)) : String(Math.round(v * 10) / 10); }
   function itemInfo(it) {
     if (it.t === 'u') {
-      var U = Z.UNITS[it.k], dmg = U.dmg * Z.TIER_MULT[it.lv - 1];
-      return '<b>' + U.ch + '</b> · ' + TIERN[it.lv - 1] + (U.dmg ? ' · 伤害 ' + fmt1(dmg) : '') + ' · 射程 ' + U.range + '<br>' + U.desc + (it.lv < 5 ? '<br><i>同字同阶相叠 → ' + TIERN[it.lv] + '</i>' : '');
+      var U = Z.UNITS[it.k], dmg = U.dmg * Z.TIER_ATK[it.lv - 1], frq = 1 / U.cd * Z.TIER_SPD[it.lv - 1];
+      if (U.mode === 'farm') return '<b>' + U.ch + '民</b> · ' + TIERN[it.lv - 1] + ' · 每 ' + fmt1(U.cd / Z.TIER_SPD[it.lv - 1]) + ' 秒产 ' + (it.lv >= 4 ? 2 : 1) + ' 馒头<br>' + U.desc + (it.lv < 5 ? '<br><i>同字同阶相叠 → ' + TIERN[it.lv] + '</i>' : '');
+      return '<b>' + U.ch + '</b> · ' + TIERN[it.lv - 1] + ' · 攻 ' + fmt1(dmg) + ' · 每秒 ' + fmt1(frq) + ' 击 · 射程 ' + U.range + '<br>' + U.desc + (it.lv < 5 ? '<br><i>同字同阶相叠 → ' + TIERN[it.lv] + '（攻、速各 ×1.35）</i>' : '');
     }
     var g = it.gen || it.genR;
     if (g) {
@@ -906,8 +946,8 @@
     var hasName = S.bench.some(function (it) { return it && it.t === 'c'; }) || S.cells.some(function (ce) { return ce.item && ce.item.t === 'c' && !ce.item.gen && !ce.item.genR; });
     if (tutStep >= 2 && hasName) { tutShow('金色名字牌：姓在左、名在右并排放（如 赵 云）→ 一框成将', slots[2].x + BS / 2, slots[0].y); return; }
     if (tutStep === 3) { tutHide(); return; }
-    if (tutStep === 0) tutShow('点「征兵」：一次发五张字牌', summonR.x + summonR.w / 2, summonR.y);
-    else if (tutStep === 1) tutShow('把字牌拖上棋盘空位 · 没用上的牌，下次征兵就作废', slots[2].x + BS / 2, slots[0].y);
+    if (tutStep === 0) tutShow('点「征兵」：补满空着的候补格（最多五名）', summonR.x + summonR.w / 2, summonR.y);
+    else if (tutStep === 1) tutShow('把字牌拖上棋盘空位 · 杀一敌 +1 馒头，阿斗失一心补 10', slots[2].x + BS / 2, slots[0].y);
     else if (tutStep === 2) {
       var pair = false, seen = {};
       S.cells.concat(S.bench.map(function (it) { return { item: it }; })).forEach(function (ce) { var it = ce.item; if (it && it.t === 'u') { var k = it.k + it.lv; if (seen[k]) pair = true; seen[k] = 1; } });
@@ -950,8 +990,8 @@
     var S = G.sides[0];
     setTxt('bunV', String(S.mantou));
     setTxt('costV', String(G.cost(0)));
-    var left = S.bench.filter(function (it) { return it; }).length;
-    setTxt('smHint', left ? ' · 弃' + left + '张' : '');
+    var empt = G.emptySlots(0);
+    setTxt('smHint', empt ? '补充 ' + empt + ' 名' : '候补已满');
     var can = G.canSummon(0);
     if (hud.can !== can) { hud.can = can; $('btnSummon').classList.toggle('off', !can); }
     updateHearts(false);
@@ -1028,6 +1068,7 @@
       if (aduShake[s] > 0) aduShake[s] -= dt;
       if (sideFlash[s] > 0) sideFlash[s] -= dt;
     }
+    for (var fi = aiFlights.length - 1; fi >= 0; fi--) { aiFlights[fi].t += dt; if (aiFlights[fi].t >= aiFlights[fi].dur) aiFlights.splice(fi, 1); }
     if (shakeAmt > 0) shakeAmt *= Math.pow(0.0015, dt);
     if (flood > 0) flood -= dt;
     A.updParts(dt);
@@ -1055,6 +1096,9 @@
   function showScreen(id) {
     ['title', 'map', 'battle', 'result'].forEach(function (s) { $(s).classList.toggle('show', s === id); });
     titleOn = id === 'title';
+    // 配乐：大厅 / 选战场放大厅曲，对战放战斗曲（结算由短曲接回大厅曲）
+    if (id === 'title' || id === 'map') SND.music('lobby');
+    else if (id === 'battle') SND.music('battle');
     if (titleOn) sizeTitle();
   }
   function closeSheets() { ['sheetPause'].forEach(function (id) { $(id).classList.remove('show'); }); }
@@ -1064,9 +1108,9 @@
     var rk = opts.rank != null ? opts.rank : rankState().r;
     G = Z.createGame({ level: level, rank: rk, seed: opts.seed, holdTimer: !!opts.hold || (tutStep < 1 && !opts.noTut) });
     bot = opts.noAI ? null : Z.createBot(G, 1, Z.aiParams(rk));
-    autoBot = opts.auto ? Z.createBot(G, 0, { tick: 0.6, mistake: 0.05, mergeSkip: 0.05, waste: 0.05, smart: 0.8 }) : null;
+    autoBot = opts.auto ? Z.createBot(G, 0, Z.PLAYER_BOT) : null;
     running = true; paused = false; gameOver = false; acc = 0; endT = 0; flood = 0;
-    tanim = [{}, {}]; benchAnim = [null, null, null, null, null]; drag = null; pend = null; hud = {}; lastHearts = [-1, -1];
+    tanim = [{}, {}]; benchAnim = [null, null, null, null, null]; drag = null; pend = null; hud = {}; lastHearts = [-1, -1]; aiFlights = [];
     A.reset();
     clearTimeout(bannerTimer); bannerQ = []; bannerBusy = false; $('banner').className = 'banner';
     hideTip(); tutHide();
@@ -1087,19 +1131,21 @@
     if (!G || !running || gameOver || paused) return;
     paused = true;
     drag = null; pend = null;
-    $('pauseInfo').textContent = G.L.name + ' · 第 ' + Math.max(1, G.wave) + '/' + G.L.waves + ' 波 · 阿斗 ' + G.sides[0].hearts + ' 心 · 对手 ' + G.sides[1].hearts + ' 心';
-    $('btnSound2').textContent = '声音：' + (SND.get() ? '开' : '关');
+    $('pauseInfo').textContent = G.L.name + ' · 第 ' + Math.max(1, G.wave) + '/' + G.waves + ' 波 · 阿斗 ' + G.sides[0].hearts + ' 心 · 对手 ' + G.sides[1].hearts + ' 心';
+    syncSound();
     $('sheetPause').classList.add('show');
+    SND.pauseMusic(true);
   }
-  function resumeGame() { $('sheetPause').classList.remove('show'); paused = false; last = performance.now(); }
+  function resumeGame() { $('sheetPause').classList.remove('show'); paused = false; last = performance.now(); SND.pauseMusic(false); }
   function onEnd(e) {
     gameOver = true;
     endT = 1.8;
     var win = e.type === 'win';
+    SND.sting(win);
     // 段位：胜升星、败降星（测试局不计）
     var st = rankState(), before = { r: st.r, s: st.s };
     if (!G.noRank) {
-      var rr = Z.rankAfter(st, win, G.sides[0].hearts);
+      var rr = Z.rankAfter(st, win);
       st.r = rr.r; st.s = rr.s; st.best = Math.max(st.best, st.r);
       if (win) st.w++; else st.l++;
       store.set('rank', st);
@@ -1109,8 +1155,8 @@
     sfx(win ? 'win' : 'lose');
   }
   function reasonText(r, win) {
-    if (win) return r === 'hearts' ? '对手的阿斗先失三心' : r === 'tie' ? '与对手同心坚守到底' : '坚守到底，心数更多';
-    return r === 'hearts' ? '阿斗失了三心' : '对手坚守得更好';
+    if (win) return r === 'hearts' ? '对手的阿斗先失三心' : r === 'better' || r === 'tie' ? '心数相同，你御敌于更远处' : '坚守到底，心数更多';
+    return r === 'hearts' ? '阿斗失了三心' : r === 'worse' ? '心数相同，对手御敌于更远处' : '对手坚守得更好';
   }
   function rankStarsHTML(r, s, cls) {
     var h = '';
@@ -1120,6 +1166,7 @@
   function showResult() {
     var win = G.phase === 'won', R = G.result || {};
     showScreen('result');
+    setTimeout(function () { if (screenOn('result')) SND.music('lobby'); }, 2600);
     drawResultBg(win);
     $('rTitle').textContent = win ? '大捷' : '兵败';
     $('rTitle').className = 'r-title ' + (win ? 'win' : 'lose');
@@ -1129,7 +1176,7 @@
       var cls = [];
       if (rc.delta > 0) for (var i = 0; i < Z.RANK_STARS; i++) cls.push(i >= rc.after.s - rc.delta && i < rc.after.s ? 'new' : '');
       html = '<div class="rk-name">' + Z.RANKS[rc.after.r] + '</div><div class="rk-stars">' + rankStarsHTML(rc.after.r, rc.after.s, cls) + '</div>' +
-        '<div class="rk-msg">' + (rc.promoted ? '晋升 ' + Z.RANKS[rc.after.r] + '！' : rc.demoted ? '降为 ' + Z.RANKS[rc.after.r] : rc.delta > 0 ? (rc.delta > 1 ? '满心完胜 · 星 +2' : '星 +1') : rc.delta < 0 && rc.before.s > 0 ? '星 −1' : '') + '</div>';
+        '<div class="rk-msg">' + (rc.promoted ? '晋升 ' + Z.RANKS[rc.after.r] + '！' : rc.demoted ? '降为 ' + Z.RANKS[rc.after.r] : rc.delta > 0 ? '星 +1' : rc.delta < 0 ? '星 −1' : '') + '</div>';
     }
     $('rStars').innerHTML = html;
     var me = G.sides[0], foe = G.sides[1];
@@ -1228,20 +1275,23 @@
   }
   function openFields() {
     showScreen('map');
-    var st = rankState();
+    var st = rankState(), open = Z.fieldsFor(st.r);
+    if (pickField >= 0 && open.indexOf(pickField) < 0) pickField = -1;
     $('mapRank').innerHTML = '<b>' + Z.RANKS[st.r] + '</b>' + rankStarsHTML(st.r, st.s);
     var list = $('mapList'), html = '';
     Z.LEVELS.forEach(function (L, i) {
-      html += '<button class="lv' + (pickField === i ? ' cur' : '') + '" data-lv="' + i + '">' +
+      var locked = open.indexOf(i) < 0;
+      html += '<button class="lv' + (pickField === i ? ' cur' : '') + (locked ? ' locked' : '') + '" data-lv="' + i + '"' + (locked ? ' disabled' : '') + '>' +
         '<canvas class="lv-th" data-th="' + i + '"></canvas>' +
-        '<span class="lv-main"><span class="lv-name">' + L.name + '</span><span class="lv-foe">对手 ' + L.rivalTitle + L.rival + ' · 敌 ' + Z.FACTIONS[L.faction].name + '</span><span class="lv-era">' + L.twist + ' · 开局 ' + L.tiles + ' 块地</span>' +
+        '<span class="lv-main"><span class="lv-name">' + L.name + (locked ? '<em class="lv-lock">' + Z.RANKS[L.unlock || 0] + ' 解锁</em>' : '') + '</span><span class="lv-foe">对手 ' + L.rivalTitle + L.rival + ' · 敌 ' + Z.FACTIONS[L.faction].name + '</span><span class="lv-era">' + L.twist + ' · 开局 ' + L.tiles + ' 块地</span>' +
         '<span class="lv-gens">' + L.gens.map(function (k) { return Z.GENERALS[k].name; }).join(' ') + '</span></span></button>';
     });
-    html += '<button class="lv rand' + (pickField === -1 ? ' cur' : '') + '" data-lv="-1"><span class="lv-dice">随</span><span class="lv-main"><span class="lv-name">随机战场</span><span class="lv-foe">六处古战场任选其一</span></span></button>';
+    html += '<button class="lv rand' + (pickField === -1 ? ' cur' : '') + '" data-lv="-1"><span class="lv-dice">随</span><span class="lv-main"><span class="lv-name">随机战场</span><span class="lv-foe">已解锁的 ' + open.length + ' 处战场任选其一</span></span></button>';
     list.innerHTML = html;
     list.querySelectorAll('canvas[data-th]').forEach(function (cvs) { thumb(cvs, +cvs.getAttribute('data-th')); });
     list.querySelectorAll('button.lv').forEach(function (b) {
       b.addEventListener('click', function () {
+        if (b.disabled) return;
         SND.unlock(); sfx('click');
         pickField = +b.getAttribute('data-lv'); store.set('field', pickField);
         list.querySelectorAll('button.lv').forEach(function (o) { o.classList.toggle('cur', o === b); });
@@ -1251,10 +1301,12 @@
     syncFight();
   }
   function syncFight() {
-    $('fightInfo').textContent = (pickField >= 0 ? Z.LEVELS[pickField].name : '随机战场') + ' · ' + Z.RANKS[rankState().r];
+    var r = rankState().r;
+    $('fightInfo').textContent = (pickField >= 0 ? Z.LEVELS[pickField].name : '随机战场') + ' · ' + Z.RANKS[r] + ' · ' + Z.wavesFor(r) + ' 波';
   }
   function startPicked() {
-    var li = pickField >= 0 ? pickField : (Math.random() * Z.LEVELS.length) | 0;
+    var open = Z.fieldsFor(rankState().r);
+    var li = pickField >= 0 && open.indexOf(pickField) >= 0 ? pickField : open[(Math.random() * open.length) | 0];
     newGame(li);
   }
   function thumb(c, li) {
@@ -1288,10 +1340,19 @@
   bind('btnStart', function () { sfx('click'); openFields(); });
   bind('btnFight', function () { sfx('click'); startPicked(); });
   bind('btnTitleSound', function () { SND.set(!SND.get()); store.set('sound', SND.get()); syncSound(); sfx('click'); });
+  bind('btnTitleMusic', function () { SND.setMusic(!SND.getMusic()); store.set('music', SND.getMusic()); syncSound(); sfx('click'); });
+  bind('btnMusic2', function () { SND.setMusic(!SND.getMusic()); store.set('music', SND.getMusic()); syncSound(); sfx('click'); });
+  ['volM', 'volS'].forEach(function (id) {
+    $(id).addEventListener('input', function () {
+      var m = +$('volM').value / 100, s2 = +$('volS').value / 100;
+      SND.setVol(m, s2); store.set('vol', { m: m, s: s2 });
+    });
+    $(id).addEventListener('change', function () { sfx('click'); });
+  });
   bind('btnMapBack', function () { sfx('click'); showScreen('title'); titleRank(); });
   bind('btnSummon', function () {
     if (!G || !running || paused || gameOver) return;
-    if (!G.summon(0)) { sfx('error'); var r = summonR; showTip('馒头不够：斩敌可得馒头', r.x + r.w / 2, r.y); }
+    if (!G.summon(0)) { sfx('error'); var r = summonR; showTip(G.emptySlots(0) ? '馒头不够：斩一敌 +1，阿斗失一心补 10' : '候补已满：先部署或合成', r.x + r.w / 2, r.y); }
     handleEvents(G.drain());
   });
   bind('btnGo', function () { if (G && running && !paused) { sfx('click'); G.callNext(); handleEvents(G.drain()); } });
@@ -1300,13 +1361,21 @@
   bind('btnResume', function () { sfx('click'); resumeGame(); });
   bind('btnRestart', function () { sfx('click'); if (G) newGame(G.level); });
   bind('btnToMap', function () { sfx('click'); closeSheets(); running = false; openFields(); });
-  bind('btnSound2', function () { SND.set(!SND.get()); store.set('sound', SND.get()); syncSound(); $('btnSound2').textContent = '声音：' + (SND.get() ? '开' : '关'); sfx('click'); });
+  bind('btnSound2', function () { SND.set(!SND.get()); store.set('sound', SND.get()); syncSound(); sfx('click'); });
   bind('btnNextLv', function () { sfx('click'); openFields(); });
   bind('btnRetry', function () { sfx('click'); if (G) newGame(G.level); });
   bind('btnResMap', function () { sfx('click'); showScreen('title'); titleRank(); });
   $('sheetPause').addEventListener('click', function (e) { if (e.target === $('sheetPause')) resumeGame(); });
-  function syncSound() { $('btnTitleSound').textContent = '声音：' + (SND.get() ? '开' : '关'); }
-  document.addEventListener('visibilitychange', function () { if (document.hidden && G && running && !paused && !gameOver) pauseGame(); });
+  function syncSound() {
+    var m = '音乐：' + (SND.getMusic() ? '开' : '关'), s2 = '音效：' + (SND.get() ? '开' : '关'), v = SND.getVol();
+    $('btnTitleSound').textContent = s2; $('btnSound2').textContent = s2;
+    $('btnTitleMusic').textContent = m; $('btnMusic2').textContent = m;
+    $('volM').value = Math.round(v.m * 100); $('volS').value = Math.round(v.s * 100);
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && G && running && !paused && !gameOver) pauseGame();
+    SND.setMute(document.hidden);
+  });
   document.addEventListener('keydown', function (e) {
     if (!G || !running || !screenOn('battle')) return;
     if (e.key === 'Escape' || e.key === 'p') { if (paused) resumeGame(); else pauseGame(); }
@@ -1328,7 +1397,7 @@
         foeBoard: F.cells.filter(function (c) { return c.item; }).map(function (c) { return { c: c.c, r: c.r, it: bare(c.item) }; }),
         unlocked: S.cells.filter(function (c) { return !c.path && !c.block && !c.lock; }).length,
         paused: paused, running: running, gameOver: gameOver, result: G.result, stars: G.stars, stats: S.stats, foeStats: F.stats, cell: cell, speed: speed,
-        fx: A.fx().length, parts: A.parts().length, time: G.time, rank: G.rank, field: G.L.name,
+        fx: A.fx().length, parts: A.parts().length, time: G.time, rank: G.rank, field: G.L.name, aiFlights: aiFlights.length, sound: SND.state(),
         pairs: S.pairs.map(function (g) { return { k: g.k, c: g.c, r: g.r, lv: g.lv }; }), foePairs: F.pairs.map(function (g) { return { k: g.k, lv: g.lv }; })
       };
     },
@@ -1360,13 +1429,13 @@
     noRank: function () { G.noRank = true; },
     rank: function () { return rankState(); }, setRank: function (r, s2) { var st = rankState(); st.r = r; st.s = s2 || 0; store.set('rank', st); titleRank(); },
     openFields: openFields, pickField: function (i) { pickField = i; },
-    setAuto: function (on) { autoBot = on ? Z.createBot(G, 0, { tick: 0.6, mistake: 0.05, mergeSkip: 0.05, waste: 0.05, smart: 0.8 }) : null; },
+    setAuto: function (on) { autoBot = on ? Z.createBot(G, 0, Z.PLAYER_BOT) : null; },
     spawn: function (side, type, d, off) { return G.spawn(side, type, d, off); },
     events: handleEvents,
     pause: pauseGame, resume: resumeGame, isPaused: function () { return paused; },
     showTitle: function () { showScreen('title'); titleRank(); },
     setSpeed: function (s) { speed = s; },
-    sounds: SND.names, renderSound: SND.render,
+    sounds: SND.names, renderSound: SND.render, renderDemo: SND.renderDemo, sound: SND,
     fontsOk: function () { return document.fonts && document.fonts.check ? { brush: document.fonts.check('20px "ZY Brush"', '赵'), serif: document.fonts.check('600 20px "ZY Serif"', '9') } : null; }
   };
 
