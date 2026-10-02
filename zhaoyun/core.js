@@ -1,66 +1,78 @@
-/* 赵云与阿斗 v4 · 核心规则（不依赖 DOM，浏览器与 Node 均可运行）
+/* 赵云与阿斗 v5 · 核心规则（不依赖 DOM，浏览器与 Node 均可运行）
  * 双方对垒：下半场是玩家，上半场是 AI 对手；同一批敌军同时进攻两边，各守各的阿斗（3 颗心）。
  * 武将占两格：名字字牌按阅读顺序左右相邻即成将（如 赵 在左、云 在右），等级取两字中较低者。
- * 经典战场任选；段位（士卒 → 大都督）决定敌军强度与对手水平。 */
+ * 数值对齐原作：刀 射程 1 攻 3、骑 1.5/2 范围、枪 2/2 穿刺、弓 3/2 单体；每升一阶攻击与攻速各 ×1.346（五阶 ×3.28）；
+ * 开局 20 馒头，征兵 10 起每次 +2、补满空候补格；杀敌 +1，阿斗失一心补 10。
+ * 段位：军士 → 皇帝 共 11 段，每段若干小级，每级 5 星；段位决定可选战场、波数与敌军强度，AI 对手随段位变强。 */
 (function (root) {
   'use strict';
 
   var COLS = 8, ROWS = 5, HEARTS = 3, BENCH = 5;
-  var TIER_MULT = [1, 2.2, 4.8, 10, 22];
-  var GEN_TIER = [1, 1.9, 3.6, 6.8, 13];
+  // 每升一阶：攻击 ×1.346、攻速 ×1.346（五阶各为 ×3.28）
+  var TIER_ATK = [1, 1.346, 1.811, 2.438, 3.28];
+  var TIER_SPD = [1, 1.346, 1.811, 2.438, 3.28];
+  var TIER_MULT = TIER_ATK.map(function (v, i) { return v * TIER_SPD[i]; }); // 理论输出倍率（攻 × 速）
+  var GEN_TIER = [1, 1.811, 3.28, 5.94, 10.76];
+  var RANGE_PAD = 0.18; // 敌人身形：射程判定多给一点
 
   // ---------- 兵种：字即是兵 ----------
   // mode: melee 单体 / thrust 直线穿刺 / arrow 箭 / fire 火球 / gallop 冲阵溅射 / pulse 涟漪 / bolt 弩矢穿透 / lob 抛石 / drum 战鼓
   // hit: 动画中兵器命中（或出手）的时刻（秒），核心按此延迟结算，使画面与伤害同步
+  // 原作四兵：理论输出 攻 × 频率 × 射程 × 目标数，骑 / 枪 / 弓 五阶相同（80.4），刀为一半（40.2）但单体最痛
+  // cd：一阶出手间隔（频率 1.245 次/秒）；hit：动画中兵器命中的时刻（秒）
   var UNITS = {
-    dao: { ch: '刀', name: '刀', mode: 'melee', range: 1.35, dmg: 17, cd: 0.75, hit: 0.17, dtype: 'phys', desc: '「丿」脱鞘飞斩，单体伤害最高' },
-    qiang: { ch: '枪', name: '枪', mode: 'thrust', range: 2.1, dmg: 12, cd: 0.95, hit: 0.14, len: 2.4, dtype: 'phys', desc: '「木」化长枪，一刺穿透一线' },
-    gong: { ch: '弓', name: '弓', mode: 'arrow', range: 3.1, dmg: 8, cd: 0.6, hit: 0.14, dtype: 'arrow', desc: '「弓」字拉满，「一」作箭连射' },
-    qi: { ch: '骑', name: '骑', mode: 'gallop', range: 1.75, dmg: 11, cd: 1.05, hit: 0.26, splash: 0.9, dtype: 'phys', desc: '「马」奔出践踏，范围伤害' },
-    dun: { ch: '盾', name: '盾', mode: 'pulse', range: 1.45, dmg: 5, cd: 1.2, hit: 0.12, slow: 0.3, dtype: 'phys', desc: '「盾」震出涟漪：减速并小伤周围敌人' },
-    huo: { ch: '火', name: '火', mode: 'fire', range: 3.0, dmg: 8, cd: 0.7, hit: 0.16, burn: 0.6, dtype: 'fire', desc: '「火」苗化作火球，点燃敌军' },
+    dao: { ch: '刀', name: '刀', mode: 'melee', range: 1, dmg: 3, cd: 0.8, hit: 0.17, targets: 1, dtype: 'phys', desc: '近战单体 · 射程 1 · 攻 3：「丿」飞斩，贴路摆最狠' },
+    qiang: { ch: '枪', name: '枪', mode: 'thrust', range: 2, dmg: 2, cd: 0.8, hit: 0.14, len: 2, targets: 1.5, dtype: 'phys', desc: '中程穿刺 · 射程 2 · 攻 2：「木」化长枪，一刺穿透一线' },
+    gong: { ch: '弓', name: '弓', mode: 'arrow', range: 3, dmg: 2, cd: 0.8, hit: 0.14, targets: 1, dtype: 'arrow', desc: '远程单体 · 射程 3 · 攻 2：「弓」字拉满放箭' },
+    qi: { ch: '骑', name: '骑', mode: 'gallop', range: 1.5, dmg: 2, cd: 0.8, hit: 0.26, splash: 0.75, targets: 2, dtype: 'phys', desc: '近战范围 · 射程 1.5 · 攻 2：「马」奔出践踏一片' },
+    nong: { ch: '农', name: '农民', mode: 'farm', range: 0, dmg: 0, cd: 6, yield: 1, desc: '不打仗，种地：开战后每 6 秒产 1 馒头（升阶更快更多）' },
+    // 以下为旧版兵种（原作没有，战场不再发放，仅保留定义以兼容）
+    dun: { ch: '盾', name: '盾', mode: 'pulse', range: 1.45, dmg: 1, cd: 1.2, hit: 0.12, slow: 0.3, dtype: 'phys', desc: '「盾」震出涟漪：减速并小伤周围敌人' },
+    huo: { ch: '火', name: '火', mode: 'fire', range: 3.0, dmg: 1.5, cd: 0.7, hit: 0.16, burn: 0.6, dtype: 'fire', desc: '「火」苗化作火球，点燃敌军' },
     gu: { ch: '鼓', name: '鼓', mode: 'drum', range: 1.5, dmg: 0, cd: 1.6, haste: 0.2, desc: '「支」击「壴」：身边友军攻速 +20%（每级 +5%）' },
-    nu: { ch: '弩', name: '弩', mode: 'bolt', range: 3.0, dmg: 21, cd: 1.5, hit: 0.2, len: 3.6, shred: 0.15, dtype: 'arrow', desc: '「弓」部张弩，重矢贯穿直线并破甲' },
-    tou: { ch: '石', name: '石', mode: 'lob', range: 4.2, dmg: 46, cd: 2.6, hit: 0.22, splash: 1.1, dtype: 'siege', desc: '「口」化巨石抛出，落地「轰」然一片' }
+    nu: { ch: '弩', name: '弩', mode: 'bolt', range: 3.0, dmg: 3.5, cd: 1.5, hit: 0.2, len: 3.6, shred: 0.15, dtype: 'arrow', desc: '「弓」部张弩，重矢贯穿直线并破甲' },
+    tou: { ch: '石', name: '石', mode: 'lob', range: 4.2, dmg: 8, cd: 2.6, hit: 0.22, splash: 1.1, dtype: 'siege', desc: '「口」化巨石抛出，落地「轰」然一片' }
   };
-  var KINDS = ['dao', 'qiang', 'gong', 'qi', 'dun', 'huo', 'gu', 'nu', 'tou'];
+  var KINDS = ['dao', 'qiang', 'gong', 'qi', 'nong', 'dun', 'huo', 'gu', 'nu', 'tou'];
 
   // ---------- 武将：两字成名，占两格 ----------
-  // 原作十二将 + 孔明 庞统 魏延 姜维；fam: 兵器系
+  // 原作十二将（枪 / 刀 / 剑 / 弓 四系）+ 孔明 庞统 魏延 姜维（扩展）；q: 金将 gold / 紫将 purple
   var GENERALS = {
-    zhaoyun: { name: '赵云', chars: ['赵', '云'], fam: '枪', skill: '七进七出', mode: 'thrust', dmg: 42, cd: 0.4, range: 2.2, hit: 0.12, len: 2.3, skillCd: 8, aura: ['qiang', 'qi'],
-      desc: '「云」化游龙，七进七出，往返穿刺七敌' },
-    liubei: { name: '刘备', chars: ['刘', '备'], fam: '剑', skill: '圣剑', mode: 'melee', dmg: 34, cd: 0.8, range: 1.8, hit: 0.17, skillCd: 11, aura: 'all',
+    zhaoyun: { name: '赵云', chars: ['赵', '云'], q: 'gold', fam: '枪', skill: '七进七出', mode: 'thrust', dmg: 7, cd: 0.4, range: 2.2, hit: 0.12, len: 2.3, skillCd: 8, aura: ['qiang', 'qi'],
+      desc: '「云」化游龙，七进七出，往返穿刺七敌；身边枪、骑 +35%' },
+    liubei: { name: '刘备', chars: ['刘', '备'], q: 'gold', fam: '剑', skill: '圣剑', mode: 'melee', dmg: 5.6, cd: 0.8, range: 1.8, hit: 0.17, skillCd: 11, aura: 'all',
       desc: '「备」聚成一柄圣剑从天而降，重创敌群并击倒；全军伤害 +10%' },
-    guanyu: { name: '关羽', chars: ['关', '羽'], fam: '刀', skill: '跳斩', mode: 'gallop', dmg: 80, cd: 1.1, range: 1.8, hit: 0.2, splash: 1.0, skillCd: 9, aura: ['dao'],
+    guanyu: { name: '关羽', chars: ['关', '羽'], q: 'gold', fam: '刀', skill: '跳斩', mode: 'gallop', dmg: 13, cd: 1.1, range: 1.8, hit: 0.2, splash: 1.0, skillCd: 9, aura: ['dao'],
       desc: '青龙偃月刀连环跳斩三次，溅射半伤并击退；身边刀兵 +35%' },
-    zhangfei: { name: '张飞', chars: ['张', '飞'], fam: '刀', skill: '大喝', mode: 'thrust', dmg: 58, cd: 1.0, range: 1.8, hit: 0.14, len: 2.0, skillCd: 10, aura: ['qiang', 'dun'],
-      desc: '「飞」字展翅一声大喝，震晕周围敌人 2 秒；身边枪、盾 +35%' },
-    machao: { name: '马超', chars: ['马', '超'], fam: '枪', skill: '西凉铁骑', mode: 'gallop', dmg: 50, cd: 0.8, range: 1.8, hit: 0.24, splash: 0.8, skillCd: 10, aura: ['qi'],
+    zhangfei: { name: '张飞', chars: ['张', '飞'], q: 'gold', fam: '刀', skill: '大喝', mode: 'thrust', dmg: 9.6, cd: 1.0, range: 1.8, hit: 0.14, len: 2.0, skillCd: 10, aura: ['dao', 'qi'],
+      desc: '「飞」字展翅一声大喝，震晕周围敌人 2 秒；身边刀、骑 +35%' },
+    machao: { name: '马超', chars: ['马', '超'], q: 'gold', fam: '枪', skill: '西凉铁骑', mode: 'gallop', dmg: 6.5, cd: 0.8, range: 1.8, hit: 0.24, splash: 0.8, skillCd: 10, aura: ['qi'],
       desc: '万「马」奔腾，铁骑贯穿一整条战线；身边骑兵 +35%' },
-    huangzhong: { name: '黄忠', chars: ['黄', '忠'], fam: '弓', skill: '火箭烈', mode: 'arrow', dmg: 100, cd: 1.3, range: 5, hit: 0.15, dtype: 'arrow', skillCd: 12, aura: ['gong', 'huo'],
-      desc: '漫天火箭覆盖全场，灼烧并击退所有敌人；身边弓、火 +35%' },
-    guanping: { name: '关平', chars: ['关', '平'], fam: '刀', skill: '震地', mode: 'melee', dmg: 48, cd: 0.9, range: 1.5, hit: 0.17, skillCd: 9, aura: ['dao'],
+    huangzhong: { name: '黄忠', chars: ['黄', '忠'], q: 'gold', fam: '弓', skill: '火箭烈', mode: 'arrow', dmg: 16.5, cd: 1.3, range: 5, hit: 0.15, dtype: 'arrow', skillCd: 12, aura: ['gong'],
+      desc: '漫天火箭覆盖全场，灼烧并击退所有敌人；身边弓兵 +35%' },
+    guanping: { name: '关平', chars: ['关', '平'], q: 'purple', fam: '刀', skill: '震地', mode: 'melee', dmg: 7.9, cd: 0.9, range: 1.5, hit: 0.17, skillCd: 9, aura: ['dao'],
       desc: '「平」字砸地，震晕身边敌人；身边刀兵 +35%' },
-    guanxing: { name: '关兴', chars: ['关', '兴'], fam: '刀', skill: '青龙斩', mode: 'melee', dmg: 60, cd: 0.9, range: 1.6, hit: 0.17, skillCd: 8, aura: ['dao'],
+    guanxing: { name: '关兴', chars: ['关', '兴'], q: 'purple', fam: '刀', skill: '青龙斩', mode: 'melee', dmg: 9.9, cd: 0.9, range: 1.6, hit: 0.17, skillCd: 8, aura: ['dao'],
       desc: '「兴」字聚成巨刃，对单个强敌一刀重斩；身边刀兵 +35%' },
-    zhangbao: { name: '张苞', chars: ['张', '苞'], fam: '枪', skill: '蛇矛突', mode: 'thrust', dmg: 55, cd: 0.8, range: 2.1, hit: 0.14, len: 2.2, skillCd: 8, aura: ['qiang'],
+    zhangbao: { name: '张苞', chars: ['张', '苞'], q: 'purple', fam: '枪', skill: '蛇矛突', mode: 'thrust', dmg: 9.1, cd: 0.8, range: 2.1, hit: 0.14, len: 2.2, skillCd: 8, aura: ['qiang'],
       desc: '「苞」化丈八蛇矛，贯穿血量最高之敌；身边枪兵 +35%' },
-    zhangyi: { name: '张翼', chars: ['张', '翼'], fam: '枪', skill: '拒马阵', mode: 'thrust', dmg: 44, cd: 0.9, range: 2.1, hit: 0.14, len: 2.0, skillCd: 10, aura: ['dun', 'qiang'],
-      desc: '「翼」展开拒马，将一片敌人钉在原地；身边盾、枪 +35%' },
-    huanggai: { name: '黄盖', chars: ['黄', '盖'], fam: '火', skill: '火船', mode: 'fire', dmg: 42, cd: 1.0, range: 2.8, hit: 0.15, dtype: 'fire', skillCd: 11, aura: ['huo', 'tou'],
-      desc: '「盖」化火船沿路冲撞，点燃并迟滞敌军；身边火、石 +35%' },
-    huangzu: { name: '黄祖', chars: ['黄', '祖'], fam: '弓', skill: '连珠箭', mode: 'arrow', dmg: 40, cd: 0.9, range: 3.4, hit: 0.15, dtype: 'arrow', skillCd: 8, aura: ['gong', 'nu'],
-      desc: '「祖」之笔画化作五支连珠箭，射向五敌并减速；身边弓、弩 +35%' },
-    kongming: { name: '孔明', chars: ['孔', '明'], fam: '扇', skill: '借东风', mode: 'fire', dmg: 48, cd: 1.1, range: 3, hit: 0.15, dtype: 'fire', skillCd: 12, aura: ['nu'],
-      desc: '「明」分日月：「日」降天火，「月」借东风，烧尽周围敌军；身边弩兵 +35%' },
-    pangtong: { name: '庞统', chars: ['庞', '统'], fam: '书', skill: '连环计', mode: 'arrow', dmg: 42, cd: 1.0, range: 2.6, hit: 0.15, skillCd: 12, aura: ['tou'],
-      desc: '「纟」丝化铁索连环六敌，伤害互相传导；身边投石 +35%' },
-    weiyan: { name: '魏延', chars: ['魏', '延'], fam: '刀', skill: '破阵', mode: 'gallop', dmg: 66, cd: 0.9, range: 1.6, hit: 0.2, splash: 0.8, skillCd: 10, aura: ['dun', 'gu'],
-      desc: '「延」笔画炸裂破阵：周围敌人受伤 +40%；身边盾、鼓 +35%' },
-    jiangwei: { name: '姜维', chars: ['姜', '维'], fam: '枪', skill: '伏兵四起', mode: 'thrust', dmg: 56, cd: 0.8, range: 2.1, hit: 0.14, len: 2.2, skillCd: 9, aura: ['qiang'],
+    zhangyi: { name: '张翼', chars: ['张', '翼'], q: 'purple', fam: '枪', skill: '拒马阵', mode: 'thrust', dmg: 7.3, cd: 0.9, range: 2.1, hit: 0.14, len: 2.0, skillCd: 10, aura: ['qiang'],
+      desc: '「翼」展开拒马，将一片敌人钉在原地；身边枪兵 +35%' },
+    huanggai: { name: '黄盖', chars: ['黄', '盖'], q: 'purple', fam: '剑', skill: '火船', mode: 'fire', dmg: 6.9, cd: 1.0, range: 2.8, hit: 0.15, dtype: 'fire', skillCd: 11, aura: ['dao', 'qi'],
+      desc: '「盖」化火船沿路冲撞，点燃并迟滞敌军；身边刀、骑 +35%' },
+    huangzu: { name: '黄祖', chars: ['黄', '祖'], q: 'purple', fam: '弓', skill: '连珠箭', mode: 'arrow', dmg: 6.6, cd: 0.9, range: 3.4, hit: 0.15, dtype: 'arrow', skillCd: 8, aura: ['gong'],
+      desc: '「祖」之笔画化作五支连珠箭，射向五敌并减速；身边弓兵 +35%' },
+    kongming: { name: '孔明', chars: ['孔', '明'], q: 'purple', fam: '扇', skill: '借东风', mode: 'fire', dmg: 7.9, cd: 1.1, range: 3, hit: 0.15, dtype: 'fire', skillCd: 12, aura: ['gong'],
+      desc: '「明」分日月：「日」降天火，「月」借东风，烧尽周围敌军；身边弓兵 +35%' },
+    pangtong: { name: '庞统', chars: ['庞', '统'], q: 'purple', fam: '书', skill: '连环计', mode: 'arrow', dmg: 6.9, cd: 1.0, range: 2.6, hit: 0.15, skillCd: 12, aura: ['qiang'],
+      desc: '「纟」丝化铁索连环六敌，伤害互相传导；身边枪兵 +35%' },
+    weiyan: { name: '魏延', chars: ['魏', '延'], q: 'purple', fam: '刀', skill: '破阵', mode: 'gallop', dmg: 10.9, cd: 0.9, range: 1.6, hit: 0.2, splash: 0.8, skillCd: 10, aura: ['dao'],
+      desc: '「延」笔画炸裂破阵：周围敌人受伤 +40%；身边刀兵 +35%' },
+    jiangwei: { name: '姜维', chars: ['姜', '维'], q: 'purple', fam: '枪', skill: '伏兵四起', mode: 'thrust', dmg: 9.2, cd: 0.8, range: 2.1, hit: 0.14, len: 2.2, skillCd: 9, aura: ['qiang'],
       desc: '笔画如伏兵破土而出，重创敌群并定身；身边枪兵 +35%' }
   };
+  var QUALITY = { gold: { name: '金将', mult: 1, weight: 1 }, purple: { name: '紫将', mult: 0.8, weight: 1.6 } };
+  var CORE_GENS = ['zhaoyun', 'guanyu', 'zhangfei', 'liubei', 'huangzhong', 'machao', 'guanping', 'guanxing', 'zhangbao', 'zhangyi', 'huangzu', 'huanggai'];
   var GEN_KEYS = ['zhaoyun', 'liubei', 'guanyu', 'zhangfei', 'machao', 'huangzhong', 'guanping', 'guanxing', 'zhangbao', 'zhangyi', 'huanggai', 'huangzu', 'kongming', 'pangtong', 'weiyan', 'jiangwei'];
   var NAME_RECIPES = GEN_KEYS.map(function (k) { return [GENERALS[k].chars[0], GENERALS[k].chars[1], k]; });
   var SYNERGIES = {
@@ -73,15 +85,16 @@
   var SYN_KEYS = ['taoyuan', 'wuhu', 'erxiao', 'wolong', 'jiangdong'];
 
   // ---------- 敌军 ----------
+  // 血量为一波的基准值（再乘波次、战场、段位倍率）；杀一敌 +1 馒头
   var ENEMIES = {
-    zu: { ch: '卒', name: '步卒', hp: 40, spd: 1.0, reward: 2, r: 0.3 },
-    qi: { ch: '骑', name: '骑兵', hp: 30, spd: 1.75, reward: 2, r: 0.3 },
-    dun: { ch: '盾', name: '盾卒', hp: 90, spd: 0.75, reward: 3, r: 0.32, res: { arrow: 0.4 } },
-    nu: { ch: '弩', name: '弩手', hp: 50, spd: 1.1, reward: 2, r: 0.3 },
-    jia: { ch: '甲', name: '重甲', hp: 130, spd: 0.7, reward: 4, r: 0.34, res: { phys: 0.3, arrow: 0.2 } },
-    teng: { ch: '藤', name: '藤甲兵', hp: 80, spd: 0.9, reward: 3, r: 0.32, res: { phys: 0.5, arrow: 0.5, siege: 0.3, fire: -1.5 } },
-    xiang: { ch: '象', name: '象兵', hp: 320, spd: 0.5, reward: 8, r: 0.4, leak: 2, stunRes: 0.7 },
-    chuan: { ch: '船', name: '战船', hp: 70, spd: 0.9, reward: 3, r: 0.34, res: { fire: -0.5 } }
+    zu: { ch: '卒', name: '步卒', hp: 13, spd: 1.0, reward: 1, r: 0.3 },
+    qi: { ch: '骑', name: '骑兵', hp: 10, spd: 1.75, reward: 1, r: 0.3 },
+    dun: { ch: '盾', name: '盾卒', hp: 29, spd: 0.75, reward: 1, r: 0.32, res: { arrow: 0.4 } },
+    nu: { ch: '弩', name: '弩手', hp: 15, spd: 1.1, reward: 1, r: 0.3 },
+    jia: { ch: '甲', name: '重甲', hp: 42, spd: 0.7, reward: 1, r: 0.34, res: { phys: 0.3, arrow: 0.2 } },
+    teng: { ch: '藤', name: '藤甲兵', hp: 26, spd: 0.9, reward: 1, r: 0.32, res: { phys: 0.5, arrow: 0.5, siege: 0.3, fire: -1.5 } },
+    xiang: { ch: '象', name: '象兵', hp: 100, spd: 0.5, reward: 3, r: 0.4, leak: 2, stunRes: 0.7 },
+    chuan: { ch: '船', name: '战船', hp: 22, spd: 0.9, reward: 1, r: 0.34, res: { fire: -0.5 } }
   };
   var FACTIONS = {
     huangjin: { name: '黄巾军', badge: '贼', zu: '贼', color: '#b08428' },
@@ -96,84 +109,98 @@
   // path: [起始列, 走向]，第 0 行紧贴中间山脊（敌军从山脊杀出），终点格坐着「斗」
   // tiles: 开局可布阵的格数；units / gens: 本战场的兵种与武将；rival: 对手主将（上半场）
   var LEVELS = [
-    { key: 'julu', name: '巨鹿之战', short: '巨鹿', era: '中平元年 · 巨鹿', blurb: '张角起于巨鹿，黄巾蔽野。刘关张初出桃园，与骑都尉曹操各守一营。', faction: 'huangjin', scene: 'plain',
-      rival: '曹操', rivalTitle: '骑都尉', path: [0, 'D1 R7 D2 L7 D1'], tiles: 8, waves: 12, hp: 1.0, start: 45,
+    { key: 'julu', unlock: 0, name: '巨鹿之战', short: '巨鹿', era: '中平元年 · 巨鹿', blurb: '张角起于巨鹿，黄巾蔽野。刘关张初出桃园，与骑都尉曹操各守一营。', faction: 'huangjin', scene: 'plain',
+      rival: '曹操', rivalTitle: '骑都尉', path: [0, 'D1 R7 D2 L7 D1'], tiles: 8, hp: 1.0,
       mix: { zu: [1, 1], qi: [0, 0.35, 4], dun: [0, 0.2, 7] },
       lieut: { name: '张宝', ch: '宝', hpMul: 9, spd: 0.6 },
       boss: { name: '张角', ch: '角', hpMul: 15, spd: 0.5, summon: { every: 6, n: 2 } },
       twist: '张角作法，不断召唤黄巾援兵',
-      units: ['dao', 'qiang', 'gong', 'qi', 'dun'], gens: ['liubei', 'guanyu', 'zhangfei', 'zhaoyun', 'guanping', 'zhangbao'] },
-    { key: 'hulao', name: '虎牢关', short: '虎牢', era: '初平元年 · 汜水', blurb: '十八路诸侯讨董。吕布独守虎牢，江东猛虎孙坚与你各守一营。', faction: 'dong', scene: 'pass',
-      rival: '孙坚', rivalTitle: '长沙太守', path: [0, 'R6 D2 L5 D2 R6'], blocked: [[7, 1], [0, 3]], tiles: 7, waves: 12, hp: 1.0, start: 45,
+      units: ['dao', 'qiang', 'gong', 'qi', 'nong'], gens: ['liubei', 'guanyu', 'zhangfei', 'zhaoyun', 'guanping', 'zhangbao'] },
+    { key: 'hulao', unlock: 3, name: '虎牢关', short: '虎牢', era: '初平元年 · 汜水', blurb: '十八路诸侯讨董。吕布独守虎牢，江东猛虎孙坚与你各守一营。', faction: 'dong', scene: 'pass',
+      rival: '孙坚', rivalTitle: '长沙太守', path: [0, 'R6 D2 L5 D2 R6'], blocked: [[7, 1], [0, 3]], tiles: 7, hp: 1.0,
       mix: { zu: [1, 0.6], qi: [0.15, 0.4], dun: [0, 0.3, 3] },
       lieut: { name: '华雄', ch: '华', hpMul: 9, spd: 0.6 },
       boss: { name: '吕布', ch: '布', hpMul: 15, spd: 0.55, charge: { every: 7, mult: 3, dur: 1.2 } },
       twist: '关隘狭窄；吕布每隔数秒策赤兔冲锋',
-      units: ['dao', 'qiang', 'gong', 'qi', 'gu'], gens: ['guanyu', 'zhangfei', 'liubei', 'machao', 'guanxing', 'huanggai'] },
-    { key: 'changban', name: '长坂坡突围', short: '长坂', era: '建安十三年 · 当阳', blurb: '曹军虎豹骑追至。赵云单骑救主，张飞据水断桥；鲁肃奉命前来观阵。', faction: 'wei', scene: 'river',
-      rival: '鲁肃', rivalTitle: '东吴使者', path: [6, 'D1 L5 D3 R6'], blocked: [[0, 3], [3, 2]], tiles: 7, waves: 12, hp: 0.8, start: 45,
+      units: ['dao', 'qiang', 'gong', 'qi', 'nong'], gens: ['guanyu', 'zhangfei', 'liubei', 'machao', 'guanxing', 'huanggai'] },
+    { key: 'changban', unlock: 9, name: '长坂坡突围', short: '长坂', era: '建安十三年 · 当阳', blurb: '曹军虎豹骑追至。赵云单骑救主，张飞据水断桥；鲁肃奉命前来观阵。', faction: 'wei', scene: 'river',
+      rival: '鲁肃', rivalTitle: '东吴使者', path: [6, 'D1 L5 D3 R6'], blocked: [[0, 3], [3, 2]], tiles: 7, hp: 0.8,
       mix: { zu: [1, 0.5], qi: [0.3, 0.6], dun: [0.05, 0.2, 4] },
       lieut: { name: '曹纯', ch: '纯', hpMul: 9, spd: 0.85 },
       boss: { name: '张郃', ch: '合', hpMul: 15, spd: 0.7, swarm: { every: 5, n: 3 } },
       twist: '路短骑多：虎豹骑轻骑成群冲锋',
-      units: ['dao', 'qiang', 'gong', 'qi', 'nu'], gens: ['zhaoyun', 'zhangfei', 'liubei', 'guanyu', 'zhangbao', 'zhangyi'] },
-    { key: 'yunmeng', name: '云梦泽伏击', short: '云梦', era: '建安十三年 · 云梦泽', blurb: '赤壁火起，曹军败走云梦大泽。孙刘联军分道设伏，周瑜与你各截一路。', faction: 'wei', scene: 'marsh',
-      rival: '周瑜', rivalTitle: '大都督', path: [7, 'L6 D2 R5 D2 L6'], blocked: [[7, 2], [0, 4]], tiles: 6, waves: 12, hp: 1.0, start: 45, fireMul: 2,
+      units: ['dao', 'qiang', 'gong', 'qi', 'nong'], gens: ['zhaoyun', 'zhangfei', 'liubei', 'guanyu', 'zhangbao', 'zhangyi'] },
+    { key: 'yunmeng', unlock: 6, name: '云梦泽伏击', short: '云梦', era: '建安十三年 · 云梦泽', blurb: '赤壁火起，曹军败走云梦大泽。孙刘联军分道设伏，周瑜与你各截一路。', faction: 'wei', scene: 'marsh',
+      rival: '周瑜', rivalTitle: '大都督', path: [7, 'L6 D2 R5 D2 L6'], blocked: [[7, 2], [0, 4]], tiles: 6, hp: 1.0, fireMul: 2,
       mix: { chuan: [1, 1], zu: [0.25, 0.15], dun: [0.1, 0.3, 4] },
       lieut: { name: '蔡瑁', ch: '蔡', hpMul: 8, spd: 0.6 },
       boss: { name: '曹操', ch: '操', hpMul: 13, spd: 0.5, summon: { every: 9, n: 2, type: 'chuan' } },
       twist: '泽中战船顺水而来；火攻伤害 ×2',
-      units: ['gong', 'huo', 'nu', 'dun', 'tou'], gens: ['huangzhong', 'huanggai', 'kongming', 'pangtong', 'zhaoyun', 'huangzu'] },
-    { key: 'hanzhong', name: '汉中对峙', short: '汉中', era: '建安二十四年 · 定军山', blurb: '刘备争汉中，黄忠据定军山居高临下。法正举旗为号，与你比谁斩将更快。', faction: 'wei', scene: 'mountain',
-      rival: '法正', rivalTitle: '军师', path: [0, 'D1 R7 D2 L7 D1'], blocked: [[3, 0], [4, 4], [6, 2]], tiles: 8, waves: 12, hp: 1.0, start: 45, highGround: 1,
+      units: ['dao', 'qiang', 'gong', 'qi', 'nong'], gens: ['huangzhong', 'huanggai', 'zhaoyun', 'huangzu', 'zhangyi', 'guanping'] },
+    { key: 'hanzhong', unlock: 13, name: '汉中对峙', short: '汉中', era: '建安二十四年 · 定军山', blurb: '刘备争汉中，黄忠据定军山居高临下。法正举旗为号，与你比谁斩将更快。', faction: 'wei', scene: 'mountain',
+      rival: '法正', rivalTitle: '军师', path: [0, 'D1 R7 D2 L7 D1'], blocked: [[3, 0], [4, 4], [6, 2]], tiles: 8, hp: 1.0, highGround: 1,
       mix: { zu: [1, 0.5], qi: [0.2, 0.3], dun: [0.15, 0.3], jia: [0, 0.25, 6] },
       lieut: { name: '张郃', ch: '合', hpMul: 9, spd: 0.7 },
       boss: { name: '夏侯渊', ch: '渊', hpMul: 15, spd: 0.85 },
       twist: '第一行为高地，射程 +0.5；夏侯渊来去如风',
-      units: ['dao', 'qiang', 'gong', 'tou', 'gu'], gens: ['huangzhong', 'zhaoyun', 'machao', 'weiyan', 'zhangyi', 'guanxing'] },
-    { key: 'yiling', name: '夷陵之战', short: '夷陵', era: '章武二年 · 夷陵', blurb: '先主伐吴，连营七百里。关兴张苞随军复仇，黄权另领一军。', faction: 'wu', scene: 'fire',
-      rival: '黄权', rivalTitle: '镇北将军', path: [1, 'D2 R2 U2 R2 D4 R2'], tiles: 9, waves: 12, hp: 1.0, start: 45,
+      units: ['dao', 'qiang', 'gong', 'qi', 'nong'], gens: ['huangzhong', 'zhaoyun', 'machao', 'weiyan', 'zhangyi', 'guanxing'] },
+    { key: 'yiling', unlock: 17, name: '夷陵之战', short: '夷陵', era: '章武二年 · 夷陵', blurb: '先主伐吴，连营七百里。关兴张苞随军复仇，黄权另领一军。', faction: 'wu', scene: 'fire',
+      rival: '黄权', rivalTitle: '镇北将军', path: [1, 'D2 R2 U2 R2 D4 R2'], tiles: 9, hp: 1.0,
       mix: { zu: [1, 0.5], nu: [0.2, 0.4], dun: [0.1, 0.3], qi: [0.1, 0.25] },
       lieut: { name: '朱然', ch: '然', hpMul: 9, spd: 0.65 },
       boss: { name: '陆逊', ch: '逊', hpMul: 15, spd: 0.55, burnUnits: { every: 8, range: 2.2, dur: 3 } },
       twist: '吴军不惧火攻；陆逊放火，烧得身边守军攻速减半',
-      units: ['dao', 'qiang', 'huo', 'dun', 'nu'], gens: ['guanxing', 'zhangbao', 'huangzhong', 'zhaoyun', 'jiangwei', 'guanping'] }
+      units: ['dao', 'qiang', 'gong', 'qi', 'nong'], gens: ['guanxing', 'zhangbao', 'huangzhong', 'zhaoyun', 'jiangwei', 'guanping'] },
+    { key: 'chibi', unlock: 21, name: '赤壁之战', short: '赤壁', era: '建安十三年 · 赤壁', blurb: '曹军八十万顺江而下。孙刘联军火烧连营，典韦护驾冲阵——最难的一仗。', faction: 'wei', scene: 'fire',
+      rival: '周瑜', rivalTitle: '大都督', path: [3, 'D1 L3 D2 R7 D1'], blocked: [[6, 1], [2, 4]], tiles: 7, hp: 1.15, fireMul: 1.5,
+      mix: { zu: [1, 0.5], dun: [0.15, 0.35], jia: [0, 0.3, 3], chuan: [0.2, 0.4] },
+      lieut: { name: '许褚', ch: '许', hpMul: 10, spd: 0.6 },
+      boss: { name: '典韦', ch: '典', hpMul: 17, spd: 0.5, flatten: { every: 5, range: 1.7, maxLv: 2, dur: 3 } },
+      twist: '典韦踏地，把身边二阶及以下的兵压扁（三秒不能出手）——兵要升阶',
+      units: ['dao', 'qiang', 'gong', 'qi', 'nong'], gens: ['zhaoyun', 'huangzhong', 'huanggai', 'huangzu', 'kongming', 'pangtong'] }
   ];
-  // ---------- 段位 ----------
-  var RANKS = ['士卒', '伍长', '什长', '百夫长', '都尉', '校尉', '中郎将', '将军', '大将军', '大都督'];
-  var RANK_STARS = 3;
-  // 段位 -> 敌军血量倍率 / AI 强度（0 起）
-  function rankHp(rank) { return 1.25 + 0.17 * Math.max(0, Math.min(RANKS.length - 1, rank | 0)); }
-  function rankAI(rank) { return 1.3 * Math.max(0, Math.min(RANKS.length - 1, rank | 0)) / (RANKS.length - 1); }
-  // 胜 +1 星（满心完胜 +2），败 −1 星；满 3 星晋升，0 星再败降段
-  function rankAfter(st, won, hearts) {
-    var r = Math.max(0, Math.min(RANKS.length - 1, st.r | 0)), s = Math.max(0, Math.min(RANK_STARS, st.s | 0)), out = { r: r, s: s, delta: 0, promoted: false, demoted: false };
+  // ---------- 段位：11 段，每段若干小级，每级 5 星 ----------
+  var RANK_GROUPS = [['军士', 3], ['校尉', 3], ['少将', 3], ['中将', 4], ['上将', 4], ['大将', 4], ['元帅', 5], ['诸侯', 5], ['霸主', 5], ['君主', 5], ['皇帝', 1]];
+  var RANKS = [], RANK_GROUP = [], CN = ['一', '二', '三', '四', '五'];
+  RANK_GROUPS.forEach(function (gr, gi) { for (var i = 0; i < gr[1]; i++) { RANKS.push(gr[1] > 1 ? gr[0] + '·' + CN[i] : gr[0]); RANK_GROUP.push(gi); } });
+  var RANK_STARS = 5;
+  function clampRank(r) { return Math.max(0, Math.min(RANKS.length - 1, r | 0)); }
+  // 段位 -> 敌军血量倍率 / AI 水平 / 波数 / 可选战场
+  function rankHp(rank) { return 1 + 0.006 * clampRank(rank); }
+  // AI 水平 0..1：军士·一 0.22（常犯错、发呆），到中将左右 0.8 封顶（与熟练玩家相当，约五五开）
+  function rankAI(rank) { return Math.min(0.8, 0.22 + 0.048 * clampRank(rank)); }
+  function wavesFor(rank) { return 5 + RANK_GROUP[clampRank(rank)]; }
+  function fieldsFor(rank) { var r = clampRank(rank), out = []; LEVELS.forEach(function (L, i) { if (r >= (L.unlock || 0)) out.push(i); }); return out; }
+  function rankGroup(rank) { return RANK_GROUPS[RANK_GROUP[clampRank(rank)]][0]; }
+  // 胜 +1 星；5 星再胜晋级（新级 0 星）；败 −1 星，0 星再败降一小级（4 星）；军士·一 不再降
+  function rankAfter(st, won) {
+    var r = clampRank(st.r), s = Math.max(0, Math.min(RANK_STARS, st.s | 0)), out = { r: r, s: s, delta: 0, promoted: false, demoted: false };
     if (won) {
-      var gain = hearts >= 3 ? 2 : 1;
-      out.delta = gain;
-      s += gain;
-      while (s > RANK_STARS && r < RANKS.length - 1) { s -= RANK_STARS; r++; out.promoted = true; }
-      if (r === RANKS.length - 1) s = Math.min(s, RANK_STARS);
+      out.delta = 1;
+      if (s >= RANK_STARS && r < RANKS.length - 1) { r++; s = 0; out.promoted = true; }
+      else s = Math.min(RANK_STARS, s + 1);
     } else {
       out.delta = -1;
       if (s > 0) s--;
       else if (r > 0) { r--; s = RANK_STARS - 1; out.demoted = true; }
+      else out.delta = 0;
     }
     out.r = r; out.s = s;
     return out;
   }
 
   var CFG = {
-    hearts: HEARTS,
-    costBase: 15, costStep: 5, costCap: 90,
-    rewardGrowth: 0.12, waveBonus: 8, waveBonusGrowth: 1,
+    hearts: HEARTS, start: 20,
+    costBase: 10, costStep: 2, costCap: 40,          // 征兵：10 起，每次 +2
+    rewardGrowth: 0, waveBonus: 0, waveBonusGrowth: 0, // 杀敌 +1，波次无额外奖励
     breakTime: 6, prepTime: 20, overlap: 10,
-    genGrowth: 2.4, hpGrowth: 1.3,
+    genStep: 0.4, hpGrowth: 1.28,
+    count0: 12, countStep: 3, countCap: 40, gap0: 1.35, gapDrop: 0.12, gapMin: 0.75, // 每波敌数 12+3n；出怪间隔 1.35 秒起每波 −0.12（最快 0.75）
     weights: { name: 9, shovel: 6 },
     namePity: 8, pieceFocus: 0.65,
     auraBonus: 0.35, auraAll: 0.1, auraRange: 1.5,
     arrowSpeed: 10, boltSpeed: 13, startTiles: 7,
-    recycle: { u: 3, c: 3, s: 2 }, heartComp: 10
+    recycle: { u: 1, c: 1, s: 1 }, heartComp: 10
   };
 
   // ---------- 工具 ----------
@@ -268,7 +295,7 @@
     if (k) return { k: k, side: 'R' };
     return null;
   }
-  var UNITS_W = { dao: 24, qiang: 20, gong: 22, qi: 18, dun: 12, huo: 12, gu: 8, nu: 12, tou: 8 };
+  var UNITS_W = { dao: 24, qiang: 22, gong: 22, qi: 20, nong: 7, dun: 12, huo: 12, gu: 8, nu: 12, tou: 8 };
 
   // =====================================================================
   function createGame(opts) {
@@ -281,7 +308,7 @@
     var rank = Math.max(0, Math.min(RANKS.length - 1, opts.rank | 0));
     var G = {
       level: li, rank: rank, L: L, P: P, content: content, seed: seed, quiet: !!opts.quiet,
-      phase: 'prep', wave: 0, waves: L.waves, timer: opts.prepTime != null ? opts.prepTime : CFG.prepTime, holdTimer: !!opts.holdTimer,
+      phase: 'prep', wave: 0, waves: opts.waves || wavesFor(rank), timer: opts.prepTime != null ? opts.prepTime : CFG.prepTime, holdTimer: !!opts.holdTimer,
       queue: [], spawnT: 0, waveTag: '', idleT: 0, time: 0, eid: 1, ev: [], floodT: 0, floodOn: 0, result: null,
       sides: []
     };
@@ -290,7 +317,7 @@
 
     function makeSide(id) {
       var S = {
-        id: id, hearts: HEARTS, mantou: L.start, summons: 0, nameSince: 0,
+        id: id, hearts: HEARTS, mantou: L.start || CFG.start, summons: 0, nameSince: 0, clearSum: 0, clearT: null, killProg: 0,
         bench: [null, null, null, null, null], cells: [], enemies: [], projs: [], pend: [],
         auraDirty: true, pairsDirty: true, pairs: [], syn: {}, synSeen: {}, mods: {}, rng: mulberry32(seed * 31 + 7 + id * 101), luck: 0,
         stats: { kills: 0, leaks: 0, summons: 0, merges: 0, generals: [], maxTier: 1, discards: 0, dmg: 0 }
@@ -308,7 +335,7 @@
       return S;
     }
     G.sides.push(makeSide(0), makeSide(1));
-    G.sides[1].luck = opts.aiLuck != null ? opts.aiLuck : aiParams(rank).luck;
+    G.sides[1].luck = opts.aiLuck || 0; // 不作弊：AI 与玩家同一套规则，没有隐藏加成
 
     function emit(e) {
       if (G.quiet) return;
@@ -343,10 +370,11 @@
     G.freeTiles = function (s) { var n = 0; side(s).cells.forEach(function (ce) { if (!ce.path && !ce.block && !ce.lock && !ce.item) n++; }); return n; };
     G.lockedCount = function (s) { var n = 0; side(s).cells.forEach(function (ce) { if (!ce.path && !ce.block && ce.lock) n++; }); return n; };
     G.over = function () { return G.phase === 'won' || G.phase === 'lost'; };
-    G.canSummon = function (s) { return !G.over() && side(s).mantou >= G.cost(s); };
-    G.waveMult = function (n) { return L.hp * rankHp(rank) * Math.pow(CFG.hpGrowth, (n || G.wave) - 1); };
-    G.genMult = function () { return 1 + CFG.genGrowth * Math.max(0, G.wave - 1) / Math.max(1, L.waves - 1); };
-    G.reward = function (base) { return Math.round(base * (1 + CFG.rewardGrowth * Math.max(0, G.wave - 1))); };
+    G.canSummon = function (s) { var S = side(s); return !G.over() && S.mantou >= G.cost(S) && S.bench.some(function (it) { return !it; }); };
+    // 段位加成从第 2 波起逐步生效（前几波留给双方布阵）
+    G.waveMult = function (n) { n = n || G.wave; return L.hp * (1 + (rankHp(rank) - 1) * Math.min(1, (n - 1) / 4)) * Math.pow(CFG.hpGrowth, n - 1); };
+    G.genMult = function () { return 1 + CFG.genStep * Math.max(0, G.wave - 1); }; // 武将随波次成长（按第几波，不按比例）
+    G.reward = function (base) { return base; };
     G.combine = function (A, B) { return combineResult(A, B, content); };
     G.pairKey = function (l, r) { return pairKey(l, r, content); };
 
@@ -402,6 +430,8 @@
       S.cells.forEach(function (ce) { if (ce.item && ce.item.t === 'u' && ce.item.lv === 1) ks.push(ce.item.k); });
       return ks.length ? { t: 'u', k: ks[(S.rng() * ks.length) | 0], lv: 1 } : it;
     }
+    // 征兵：一次补满空着的候补格（最多五名），已有候补不动；价格 10 起每次 +2
+    G.emptySlots = function (s) { var n = 0; side(s).bench.forEach(function (it) { if (!it) n++; }); return n; };
     G.summon = function (s) {
       var S = side(s);
       if (!G.canSummon(S)) return null;
@@ -409,13 +439,14 @@
       S.mantou -= cost;
       S.summons++;
       S.stats.summons++;
-      var lost = S.bench.filter(function (it) { return it; });
-      S.stats.discards += lost.length;
-      var batch = [];
-      for (var i = 0; i < BENCH; i++) batch.push(luckify(S, rollItem(S, batch)));
-      S.bench = batch;
+      var batch = [], slots = [];
+      for (var i = 0; i < BENCH; i++) {
+        if (S.bench[i]) continue;
+        var it = luckify(S, rollItem(S, batch.concat(S.bench.filter(Boolean))));
+        S.bench[i] = it; batch.push(it); slots.push(i);
+      }
       S.auraDirty = true;
-      emit({ type: 'summon', s: S.id, items: batch.slice(), lost: lost, cost: cost });
+      emit({ type: 'summon', s: S.id, items: batch.slice(), slots: slots, lost: [], cost: cost });
       return batch;
     };
 
@@ -616,15 +647,15 @@
       for (var t in L.mix) {
         var m = L.mix[t], from = m[2] || 1;
         if (n < from) continue;
-        var k = L.waves > from ? (n - from) / (L.waves - from) : 1;
+        var k = G.waves > from ? (n - from) / (G.waves - from) : 1;
         var w = m[0] + (m[1] - m[0]) * k;
         if (w > 0) { out.push([t, w]); tot += w; }
       }
       return { list: out, tot: tot };
     }
-    G.isBossWave = function (n) { return n === L.waves ? 'boss' : (n % 5 === 0 ? 'lieut' : ''); };
+    G.isBossWave = function (n) { return n === G.waves ? 'boss' : (n % 5 === 0 ? 'lieut' : ''); };
     function buildWave(n) {
-      var count = Math.min(34, 8 + 2 * n);
+      var count = Math.min(CFG.countCap, Math.round(CFG.count0 + CFG.countStep * n));
       var mx = mixAt(n), list = [], tag = '';
       var special = (n % 4 === 3 && mx.list.some(function (x) { return x[0] === 'qi'; })) ? 'qi' : '';
       for (var i = 0; i < count; i++) {
@@ -651,7 +682,7 @@
       if (type === 'boss' || type === 'lieut') {
         var bd = type === 'boss' ? L.boss : L.lieut;
         e.boss = true; e.lieut = type === 'lieut'; e.name = bd.name; e.ch = bd.ch; e.spd = bd.spd; e.r = type === 'boss' ? 0.46 : 0.4;
-        e.maxHp = ENEMIES.zu.hp * mult * bd.hpMul; e.reward = type === 'boss' ? 40 : 20; e.leak = type === 'boss' ? 2 : 1;
+        e.maxHp = ENEMIES.zu.hp * mult * bd.hpMul; e.reward = type === 'boss' ? 10 : 5; e.leak = type === 'boss' ? 2 : 1;
         e.res = FAC.res ? JSON.parse(JSON.stringify(FAC.res)) : null;
         e.def = bd; e.abT = 3;
         if (bd.dmgRes) e.dmgRes = bd.dmgRes;
@@ -673,14 +704,17 @@
       return e;
     }
     G.spawn = function (s, type, d, off) { return spawn(side(s), type, d, off); };
+    function depth(S) { return S.killProg / Math.max(1, S.stats.kills); }
+    function addClear() { G.sides.forEach(function (S) { S.clearSum += (S.clearT != null ? S.clearT : G.time) - G.waveT0; S.clearT = null; }); }
     G.startWave = function () {
       if (G.phase !== 'prep' && G.phase !== 'break') return;
+      G.waveT0 = G.time; G.sides.forEach(function (S) { S.clearT = null; });
       G.wave++;
       G.queue = buildWave(G.wave);
       G.spawnT = 0.2;
       G.idleT = 0;
       G.phase = 'wave';
-      emit({ type: 'wave', n: G.wave, tag: G.waveTag, last: G.wave === L.waves, boss: G.isBossWave(G.wave) });
+      emit({ type: 'wave', n: G.wave, tag: G.waveTag, last: G.wave === G.waves, boss: G.isBossWave(G.wave) });
     };
     G.callNext = function () { if (G.phase === 'prep' || G.phase === 'break') { G.holdTimer = false; G.startWave(); return true; } return false; };
 
@@ -721,6 +755,7 @@
       e.dead = true;
       S.mantou += e.reward;
       S.stats.kills++;
+      S.killProg += Math.min(1, e.d / P.len);
       emit({ type: 'kill', s: S.id, x: e.x, y: e.y, reward: e.reward, boss: !!e.boss, lieut: !!e.lieut, name: e.name, etype: e.type, ch: e.ch, r: e.r, eid: e.id });
     }
     G.hurt = function (s, e, dmg, dtype) { return hurt(side(s), e, dmg, dtype); };
@@ -730,7 +765,7 @@
       for (var i = 0; i < S.enemies.length; i++) {
         var e = S.enemies[i];
         if (e.dead || e.d < 0.4) continue;
-        if (dist(x, y, e.x, e.y) <= range && (!best || e.d > best.d)) best = e;
+        if (dist(x, y, e.x, e.y) <= range + RANGE_PAD && (!best || e.d > best.d)) best = e;
       }
       return best;
     }
@@ -783,8 +818,9 @@
 
     // ---------- 出手 ----------
     function unitDmg(S, it) {
-      if (it.t === 'u') return UNITS[it.k].dmg * TIER_MULT[it.lv - 1] * (it.aura || 1);
-      return GENERALS[it.k].dmg * G.genMult() * GEN_TIER[(it.lv || 1) - 1] * (it.aura || 1);
+      if (it.t === 'u') return UNITS[it.k].dmg * TIER_ATK[it.lv - 1] * (it.aura || 1);
+      var GD = GENERALS[it.k];
+      return GD.dmg * QUALITY[GD.q || 'purple'].mult * G.genMult() * GEN_TIER[(it.lv || 1) - 1] * (it.aura || 1);
     }
     // it: 兵牌或武将（武将位于两格正中 x=c+1）
     function attack(S, it, x, y, c, r, tgt) {
@@ -839,7 +875,7 @@
     function toughest(list) { var top = list[0]; list.forEach(function (e) { if (e.hp > top.hp) top = e; }); return top; }
     function castSkill(S, g) {
       var x = g.x, y = g.y, k = g.k, def = GENERALS[k];
-      var base = def.dmg * G.genMult() * GEN_TIER[(g.lv || 1) - 1] * (g.aura || 1) * S.mods.skillDmg;
+      var base = def.dmg * QUALITY[def.q || 'purple'].mult * G.genMult() * GEN_TIER[(g.lv || 1) - 1] * (g.aura || 1) * S.mods.skillDmg;
       var live = liveEnemies(S);
       var ev = { type: 'skill', s: S.id, k: k, c: g.c, r: g.r, x: x, y: y, lv: g.lv };
       if (!live.length) return false;
@@ -974,6 +1010,16 @@
       }
       if (bd.rage && !e.raged && e.hp < e.maxHp * 0.5) { e.raged = true; e.spd *= 1.6; emit({ type: 'bossAct', s: S.id, act: 'rage', x: e.x, y: e.y, name: e.name }); }
       if (bd.shield && e.abT <= 0) { e.abT = bd.shield.every; e.shield = e.maxHp * bd.shield.frac; emit({ type: 'bossAct', s: S.id, act: 'shield', x: e.x, y: e.y, name: e.name }); }
+      if (bd.flatten && e.abT <= 0 && e.d > 1) {
+        // 典韦踏地：身边低阶兵被压扁
+        e.abT = bd.flatten.every;
+        var flat = [];
+        S.cells.forEach(function (ce) {
+          var it = ce.item;
+          if (it && it.t === 'u' && (it.lv || 1) <= bd.flatten.maxLv && dist(ce.c + 0.5, ce.r + 0.5, e.x, e.y) <= bd.flatten.range) { it.flatT = bd.flatten.dur; flat.push([ce.c + 0.5, ce.r + 0.5]); }
+        });
+        emit({ type: 'bossAct', s: S.id, act: 'flatten', x: e.x, y: e.y, name: e.name, pts: flat, rad: bd.flatten.range });
+      }
       if (bd.burnUnits && e.abT <= 0 && e.d > 1) {
         e.abT = bd.burnUnits.every;
         var hitU = [];
@@ -1063,9 +1109,19 @@
             it.skLeft = 0;
           }
         }
+        if (it.flatT > 0) { it.flatT -= dt; return; } // 被典韦压扁：不能出手
+        var def = it.t === 'u' ? UNITS[it.k] : GENERALS[it.k];
+        // 升阶攻速：每阶 ×1.346（武将的等级已算进伤害倍率）
+        if (it.t === 'u') spdMul *= TIER_SPD[(it.lv || 1) - 1];
+        if (def.mode === 'farm') {
+          // 农民：开战后定时产馒头
+          if (G.phase !== 'wave') return;
+          it.farmT = (it.farmT || 0) + dt * spdMul;
+          if (it.farmT >= def.cd) { it.farmT -= def.cd; var y0 = def.yield * (it.lv >= 4 ? 2 : 1); S.mantou += y0; S.stats.farmed = (S.stats.farmed || 0) + y0; emit({ type: 'farm', s: S.id, c: c, r: r, v: y0 }); }
+          return;
+        }
         it.cdLeft = (it.cdLeft || 0) - dt * spdMul;
         if (it.cdLeft > 0) return;
-        var def = it.t === 'u' ? UNITS[it.k] : GENERALS[it.k];
         if (def.mode === 'drum') {
           if (G.phase === 'wave' && liveEnemies(S).length) { it.cdLeft = def.cd; emit({ type: 'drum', s: S.id, c: c, r: r, rad: def.range }); }
           else it.cdLeft = 0;
@@ -1161,7 +1217,7 @@
           var q = G.queue.shift();
           G.sides.forEach(function (S) { spawn(S, q.t, 0, q.off); });
           if (q.t === 'boss' || q.t === 'lieut') emit({ type: 'boss', name: (q.t === 'boss' ? L.boss : L.lieut).name, lieut: q.t === 'lieut' });
-          G.spawnT += 1.3 - 0.55 * (G.wave - 1) / Math.max(1, L.waves - 1);
+          G.spawnT += Math.max(CFG.gapMin, CFG.gap0 - CFG.gapDrop * (G.wave - 1));
         }
         if (L.flood) {
           G.floodT += dt;
@@ -1173,13 +1229,22 @@
       if (G.phase === 'wave' && !G.queue.length) {
         var left = G.sides[0].enemies.length + G.sides[1].enemies.length;
         G.idleT += dt;
-        var lastWave = G.wave >= L.waves;
+        // 清场用时：本波出完后，哪边先清干净
+        G.sides.forEach(function (S) { if (S.clearT == null && !S.enemies.length) S.clearT = G.time; });
+        var lastWave = G.wave >= G.waves;
         if (lastWave) {
           if (!left) {
-            var h0 = G.sides[0].hearts, h1 = G.sides[1].hearts;
-            finish(h0 >= h1 ? 0 : 1, h0 > h1 ? 'hearts-more' : h0 === h1 ? 'tie' : 'hearts-less');
+            addClear();
+            // 比心数 → 比「御敌于外」（敌人平均走到路的几成被斩，越早越好）→ 比清场用时 → 仍相同算玩家守住
+            var A0 = G.sides[0], A1 = G.sides[1], h0 = A0.hearts, h1 = A1.hearts, w;
+            if (h0 !== h1) w = h0 > h1 ? 0 : 1;
+            else if (Math.abs(depth(A0) - depth(A1)) > 1e-4) w = depth(A0) < depth(A1) ? 0 : 1;
+            else if (Math.abs(A0.clearSum - A1.clearSum) > 0.05) w = A0.clearSum < A1.clearSum ? 0 : 1;
+            else w = 0;
+            finish(w, h0 > h1 ? 'hearts-more' : h0 < h1 ? 'hearts-less' : w === 0 ? 'better' : 'worse');
           }
         } else if (!left || G.idleT >= CFG.overlap) {
+          addClear();
           G.sides.forEach(function (S) { var b = CFG.waveBonus + CFG.waveBonusGrowth * (G.wave - 1); S.mantou += b; });
           emit({ type: 'clear', n: G.wave, bonus: CFG.waveBonus + CFG.waveBonusGrowth * (G.wave - 1) });
           G.phase = 'break';
@@ -1188,12 +1253,27 @@
       }
     };
     G.drain = function () { var e = G.ev; G.ev = []; return e; };
+    G.note = function (e) { emit(e); };
     G.updateAura();
     return G;
   }
 
   // =====================================================================
-  // AI / 机器人：同一套规则与经济。p: {tick, mistake, mergeSkip, waste, jitter, smart}
+  // AI / 机器人：与玩家完全同一套规则、经济与信息（不作弊、无隐藏加成），只是「手」和「脑」有快慢好坏。
+  // 像真人一样一次做一件事：想一想（反应间隔）→ 拖一张牌（拖动耗时）→ 落下；低段位常发呆、放错位、忘了合成。
+  // p: { tick 反应间隔, jitter, idle 发呆概率, idleT 发呆时长, drag 拖动耗时, mistake 放错位, mergeSkip 忘合成,
+  //      waste 新兵晾着不用, smart 精打细算（攒钱征兵、凑武将、留位置）, genFocus 凑武将 }
+  function aiParams(rank) {
+    var m = rankAI(rank);
+    return {
+      skill: m, tick: lerp(2.3, 0.75, m), jitter: 0.7, idle: lerp(0.22, 0.03, m), idleT: lerp(4.5, 1.5, m), drag: lerp(0.65, 0.32, m),
+      mistake: lerp(0.38, 0.05, m), mergeSkip: lerp(0.45, 0.04, m), waste: lerp(0.3, 0.02, m), smart: lerp(0.15, 0.95, m), genFocus: lerp(0.25, 0.95, m)
+    };
+  }
+  function lerp(a, b, t) { return a + (b - a) * Math.max(0, Math.min(1, t)); }
+  // 一个熟练玩家（测试 / 托管用）
+  var PLAYER_BOT = { skill: 0.85, tick: 0.9, jitter: 0.6, idle: 0.04, idleT: 1.5, drag: 0.35, mistake: 0.07, mergeSkip: 0.05, waste: 0.03, smart: 0.85, genFocus: 0.85 };
+
   function createBot(G, sid, p, seed) {
     p = p || {};
     var S = G.sides[sid], P = G.P;
@@ -1206,12 +1286,15 @@
     var cellAt = function (c, r) { return c < 0 || r < 0 || c >= COLS || r >= ROWS ? null : S.cells[r * COLS + c]; };
     var open = function (ce) { return ce && !ce.path && !ce.block && !ce.lock; };
     var tiles = function () { return S.cells.filter(function (ce) { return !ce.path && !ce.block; }); };
-    var val = function (it) { return it.gen || it.genR ? 1000 : it.t === 'u' ? Math.pow(2, it.lv) * (it.k === 'gu' ? 0.8 : 1) : it.t === 'c' ? 3 * it.lv : 0; };
+    var val = function (it) { return it.gen || it.genR ? 1000 : it.t === 'u' ? Math.pow(2, it.lv) * (it.k === 'nong' ? 0.7 : 1) : it.t === 'c' ? 3 * it.lv : 0; };
     var mistake = p.mistake || 0, mergeSkip = p.mergeSkip || 0, ignored = [];
     var skip = function (it) { return ignored.indexOf(it) >= 0; };
+    var queue = [];
+    function mv(from, to) { queue.push({ from: from, to: to }); return true; }
     // 未成将的名字牌 → 搭档应放的格子（保留给搭档）
     function reserved() {
       var res = {};
+      if (rng() > (p.genFocus == null ? 1 : p.genFocus)) return res;
       S.cells.forEach(function (ce) {
         var it = ce.item;
         if (!it || it.t !== 'c' || it.gen || it.genR) return;
@@ -1223,13 +1306,16 @@
       });
       return res;
     }
+    // 落位评分：近战贴路、弓兵占弯道（射程内路越长越好）；农民放在没用的角落
     function tileScore(ce, it) {
+      if (it.t === 'u' && it.k === 'nong') return -cov(ce.c, ce.r, 2);
       if (it.t === 'u' && it.k === 'gu') {
         var n = 0;
         tiles().forEach(function (o) { if (o !== ce && o.item && (o.item.t === 'u' || o.item.t === 'c') && Math.hypot(o.c - ce.c, o.r - ce.r) <= 1.5) n += o.item.t === 'c' ? 2 : o.item.lv; });
         return n;
       }
-      return cov(ce.c, ce.r, (it.t === 'u' ? UNITS[it.k].range : 2) + (ce.high ? 0.5 : 0));
+      var R = (it.t === 'u' ? UNITS[it.k].range + RANGE_PAD : 2) + (ce.high ? 0.5 : 0);
+      return cov(ce.c, ce.r, R) * (it.t === 'u' ? (UNITS[it.k].targets || 1) : 1);
     }
     function bestFree(it, avoidRes) {
       var res = avoidRes ? reserved() : {};
@@ -1241,7 +1327,6 @@
       fr.forEach(function (ce) { var v = tileScore(ce, it); if (v > bs) { bs = v; best = ce; } });
       return best;
     }
-    // 两格都空的相邻位置，按武将射程覆盖评分
     function bestPairSpot() {
       var best = null, bs = -1;
       for (var r = 0; r < ROWS; r++) for (var c = 0; c < COLS - 1; c++) {
@@ -1262,31 +1347,28 @@
     }
     function tryMerge(i, it) {
       if (rng() < mergeSkip) return false;
-      // 优先合到已成将的名字上、其次射程好的位置
       var m = tiles().filter(function (ce) { return ce.item && mergeable(it, ce.item); });
       if (m.length) {
         m.sort(function (a, b) { return (b.item.gen || b.item.genR ? 100 : 0) + tileScore(b, it) - (a.item.gen || a.item.genR ? 100 : 0) - tileScore(a, it); });
-        G.apply(sid, B(i), T(m[0].c, m[0].r)); return true;
+        return mv(B(i), T(m[0].c, m[0].r));
       }
-      for (var j = 0; j < BENCH; j++) if (j !== i && S.bench[j] && mergeable(it, S.bench[j])) { G.apply(sid, B(i), B(j)); return true; }
+      for (var j = 0; j < BENCH; j++) if (j !== i && S.bench[j] && mergeable(it, S.bench[j])) return mv(B(i), B(j));
       return false;
     }
     function placeName(i, it) {
+      if (rng() > (p.genFocus == null ? 1 : p.genFocus) + 0.15) return false; // 低段位常常没想起来凑武将
       var pts = partnersOf(it.ch);
-      // 1) 场上有未成将的搭档：放到正确一侧
       for (var q = 0; q < pts.length; q++) {
         var ps = boardHas(pts[q].ch, true);
         for (var w = 0; w < ps.length; w++) {
           var pc = ps[w], qc = pts[q].left ? pc.c - 1 : pc.c + 1, Q = cellAt(qc, pc.r);
-          if (open(Q) && !Q.item) { G.apply(sid, B(i), T(Q.c, Q.r)); return true; }
-          // 正确一侧被兵占了：把兵挪走
+          if (open(Q) && !Q.item) return mv(B(i), T(Q.c, Q.r));
           if (open(Q) && Q.item && Q.item.t === 'u' && rng() > mistake) {
             var f = bestFree(Q.item, true);
-            if (f && f !== Q) { G.apply(sid, T(Q.c, Q.r), T(f.c, f.r)); G.apply(sid, B(i), T(Q.c, Q.r)); return true; }
+            if (f && f !== Q) { mv(T(Q.c, Q.r), T(f.c, f.r)); return mv(B(i), T(Q.c, Q.r)); }
           }
         }
       }
-      // 2) 备战席上就有搭档：找两格相邻空位
       for (var q2 = 0; q2 < pts.length; q2++) {
         for (var j = 0; j < BENCH; j++) {
           var o = S.bench[j];
@@ -1294,103 +1376,133 @@
           var spot = bestPairSpot();
           if (!spot) break;
           var meL = pts[q2].left;
-          G.apply(sid, B(i), T(meL ? spot.c : spot.c + 1, spot.r));
-          G.apply(sid, B(j), T(meL ? spot.c + 1 : spot.c, spot.r));
-          return true;
+          mv(B(i), T(meL ? spot.c : spot.c + 1, spot.r));
+          return mv(B(j), T(meL ? spot.c + 1 : spot.c, spot.r));
         }
       }
-      // 3) 先放一半，给搭档留好位置
       if (boardHas(it.ch, true).length) return false;
       if (G.freeTiles(sid) < 3 || rng() < mistake) return false;
       var spot2 = bestPairSpot();
       if (!spot2) return false;
       var left = pts.length && pts[0].left;
-      G.apply(sid, B(i), T(left ? spot2.c : spot2.c + 1, spot2.r));
-      return true;
+      return mv(B(i), T(left ? spot2.c : spot2.c + 1, spot2.r));
     }
+    // 决定下一步（只排队，不立即执行）
     function one() {
       var i, it, f;
-      // 1) 合并（兵牌、名字牌）
       for (i = 0; i < BENCH; i++) {
         it = S.bench[i];
         if (!it || skip(it) || it.t === 's') continue;
         if (tryMerge(i, it)) return true;
       }
-      // 2) 名字牌
       for (i = 0; i < BENCH; i++) {
         it = S.bench[i];
         if (it && !skip(it) && it.t === 'c' && placeName(i, it)) return true;
       }
-      // 3) 铲子
       for (i = 0; i < BENCH; i++) {
         it = S.bench[i];
         if (it && !skip(it) && it.t === 's') {
           var best = null, bs = -1;
           tiles().forEach(function (ce) { if (ce.lock) { var v = rng() < mistake ? rng() : cov(ce.c, ce.r, 1.6) + cov(ce.c, ce.r, 3.2) * 0.3; if (v > bs) { bs = v; best = ce; } } });
-          if (best) { G.apply(sid, B(i), T(best.c, best.r)); return true; }
+          if (best) return mv(B(i), T(best.c, best.r));
         }
       }
-      // 4) 兵牌：空位（避开给搭档留的位置）
       var order = [0, 1, 2, 3, 4].sort(function (a, b) { return (S.bench[b] ? val(S.bench[b]) : -1) - (S.bench[a] ? val(S.bench[a]) : -1); });
       for (var oi = 0; oi < BENCH; oi++) {
         i = order[oi]; it = S.bench[i];
         if (!it || skip(it) || it.t !== 'u') continue;
+        if (it.k === 'nong' && G.freeTiles(sid) < 2) continue;
         f = bestFree(it, true);
-        if (f) { G.apply(sid, B(i), T(f.c, f.r)); return true; }
+        if (f) return mv(B(i), T(f.c, f.r));
       }
-      // 5) 场上同字合并
       var us = tiles().filter(function (ce) { return ce.item && ce.item.t === 'u'; });
       if (rng() >= mergeSkip) {
         for (var a = 0; a < us.length; a++) for (var b2 = a + 1; b2 < us.length; b2++) {
           if (mergeable(us[a].item, us[b2].item)) {
             var x = us[a], y = us[b2];
             if (tileScore(x, x.item) > tileScore(y, y.item)) { var tmp = x; x = y; y = tmp; }
-            G.apply(sid, T(x.c, x.r), T(y.c, y.r));
-            return true;
+            return mv(T(x.c, x.r), T(y.c, y.r));
           }
         }
-        // 场上同名同阶的名字牌：把散的一张叠到另一张（优先叠进已成将的）
         var cs = tiles().filter(function (ce) { return ce.item && ce.item.t === 'c'; });
         for (var a2 = 0; a2 < cs.length; a2++) for (var b3 = 0; b3 < cs.length; b3++) {
           if (a2 === b3 || !mergeable(cs[a2].item, cs[b3].item)) continue;
           var src = cs[a2], dst = cs[b3];
           if (src.item.gen || src.item.genR) continue;
-          G.apply(sid, T(src.c, src.r), T(dst.c, dst.r));
-          return true;
+          return mv(T(src.c, src.r), T(dst.c, dst.r));
         }
       }
-      // 6) 板满：用备战席里更强的兵替换最弱的兵
+      // 板满：用备战席里更强的兵替换最弱的兵（被换下的回到候补）
       if (G.freeTiles(sid) === 0 && rng() > mistake) {
         for (i = 0; i < BENCH; i++) {
           it = S.bench[i];
           if (!it || skip(it) || it.t !== 'u') continue;
           var wk = null;
           us.forEach(function (ce) { if (val(ce.item) < val(it) && (!wk || val(ce.item) < val(wk.item))) wk = ce; });
-          if (wk) { G.apply(sid, B(i), T(wk.c, wk.r)); return true; }
+          if (wk) return mv(B(i), T(wk.c, wk.r));
         }
       }
       return false;
     }
-    function act() {
-      for (var guard = 0; guard < 25; guard++) if (!one()) break;
+    // 征兵与遣散：高段位攒钱等空位多了再一次补满；低段位有钱就点
+    function economy() {
+      var need = G.cost(sid), empt = G.emptySlots(sid), smart = p.smart == null ? 1 : p.smart;
+      if (empt <= 1 && S.mantou >= need && rng() < 0.3 + smart * 0.7) {
+        var worst = -1, wv = 1e9;
+        for (var i = 0; i < BENCH; i++) {
+          var it = S.bench[i];
+          if (!it) continue;
+          var v = it.t === 's' ? (G.lockedCount(sid) ? 5 : 0) : it.t === 'c' ? 6 * (it.lv || 1) * (partnersOf(it.ch).length ? 1 : 0.2) : val(it);
+          if (v < wv) { wv = v; worst = i; }
+        }
+        if (worst >= 0 && wv < 8 && (G.freeTiles(sid) === 0 || empt === 0)) return mv(B(worst), { z: 'x' });
+      }
       if (G.canSummon(sid)) {
-        if (p.smart == null || rng() < 0.4 + p.smart) {
-          for (var i = 0; i < BENCH; i++) { var it = S.bench[i]; if (it) G.apply(sid, B(i), { z: 'x' }); }
-        }
-        if (G.canSummon(sid)) {
-          var got = G.summon(sid) || [];
-          ignored = got.filter(function () { return rng() < (p.waste || 0); });
-          for (var g2 = 0; g2 < 25; g2++) if (!one()) break;
-        }
+        var go = rng() < smart ? (empt >= 3 || S.mantou >= need * 2 || empt === BENCH || G.phase !== 'wave' && empt >= 2) : true;
+        if (go) { queue.push({ summon: true }); return true; }
+      }
+      return false;
+    }
+    function exec(q) {
+      if (q.summon) {
+        var got = G.summon(sid) || [];
+        ignored = got.filter(function () { return rng() < (p.waste || 0); });
+        return;
+      }
+      if (G.plan(sid, q.from, q.to)) G.apply(sid, q.from, q.to);
+    }
+    var cur = null, think = (p.tick || 1) * rng();
+    function startNext() {
+      var q = queue.shift();
+      if (!q) return;
+      var dur = q.summon ? 0.25 + (p.drag || 0.4) * 0.5 : (p.drag || 0.4) * (0.8 + 0.5 * rng());
+      if (!q.summon && G.note) G.note({ type: 'aidrag', s: sid, from: q.from, to: q.to, dur: dur });
+      cur = { q: q, t: dur };
+    }
+    function act() {
+      // 测试用：立刻把能做的都做完
+      for (var g = 0; g < 30; g++) {
+        if (!queue.length && !one() && !economy()) break;
+        while (queue.length) exec(queue.shift());
       }
     }
-    var t = (p.tick || 1) * rng();
     return {
-      act: act,
+      act: act, params: p,
       update: function (dt) {
         if (G.over()) return;
-        t -= dt;
-        if (t <= 0) { t = (p.tick || 1) * (1 + (p.jitter || 0) * (rng() - 0.5)); act(); }
+        if (cur) {
+          cur.t -= dt;
+          if (cur.t > 0) return;
+          exec(cur.q); cur = null;
+          if (queue.length) { startNext(); return; }
+          think = (p.tick || 1) * 0.35 * (0.6 + 0.8 * rng());
+          return;
+        }
+        think -= dt;
+        if (think > 0) return;
+        if (one() || economy()) startNext();
+        think = (p.tick || 1) * (1 + (p.jitter || 0) * (rng() - 0.5));
+        if (rng() < (p.idle || 0)) think += (p.idleT || 2) * (0.5 + rng());
       }
     };
   }
@@ -1399,9 +1511,10 @@
     COLS: COLS, ROWS: ROWS, HEARTS: HEARTS, BENCH: BENCH, TIER_MULT: TIER_MULT, UNITS: UNITS, KINDS: KINDS,
     GENERALS: GENERALS, GEN_KEYS: GEN_KEYS, NAME_RECIPES: NAME_RECIPES, SYNERGIES: SYNERGIES, SYN_KEYS: SYN_KEYS,
     ENEMIES: ENEMIES, FACTIONS: FACTIONS, LEVELS: LEVELS, PATHS: PATHS, CFG: CFG, UNITS_W: UNITS_W,
-    GEN_TIER: GEN_TIER, RANKS: RANKS, RANK_STARS: RANK_STARS, rankAfter: rankAfter, rankHp: rankHp, rankAI: rankAI,
+    GEN_TIER: GEN_TIER, TIER_ATK: TIER_ATK, TIER_SPD: TIER_SPD, QUALITY: QUALITY, CORE_GENS: CORE_GENS, RANGE_PAD: RANGE_PAD,
+    RANKS: RANKS, RANK_GROUPS: RANK_GROUPS, RANK_GROUP: RANK_GROUP, RANK_STARS: RANK_STARS, rankAfter: rankAfter, rankHp: rankHp, rankAI: rankAI, wavesFor: wavesFor, fieldsFor: fieldsFor, rankGroup: rankGroup,
     posAt: posAt, coverage: coverage, levelContent: levelContent, combineResult: combineResult, pairKey: pairKey, mergeable: mergeable,
-    buildPath: buildPath, createGame: createGame, createBot: createBot, aiParams: aiParams, mulberry32: mulberry32
+    buildPath: buildPath, createGame: createGame, createBot: createBot, aiParams: aiParams, PLAYER_BOT: PLAYER_BOT, mulberry32: mulberry32
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   else root.ZYCore = API;
